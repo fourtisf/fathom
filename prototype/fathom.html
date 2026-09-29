@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fathom · Private AI that forgets you</title>
+<meta name="description" content="Private AI on open models. Compare models side by side, set chats to self-destruct, sign in with your wallet and pay per message with USDG, USDC or ETH on Robinhood Chain.">
+<meta name="theme-color" content="#060A1C">
+<link rel="canonical" href="https://fathom.ai/">
+<!-- Open Graph / social previews (replace og.png with a real 1200x630 image) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fathom">
+<meta property="og:title" content="Fathom · Private AI that forgets you">
+<meta property="og:description" content="Open models in sealed hardware. Wallet login, pay per message, zero logs.">
+<meta property="og:url" content="https://fathom.ai/">
+<meta property="og:image" content="https://fathom.ai/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fathom · Private AI that forgets you">
+<meta name="twitter:description" content="Open models in sealed hardware. Wallet login, pay per message, zero logs.">
+<meta name="twitter:image" content="https://fathom.ai/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%238B7CFF'/%3E%3Cstop offset='.5' stop-color='%235B6CFF'/%3E%3Cstop offset='1' stop-color='%2338C8E8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M7 14c3-2.5 6-2.5 9 0s6 2.5 9 0M10 20c2-1.6 4-1.6 6 0s4 1.6 6 0' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Fathom","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Private AI on open models with wallet login and pay-per-message pricing.","offers":{"@type":"Offer","price":"1","priceCurrency":"USD","description":"100 credits"}}</script>
+<!-- Privacy-friendly analytics: self-host Plausible or Umami here. No Google Analytics, no pixels. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060A1C; --bg2:#0A0F2B;
+  --glass:rgba(255,255,255,.035); --glass2:rgba(255,255,255,.06); --glass3:rgba(255,255,255,.09);
+  --ink:#F1F2FF; --ink2:#B7BCDD; --mute:#8187AE; --faint:#5A6088;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --violet:#8B7CFF; --violet2:#B3A8FF; --indigo:#5B6CFF; --cyan:#5CE1E6; --pink:#F08BD6; --mint:#3DDC97; --rose:#FF6B7A;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.1,1);
+  --grad:linear-gradient(135deg,#8B7CFF 0%,#5B6CFF 45%,#38C8E8 100%);
+  --sh-lg:0 40px 120px -30px rgba(3,5,20,.9),0 0 0 1px rgba(255,255,255,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:96px;overflow-x:clip;background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
+  radial-gradient(900px 600px at 85% 20%,rgba(91,108,255,.10),transparent 60%),
+  radial-gradient(800px 700px at 10% 70%,rgba(139,124,255,.08),transparent 60%),
+  radial-gradient(700px 500px at 60% 110%,rgba(56,200,232,.07),transparent 60%),
+  linear-gradient(180deg,#070B22,#060A1C 40%,#05081A)}
+body::after{content:"";position:fixed;inset:0;z-index:300;pointer-events:none;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+::selection{background:rgba(139,124,255,.35)}
+:focus-visible{outline:2px solid var(--violet2);outline-offset:2px;border-radius:8px}
+.wrap{width:min(1160px,100% - 48px);margin-inline:auto}
+
+/* glass surface mixin: gradient hairline border */
+.glass,.cell,.step,.models,.pcard,.token,.q,.frame,.code,.sheet{
+  background:linear-gradient(180deg,rgba(40,48,120,.42),rgba(16,21,60,.5)) padding-box,
+             linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 40%,rgba(139,124,255,.14)) border-box;
+  border:1px solid transparent;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+
+/* ---------- BUTTONS ---------- */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:12px;font-size:15px;font-weight:500;white-space:nowrap;transition:transform .15s var(--ease),box-shadow .25s,background .2s,filter .2s}
+.btn:active{transform:scale(.98)}
+.btn-dark{color:#fff;background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 30px -10px rgba(111,108,255,.8),0 0 0 1px rgba(139,124,255,.4)}
+.btn-dark:hover{filter:brightness(1.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 40px -8px rgba(111,108,255,.95),0 0 0 1px rgba(179,168,255,.6)}
+.btn-light{color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line2);backdrop-filter:blur(10px)}
+.btn-light:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2)}
+.btn-sm{height:36px;padding:0 14px;font-size:14px;border-radius:10px}
+.btn-lg{height:52px;padding:0 26px;font-size:16px;border-radius:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- NAV ---------- */
+header{position:sticky;top:0;z-index:80;padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid transparent;transition:background .3s,border-color .3s}
+header.scrolled{background:rgba(6,10,28,.7);backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);border-bottom-color:var(--line)}
+nav{display:flex;align-items:center;height:68px;gap:8px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.02em}
+.logo-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 18px -4px rgba(111,108,255,.8)}
+.logo-mark svg{width:16px;height:16px}
+.nav-links{display:flex;gap:2px;margin-left:36px}
+.nav-links a{padding:8px 12px;border-radius:8px;font-size:14.5px;color:var(--ink2);transition:background .2s,color .2s}
+.nav-links a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;place-items:center}
+.acct{display:none;align-items:center;gap:6px}
+.is-on .acct{display:flex}
+.is-on .guest{display:none}
+.bal,.addr{display:flex;align-items:center;gap:8px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line2);font-size:14px}
+.bal{padding:0 12px;font-weight:500;font-variant-numeric:tabular-nums}
+.bal i{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint)}
+.bal em{font-style:normal;color:var(--mute);font-weight:400}
+.addr{padding:0 12px 0 6px;font-family:var(--mono);font-size:13px}
+.av{width:24px;height:24px;border-radius:7px;background:conic-gradient(from 200deg,#8B7CFF,#38C8E8,#3DDC97,#F08BD6,#8B7CFF)}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;padding:76px 0 0;text-align:center;isolation:isolate}
+.aurora{position:absolute;inset:-140px 0 auto;height:1000px;z-index:-1;overflow:hidden;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 45%,transparent);mask-image:linear-gradient(180deg,#000 45%,transparent)}
+.aurora i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen}
+.aurora i:nth-child(1){width:640px;height:480px;left:6%;top:80px;background:#5B4BFF;animation:d1 22s ease-in-out infinite alternate}
+.aurora i:nth-child(2){width:560px;height:420px;right:4%;top:40px;background:#1FA6D6;opacity:.38;animation:d2 26s ease-in-out infinite alternate}
+.aurora i:nth-child(3){width:520px;height:380px;left:36%;top:300px;background:#9B3BD6;opacity:.32;animation:d1 30s ease-in-out infinite alternate-reverse}
+.aurora i:nth-child(4){width:360px;height:300px;right:26%;top:420px;background:#2E6BFF;opacity:.3;animation:d2 24s ease-in-out infinite alternate-reverse}
+@keyframes d1{to{transform:translate(90px,40px) scale(1.12)}}
+@keyframes d2{to{transform:translate(-90px,60px) scale(1.08)}}
+.grid-lines{position:absolute;inset:-140px 0 auto;height:820px;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 30%,#000,transparent 75%);mask-image:radial-gradient(ellipse 60% 55% at 50% 30%,#000,transparent 75%)}
+.pill{display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 14px 0 5px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line2);font-size:13.5px;color:var(--ink2);backdrop-filter:blur(10px)}
+.pill b{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--grad);color:#fff;font-size:12px;font-weight:500}
+.pill svg{width:14px;height:14px;color:var(--mute)}
+.hero h1{margin:26px auto 0;max-width:15ch;font-size:clamp(44px,7.2vw,92px);font-weight:600;line-height:1;letter-spacing:-.05em;background:linear-gradient(180deg,#fff 45%,#C9CCEE);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 .grad{background:linear-gradient(100deg,#B3A8FF,#8B7CFF 35%,#5CE1E6 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:560px;margin:24px auto 0;font-size:19px;line-height:1.55;color:var(--ink2)}
+.ctas{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:34px}
+.ticks{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 24px;margin-top:22px;font-size:14px;color:var(--mute)}
+.ticks span{display:inline-flex;align-items:center;gap:7px}
+.ticks svg{width:15px;height:15px;color:var(--mint)}
+.pre .up{opacity:0;transform:translateY(16px)}
+.up{transition:opacity .9s var(--ease),transform .9s var(--ease)}
+
+/* ---------- APP ---------- */
+.stage{position:relative;width:min(1120px,100% - 32px);margin:68px auto 0}
+.stage::before{content:"";position:absolute;inset:-2px;border-radius:26px;z-index:-1;background:conic-gradient(from var(--ang,0deg),transparent 0 60%,rgba(139,124,255,.9) 72%,rgba(92,225,230,.9) 80%,transparent 90%);filter:blur(1px);animation:ang 8s linear infinite;opacity:.8}
+.stage::after{content:"";position:absolute;left:10%;right:10%;top:-80px;height:260px;z-index:-2;background:radial-gradient(closest-side,rgba(111,108,255,.45),transparent);filter:blur(40px)}
+@property --ang{syntax:"<angle>";initial-value:0deg;inherits:false}
+@keyframes ang{to{--ang:360deg}}
+.frame{padding:8px;border-radius:24px;box-shadow:var(--sh-lg);background:rgba(10,14,40,.85)}
+.app{display:grid;grid-template-columns:250px 1fr;grid-template-rows:100%;height:600px;border-radius:17px;overflow:hidden;background:#0A0E26;border:1px solid var(--line);text-align:left}
+.side{display:flex;flex-direction:column;padding:14px;background:#080C22;border-right:1px solid var(--line)}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 14px}
+.dots{display:flex;gap:6px}.dots i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.1)}
+.newchat{display:flex;align-items:center;gap:9px;width:100%;height:38px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line2);font-size:14px;font-weight:500}
+.newchat:hover{background:rgba(255,255,255,.08)}
+.newchat kbd{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+.side h6{margin:20px 8px 6px;font-size:12px;font-weight:500;color:var(--faint)}
+.hist a{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;font-size:14px;color:var(--ink2);white-space:nowrap;overflow:hidden}
+.hist a span{overflow:hidden;text-overflow:ellipsis}
+.hist a:hover{background:rgba(255,255,255,.04);color:#fff}
+.hist a.on{background:rgba(139,124,255,.12);color:#fff}
+.hist svg{flex-shrink:0;width:13px;height:13px;color:var(--faint)}
+.hist a.on svg{color:var(--violet2)}
+.wallet-card{margin-top:auto;padding:14px;border-radius:14px;background:linear-gradient(160deg,rgba(139,124,255,.16),rgba(56,200,232,.06));border:1px solid rgba(139,124,255,.22)}
+.wallet-card .r{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mute)}
+.wallet-card b{display:block;margin-top:4px;font-size:22px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.wallet-card .bar{height:4px;margin:10px 0 12px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.wallet-card .bar i{display:block;height:100%;width:0;border-radius:4px;background:var(--grad);transition:width .6s var(--ease)}
+.wallet-card .btn{width:100%;height:34px;font-size:13.5px}
+
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;height:58px;padding:0 16px;border-bottom:1px solid var(--line)}
+.model-btn{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:9px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.model-btn:hover,.model-btn[aria-expanded=true]{background:rgba(255,255,255,.06)}
+.model-btn svg{width:15px;height:15px;color:var(--mute)}
+.menu{position:absolute;top:52px;left:12px;z-index:20;width:300px;padding:6px;border-radius:14px;background:rgba(16,21,54,.97);border:1px solid var(--line2);box-shadow:0 30px 60px -20px rgba(0,0,0,.8);backdrop-filter:blur(16px);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top left;pointer-events:none;transition:all .2s var(--ease)}
+.menu.open{opacity:1;transform:none;pointer-events:auto}
+.menu button{display:grid;grid-template-columns:1fr auto;gap:0 10px;width:100%;padding:10px 12px;border-radius:9px;text-align:left}
+.menu button:hover{background:rgba(255,255,255,.05)}
+.menu button[aria-checked=true]{background:rgba(139,124,255,.16)}
+.menu b{font-size:14px;font-weight:600}
+.menu small{grid-column:1;font-size:12.5px;color:var(--mute)}
+.menu em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;font-family:var(--mono);font-size:12px;color:var(--violet2)}
+.sealed{display:flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:999px;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.22);color:var(--mint);font-size:12.5px;font-weight:500}
+.sealed .d{width:7px;height:7px;border-radius:50%;background:var(--mint);animation:ping 2.2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(61,220,151,.5)}70%{box-shadow:0 0 0 7px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+
+.thread{flex:1;min-height:0;overflow-y:auto;padding:26px 0 10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.thread-in{width:min(660px,100% - 40px);margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.m{font-size:15px;line-height:1.65;transition:opacity .9s var(--ease),filter .9s var(--ease),transform .9s var(--ease)}
+.m.you{align-self:flex-end;max-width:78%;padding:10px 15px;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,rgba(139,124,255,.28),rgba(91,108,255,.2));border:1px solid rgba(139,124,255,.28);color:#fff}
+.m.ai{display:grid;grid-template-columns:28px 1fr;gap:12px;color:var(--ink2)}
+.m.ai .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--grad);box-shadow:0 4px 12px -3px rgba(111,108,255,.7)}
+.m.ai .ic svg{width:14px;height:14px}
+.m.ai .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.m.ai .meta span{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px;color:var(--mute)}
+.m.ai .meta .ok{background:rgba(61,220,151,.08);border-color:rgba(61,220,151,.2);color:var(--mint)}
+.m.ai .meta svg{width:12px;height:12px}
+.m.note{align-self:center;display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:12.5px;color:var(--mute)}
+.m.note svg{width:13px;height:13px;color:var(--mint)}
+.m.gone{opacity:0;filter:blur(8px);transform:translateY(24px)}
+.toolrun{display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;margin-bottom:10px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:rgba(255,255,255,.03);font-size:12.5px;color:var(--ink2)}
+.toolrun svg{width:13px;height:13px;color:var(--cyan)}
+.shim{background:linear-gradient(90deg,var(--faint) 20%,#fff 50%,var(--faint) 80%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shim 1.5s linear infinite}
+@keyframes shim{to{background-position:-200% 0}}
+.caret{display:inline-block;width:2px;height:16px;margin-left:2px;background:var(--violet2);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.composer-wrap{padding:8px 16px 14px}
+.composer{width:min(660px,100%);margin:0 auto;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line2);transition:border-color .2s,box-shadow .2s}
+.composer:focus-within{border-color:rgba(139,124,255,.55);box-shadow:0 0 0 4px rgba(139,124,255,.14),0 0 40px -10px rgba(139,124,255,.5)}
+.composer textarea{display:block;width:100%;resize:none;border:0;outline:0;background:none;color:#fff;font:inherit;font-size:15px;padding:14px 16px 4px;max-height:140px}
+.composer textarea::placeholder{color:var(--faint)}
+.cbar{display:flex;align-items:center;gap:6px;padding:6px 8px 8px 10px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;border:1px solid var(--line2);font-size:13px;color:var(--ink2);transition:all .15s}
+.chip:hover{background:rgba(255,255,255,.05)}
+.chip svg{width:14px;height:14px}
+.chip[aria-pressed=true]{background:rgba(92,225,230,.1);border-color:rgba(92,225,230,.35);color:var(--cyan)}
+.cbar .sp{flex:1}
+.send{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--grad);color:#fff;box-shadow:0 6px 16px -6px rgba(111,108,255,.9);transition:opacity .2s}
+.send:disabled{opacity:.25;box-shadow:none;cursor:not-allowed}
+.send svg{width:16px;height:16px}
+.chint{display:flex;justify-content:space-between;gap:10px;width:min(660px,100%);margin:8px auto 0;font-size:12px;color:var(--faint)}
+.chint span{display:inline-flex;align-items:center;gap:6px}
+.chint svg{width:12px;height:12px}
+.chint button:hover{color:var(--rose)}
+
+/* ---------- LOGOS ---------- */
+.logos{padding:80px 0 0;text-align:center}
+.logos p{font-size:14px;color:var(--mute)}
+.logos ul{display:flex;justify-content:center;flex-wrap:wrap;gap:16px 48px;margin-top:22px;list-style:none}
+.logos li{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:600;letter-spacing:-.02em;color:#6E74A0}
+.logos li svg{width:20px;height:20px}
+
+/* ---------- SECTION HEAD ---------- */
+section{padding:136px 0 0}
+.shead{max-width:680px;margin:0 auto 56px;text-align:center}
+.tag{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:rgba(139,124,255,.1);border:1px solid rgba(139,124,255,.28);font-size:13px;font-weight:500;color:var(--violet2)}
+.shead h2{margin-top:18px;font-size:clamp(34px,4.6vw,56px);font-weight:600;line-height:1.05;letter-spacing:-.045em;background:linear-gradient(180deg,#fff 50%,#CDD0F2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.shead p{margin-top:16px;font-size:18px;color:var(--ink2)}
+
+/* ---------- BENTO ---------- */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.cell{position:relative;overflow:hidden;border-radius:22px;padding:28px;display:flex;flex-direction:column}
+.cell::after,.step::after,.pcard.calc::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(420px circle at var(--mx,50%) var(--my,-20%),rgba(139,124,255,.13),transparent 60%);opacity:0;transition:opacity .35s}
+.cell:hover::after,.step:hover::after,.pcard.calc:hover::after{opacity:1}
+.cell h3{font-size:19px;font-weight:600;letter-spacing:-.025em}
+.cell > p{margin-top:6px;font-size:15px;color:var(--ink2);max-width:40ch}
+.c-enclave{grid-column:span 4;grid-row:span 2}
+.c-logs,.c-wallet{grid-column:span 2}
+.c-cipher,.c-tools{grid-column:span 3}
+.viz{margin-top:24px;flex:1;display:flex;flex-direction:column;justify-content:flex-end}
+.inner{border-radius:14px;border:1px solid var(--line);background:rgba(4,7,22,.55)}
+.enc{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:stretch;margin-top:26px;flex:1}
+.enc-art{position:relative;border-radius:16px;background:radial-gradient(90% 90% at 50% 45%,rgba(111,108,255,.22),rgba(4,7,22,.6) 70%);border:1px solid var(--line);display:grid;place-items:center;min-height:240px;overflow:hidden}
+.enc-art svg{width:78%;max-width:260px;filter:drop-shadow(0 0 30px rgba(111,108,255,.45))}
+.ring{transform-origin:130px 130px;animation:rot 26s linear infinite}
+.ring.r2{animation-duration:40s;animation-direction:reverse}
+@keyframes rot{to{transform:rotate(360deg)}}
+.report{border-radius:16px;border:1px solid var(--line);background:rgba(4,7,22,.55);padding:16px 18px;display:flex;flex-direction:column}
+.report .kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.report .kv:first-child{padding-top:0}
+.report .kv span{color:var(--mute)}
+.report code{font-family:var(--mono);font-size:12.5px;color:#fff;text-align:right}
+.verdict{display:flex;align-items:center;gap:9px;margin-top:14px;padding:11px 12px;border-radius:10px;background:rgba(61,220,151,.09);border:1px solid rgba(61,220,151,.2);color:var(--mint);font-size:13.5px;font-weight:500;transition:all .25s}
+.verdict.wait{background:rgba(92,225,230,.08);border-color:rgba(92,225,230,.22);color:var(--cyan)}
+.verdict svg{width:16px;height:16px;flex-shrink:0}
+.report .btn{margin-top:10px;height:36px;font-size:13.5px}
+.logview{border-radius:14px;border:1px solid var(--line);background:rgba(4,7,22,.55);overflow:hidden;font-family:var(--mono);font-size:12px}
+.logview .lh{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--mute);font-family:var(--sans);font-size:12px}
+.logview .ln{display:flex;gap:10px;padding:7px 12px;color:var(--faint)}
+.logview .ln s{flex:1;height:8px;margin-top:5px;border-radius:4px;background:rgba(255,255,255,.06);text-decoration:none}
+.logview .empty{padding:12px;text-align:center;font-family:var(--sans);font-size:13px;color:var(--mint);background:rgba(61,220,151,.08);border-top:1px solid rgba(61,220,151,.15)}
+.siwe{border-radius:14px;border:1px solid var(--line);background:rgba(4,7,22,.55);padding:14px}
+.siwe .who{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500}
+.siwe .who .av{width:28px;height:28px;border-radius:8px}
+.siwe .who small{display:block;font-family:var(--mono);font-size:11.5px;color:var(--mute);font-weight:400}
+.siwe pre{margin:12px 0;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--ink2);white-space:pre-wrap}
+.siwe .b2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.siwe .b2 span{height:32px;display:grid;place-items:center;border-radius:8px;font-size:12.5px;font-weight:500;border:1px solid var(--line2)}
+.siwe .b2 span:last-child{background:var(--grad);border-color:transparent;color:#fff}
+.flow{display:grid;grid-template-columns:1fr 24px 1fr;align-items:center;gap:10px}
+.box{border-radius:14px;border:1px solid var(--line);background:rgba(4,7,22,.55);padding:12px 14px;min-height:112px}
+.box small{display:block;font-size:11.5px;color:var(--mute);margin-bottom:6px}
+.box p{font-size:13.5px;line-height:1.55;color:#fff}
+.box.enc2 p{font-family:var(--mono);font-size:11.5px;color:var(--cyan);word-break:break-all;line-height:1.6;text-shadow:0 0 12px rgba(92,225,230,.5)}
+.flow svg{width:24px;height:24px;color:var(--violet2)}
+.req{border-radius:14px;border:1px solid var(--line);background:rgba(4,7,22,.55);overflow:hidden}
+.req .row{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.req .row:last-child{border-bottom:0}
+.req .row span{color:var(--mute)}
+.req .row code{font-family:var(--mono);font-size:12.5px;color:#fff}
+.req .row .hid{display:inline-flex;align-items:center;gap:6px;color:var(--mint);font-family:var(--sans);font-size:12.5px;font-weight:500}
+.req .row .hid svg{width:13px;height:13px}
+
+/* ---------- STEPS ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.step{position:relative;overflow:hidden;border-radius:22px;padding:28px}
+.step .n{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--grad);color:#fff;font-size:15px;font-weight:600;box-shadow:0 8px 20px -6px rgba(111,108,255,.8)}
+.step h3{margin-top:22px;font-size:19px;font-weight:600;letter-spacing:-.025em}
+.step p{margin-top:6px;font-size:15px;color:var(--ink2)}
+.step .mini{margin-top:22px;height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:11px;background:rgba(4,7,22,.55);border:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.step .mini b{margin-left:auto;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+.step .mini svg{width:16px;height:16px;color:var(--violet2)}
+
+/* ---------- MODELS ---------- */
+.models{border-radius:22px;overflow:hidden}
+.mh,.mr{display:grid;grid-template-columns:1.5fr 1.3fr .7fr .7fr .7fr;gap:16px;align-items:center;padding:0 28px}
+.mh{height:48px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+.mr{min-height:84px;border-bottom:1px solid var(--line);transition:background .25s}
+.mr:last-child{border-bottom:0}
+.mr:hover{background:linear-gradient(90deg,rgba(139,124,255,.1),transparent 70%)}
+.mn{display:flex;align-items:center;gap:14px}
+.mlogo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.mn b{display:block;font-size:16px;font-weight:600;letter-spacing:-.02em}
+.mn small{font-size:13px;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{height:26px;display:inline-flex;align-items:center;padding:0 10px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+.num{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;color:#fff}
+.mr .lbl{display:none}
+
+/* ---------- PRICING ---------- */
+.price{display:grid;grid-template-columns:1fr 1.05fr;gap:16px}
+.pcard{position:relative;overflow:hidden;border-radius:22px;padding:36px}
+.pcard.dark{background:linear-gradient(150deg,#5B4BFF 0%,#3C3FD8 40%,#1B7FC4 100%);border:1px solid rgba(255,255,255,.18);box-shadow:0 40px 90px -30px rgba(91,75,255,.7)}
+.pcard.dark::before{content:"";position:absolute;right:-100px;top:-120px;width:380px;height:380px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.28),transparent)}
+.pcard.dark::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:32px 32px;-webkit-mask-image:linear-gradient(200deg,#000,transparent 60%);mask-image:linear-gradient(200deg,#000,transparent 60%);pointer-events:none}
+.pcard.dark > *{position:relative;z-index:1}
+.pcard.dark .lab{font-size:14px;color:rgba(255,255,255,.75)}
+.big{display:flex;align-items:baseline;gap:12px;margin-top:10px}
+.big b{font-size:92px;font-weight:600;line-height:1;letter-spacing:-.06em}
+.big span{font-size:20px;color:rgba(255,255,255,.8)}
+.pcard.dark p{margin-top:16px;color:rgba(255,255,255,.85);max-width:34ch}
+.plist{margin-top:30px;display:grid;gap:12px;list-style:none}
+.plist li{display:flex;align-items:center;gap:10px;font-size:15px;color:#fff}
+.plist svg{width:18px;height:18px;padding:3px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;flex-shrink:0}
+.pcard.dark .btn{margin-top:32px;background:#fff;color:#1B1D4A;box-shadow:0 10px 30px -10px rgba(0,0,0,.4)}
+.pcard.dark .btn:hover{background:#EEF0FF}
+.calc h3{font-size:15px;font-weight:500;color:var(--mute)}
+.read{display:flex;align-items:baseline;gap:10px;margin:8px 0 28px}
+.read b{font-size:60px;font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.read span{color:var(--mute)}
+.field{margin-bottom:24px}
+.field label{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;color:var(--ink2)}
+.field label b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;outline:none;background:linear-gradient(90deg,#8B7CFF,#38C8E8 var(--p,12%),rgba(255,255,255,.08) var(--p,12%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(139,124,255,.3),0 4px 12px rgba(0,0,0,.5);cursor:grab}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(139,124,255,.3);cursor:grab}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border-radius:12px;background:rgba(4,7,22,.6);border:1px solid var(--line)}
+.seg button{height:38px;border-radius:9px;font-size:13.5px;color:var(--mute);transition:all .15s}
+.seg button[aria-checked=true]{background:rgba(139,124,255,.2);color:#fff;font-weight:500;box-shadow:inset 0 0 0 1px rgba(139,124,255,.35)}
+.compare{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(61,220,151,.08);border:1px solid rgba(61,220,151,.2);font-size:14px;color:var(--mint)}
+.compare b{font-weight:600}
+
+/* ---------- API ---------- */
+.api{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}
+.api .shead{margin:0;text-align:left}
+.api-list{margin-top:32px;display:grid;gap:18px}
+.api-list div{display:grid;grid-template-columns:36px 1fr;gap:14px}
+.api-list .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:rgba(139,124,255,.12);border:1px solid rgba(139,124,255,.28)}
+.api-list .ic svg{width:17px;height:17px;color:var(--violet2)}
+.api-list h4{font-size:15.5px;font-weight:600;letter-spacing:-.015em}
+.api-list p{font-size:14.5px;color:var(--ink2)}
+.code{border-radius:20px;overflow:hidden;box-shadow:var(--sh-lg);background:rgba(5,8,24,.9)}
+.ctop{display:flex;align-items:center;gap:4px;padding:10px 10px 10px 16px;border-bottom:1px solid var(--line)}
+.ctop .dots{margin-right:12px}
+.ctop [role=tab]{height:30px;padding:0 12px;border-radius:7px;font-size:13px;color:var(--mute)}
+.ctop [role=tab][aria-selected=true]{background:rgba(255,255,255,.08);color:#fff}
+.copy{margin-left:auto;height:30px;padding:0 12px;border-radius:7px;font-size:12.5px;color:var(--ink2);border:1px solid var(--line2)}
+.copy:hover{color:#fff}
+.code pre{padding:24px 26px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#C9CDE6}
+.k{color:#C4B5FD}.s{color:#7EE7C0}.c{color:#555C85}.f{color:#7DD3FC}
+
+/* ---------- TOKEN ---------- */
+.token{border-radius:28px;padding:48px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;overflow:hidden}
+.token::before{content:"";position:absolute;left:-160px;bottom:-220px;width:600px;height:480px;border-radius:50%;background:radial-gradient(closest-side,rgba(111,108,255,.35),transparent);z-index:0}
+.token > *{position:relative}
+.token h2{font-size:clamp(32px,3.8vw,46px);font-weight:600;letter-spacing:-.045em;line-height:1.05}
+.token p{margin-top:14px;color:var(--ink2);font-size:17px}
+.token .ctas{justify-content:flex-start;margin-top:28px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stats div{padding:22px;border-radius:16px;background:rgba(4,7,22,.55);border:1px solid var(--line)}
+.stats span{font-size:13px;color:var(--mute)}
+.stats b{display:block;margin-top:8px;font-size:34px;font-weight:600;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.stats div:nth-child(2) b{background:linear-gradient(90deg,#B3A8FF,#5CE1E6);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- FAQ ---------- */
+.faq{max-width:760px;margin:0 auto}
+.q{border-radius:16px;margin-bottom:10px;transition:box-shadow .2s}
+.q[data-open]{box-shadow:0 0 0 1px rgba(139,124,255,.3),0 20px 40px -20px rgba(111,108,255,.5)}
+.q button{display:flex;justify-content:space-between;align-items:center;gap:16px;width:100%;padding:20px 22px;text-align:left;font-size:16.5px;font-weight:500;letter-spacing:-.015em}
+.q .pm{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.06);flex-shrink:0;transition:transform .3s var(--ease),background .2s}
+.q .pm svg{width:14px;height:14px}
+.q[data-open] .pm{transform:rotate(45deg);background:rgba(139,124,255,.2);color:var(--violet2)}
+.q .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease)}
+.q[data-open] .a{grid-template-rows:1fr}
+.q .a > div{overflow:hidden}
+.q .a p{padding:0 22px 20px;color:var(--ink2);max-width:62ch}
+
+/* ---------- CTA / FOOTER ---------- */
+.cta{margin-top:136px;border-radius:28px;padding:88px 32px;text-align:center;position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(160deg,#171A4A,#0B0F2E 60%);border:1px solid rgba(139,124,255,.25)}
+.cta .aurora{inset:0;height:auto;-webkit-mask-image:none;mask-image:none}
+.cta .aurora i{opacity:.45;filter:blur(90px)}
+.cta h2{font-size:clamp(36px,5.4vw,64px);font-weight:600;letter-spacing:-.05em;line-height:1.02;max-width:14ch;margin:0 auto}
+.cta p{margin:18px auto 32px;max-width:32em;color:rgba(255,255,255,.75);font-size:18px}
+.cta .btn-dark{background:#fff;color:#1B1D4A;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+.cta .btn-dark:hover{filter:none;background:#EEF0FF}
+footer{padding:80px 0 calc(40px + env(safe-area-inset-bottom,0px))}
+.foot{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:40px}
+.foot p{margin-top:12px;font-size:14px;color:var(--mute);max-width:28ch}
+.foot h5{font-size:13.5px;font-weight:600;margin-bottom:12px}
+.foot ul{list-style:none;display:grid;gap:9px;font-size:14px;color:var(--mute)}
+.foot a:hover{color:#fff}
+.legal{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:56px;padding-top:22px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- MODALS ---------- */
+.modal{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;background:rgba(3,5,18,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .25s}
+.modal.open{opacity:1;pointer-events:auto}
+.sheet{position:relative;width:min(420px,100%);padding:26px;border-radius:22px;background:linear-gradient(180deg,#141A45,#0C1130) padding-box,linear-gradient(180deg,rgba(255,255,255,.2),rgba(139,124,255,.2)) border-box;box-shadow:0 50px 120px -20px rgba(0,0,0,.9);transform:translateY(12px) scale(.98);transition:transform .35s var(--ease)}
+.modal.open .sheet{transform:none}
+.sheet h3{font-size:22px;font-weight:600;letter-spacing:-.03em}
+.sheet > p{margin:6px 0 20px;font-size:14.5px;color:var(--ink2)}
+.x{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--mute)}
+.x:hover{background:rgba(255,255,255,.07);color:#fff}
+.wopt{display:flex;align-items:center;gap:12px;width:100%;height:58px;padding:0 14px;margin-bottom:8px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.03);font-size:15px;font-weight:500;transition:all .15s}
+.wopt:hover{background:rgba(255,255,255,.07);border-color:rgba(139,124,255,.4)}
+.wopt i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:14px;color:#fff}
+.wopt small{margin-left:auto;font-size:12px;font-weight:500;color:var(--mute)}
+.wopt small.rec{padding:3px 8px;border-radius:6px;background:rgba(139,124,255,.18);color:var(--violet2)}
+.wopt.busy small{color:var(--cyan);background:none}
+.terms{margin-top:14px;text-align:center;font-size:12.5px;color:var(--mute)}
+.amts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.amts button{height:66px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .15s}
+.amts button b{font-size:17px;font-weight:600}
+.amts button small{font-size:11.5px;color:var(--mute)}
+.amts button:hover{background:rgba(255,255,255,.06)}
+.amts button[aria-checked=true]{border-color:var(--violet);background:rgba(139,124,255,.15);box-shadow:0 0 0 3px rgba(139,124,255,.18)}
+.amts button[aria-checked=true] b{color:var(--violet2)}
+.sum{margin-top:18px;padding:6px 14px;border-radius:14px;background:rgba(4,7,22,.5);border:1px solid var(--line)}
+.sum div{display:flex;justify-content:space-between;padding:9px 0;font-size:14px;color:var(--ink2);border-bottom:1px solid var(--line)}
+.sum div:last-child{border-bottom:0}
+.sum b{font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.prog i{display:block;height:4px;border-radius:4px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+.prog i::after{content:"";position:absolute;inset:0;width:0;background:var(--grad);transition:width .8s var(--ease)}
+.prog .done i::after{width:100%}
+.prog span{display:block;margin-top:7px;font-size:11.5px;color:var(--faint)}
+.prog .done span{color:#fff}
+.sheet .btn-dark{width:100%;margin-top:16px;height:50px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:250;display:flex;align-items:center;gap:10px;height:46px;padding:0 18px 0 12px;border-radius:14px;background:rgba(20,26,69,.95);border:1px solid rgba(139,124,255,.35);color:#fff;font-size:14px;font-weight:500;box-shadow:0 20px 50px -10px rgba(0,0,0,.7);backdrop-filter:blur(12px);transform:translate(-50%,24px);opacity:0;transition:all .35s var(--ease);pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:var(--mint);color:#062B1B;font-style:normal;font-size:12px}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:1020px){
+  .c-enclave{grid-column:span 6;grid-row:auto}
+  .c-logs,.c-wallet{grid-column:span 3}
+  .c-cipher,.c-tools{grid-column:span 6}
+  .api{grid-template-columns:1fr;gap:40px}
+  .token{grid-template-columns:1fr;padding:36px}
+  .foot{grid-template-columns:1fr 1fr}
+}
+@media (max-width:860px){
+  .nav-links{display:none}
+  .nav-links.open{display:flex;flex-direction:column;position:absolute;top:68px;left:12px;right:12px;margin:0;padding:8px;border-radius:16px;background:rgba(14,19,50,.98);border:1px solid var(--line2);box-shadow:0 30px 60px -20px rgba(0,0,0,.8)}
+  .nav-links.open a{padding:13px 14px;font-size:16px}
+  .menu-btn{display:grid}
+  .app{grid-template-columns:1fr;height:560px}
+  .side{display:none}
+  .steps,.price{grid-template-columns:1fr}
+  .mh{display:none}
+  .mr{grid-template-columns:repeat(3,1fr);row-gap:12px;padding:20px 22px}
+  .mr .mn,.mr .chips{grid-column:1/-1}
+  .mr .lbl{display:block;font-family:var(--sans);font-size:11.5px;color:var(--mute)}
+  section{padding-top:100px}
+}
+@media (max-width:600px){
+  .wrap{width:calc(100% - 32px)}
+  .bal em,.addr .ad{display:none}
+  .addr{padding-right:6px}
+  .hero{padding-top:44px}
+  .stage{width:calc(100% - 16px);margin-top:48px}
+  .frame{padding:5px;border-radius:20px}
+  .app{height:540px}
+  .sealed .t{display:none}
+  .c-logs,.c-wallet{grid-column:span 6}
+  .enc{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .flow svg{transform:rotate(90deg);justify-self:center}
+  .cell,.pcard{padding:22px}
+  .amts{grid-template-columns:repeat(2,1fr)}
+  .seg{grid-template-columns:repeat(2,1fr)}
+  .token{padding:26px}
+  .stats b{font-size:28px}
+  .cta{padding:60px 22px;border-radius:22px}
+  .chint .l{display:none}
+  .chint{justify-content:flex-end}
+  .nav-docs{display:none!important}
+  .big b{font-size:76px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .rv,.pre .up{opacity:1;transform:none}
+}
+
+/* ===== premium hero backdrop v2 ===== */
+body::before{background:linear-gradient(180deg,#050817 0%,#04061A 50%,#03050F 100%)!important}
+.hero .aurora{inset:-100px 0 auto;height:1100px}
+.hero .aurora i{filter:blur(120px);mix-blend-mode:normal}
+.hero .aurora i:nth-child(1){width:520px;height:360px;left:12%;top:120px;background:#3B2FD0;opacity:.22}
+.hero .aurora i:nth-child(2){width:480px;height:340px;right:10%;top:140px;background:#0E6FA8;opacity:.18}
+.hero .aurora i:nth-child(3),.hero .aurora i:nth-child(4){display:none}
+.hero .grid-lines{opacity:.55;-webkit-mask-image:radial-gradient(ellipse 45% 40% at 50% 22%,#000,transparent 70%);mask-image:radial-gradient(ellipse 45% 40% at 50% 22%,#000,transparent 70%)}
+.beam{position:absolute;left:50%;top:-140px;width:1100px;height:760px;transform:translateX(-50%);z-index:-1;pointer-events:none;
+  background:
+   radial-gradient(ellipse 34% 55% at 50% 0%,rgba(139,124,255,.34),transparent 70%),
+   conic-gradient(from 180deg at 50% 0%,transparent 160deg,rgba(139,124,255,.10) 172deg,rgba(92,225,230,.08) 180deg,rgba(139,124,255,.10) 188deg,transparent 200deg);
+  -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent 95%);mask-image:linear-gradient(180deg,#000 30%,transparent 95%)}
+.stars{position:absolute;inset:-100px 0 auto;height:900px;z-index:-1;pointer-events:none;opacity:.7;
+  background-image:radial-gradient(1px 1px at 12% 22%,rgba(255,255,255,.7),transparent 60%),radial-gradient(1px 1px at 78% 14%,rgba(255,255,255,.55),transparent 60%),radial-gradient(1.2px 1.2px at 64% 38%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1px 1px at 30% 48%,rgba(255,255,255,.4),transparent 60%),radial-gradient(1px 1px at 90% 44%,rgba(255,255,255,.45),transparent 60%),radial-gradient(1.2px 1.2px at 6% 60%,rgba(255,255,255,.35),transparent 60%),radial-gradient(1px 1px at 46% 8%,rgba(255,255,255,.5),transparent 60%),radial-gradient(1px 1px at 22% 78%,rgba(255,255,255,.3),transparent 60%),radial-gradient(1px 1px at 84% 70%,rgba(255,255,255,.3),transparent 60%);
+  -webkit-mask-image:linear-gradient(180deg,#000 40%,transparent);mask-image:linear-gradient(180deg,#000 40%,transparent)}
+.horizon{position:absolute;left:50%;transform:translateX(-50%);width:2400px;height:2400px;border-radius:50%;z-index:-1;pointer-events:none;
+  top:calc(100% - 700px);
+  background:radial-gradient(closest-side,#070B24 96%,transparent 100%);
+  box-shadow:0 -1px 0 rgba(179,168,255,.55),0 -30px 80px -10px rgba(111,108,255,.35),0 -2px 30px rgba(92,225,230,.18)}
+.hero h1{background:linear-gradient(180deg,#FFFFFF 40%,#D4D7F5)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.hero h1 .grad{background:linear-gradient(95deg,#C4BCFF,#8B7CFF 45%,#6FE3F0)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.stage::after{background:radial-gradient(closest-side,rgba(111,108,255,.32),transparent)!important}
+.cta{background:radial-gradient(ellipse 60% 80% at 50% 0%,rgba(111,108,255,.35),transparent 70%),linear-gradient(180deg,#0C1034,#070A22)!important}
+.cta .aurora i{opacity:.18!important}
+@media (max-width:860px){.horizon{top:calc(100% - 620px);width:1600px;height:1600px}.beam{width:760px}}
+
+/* ================= v5 additions ================= */
+.view{display:none}
+.view.on{display:block}
+body.in-app header#hdr,body.in-app footer.site-foot{display:none}
+.nav-links a.cur{color:#fff;background:rgba(255,255,255,.06)}
+
+/* hero preview (links into app) */
+.preview-link{position:absolute;inset:0;z-index:5;display:grid;place-items:center;border-radius:24px;background:linear-gradient(180deg,transparent 40%,rgba(6,10,28,.65));opacity:0;transition:opacity .3s}
+.stage:hover .preview-link,.preview-link:focus-visible{opacity:1}
+.preview-link span{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 22px;border-radius:14px;background:var(--grad);color:#fff;font-weight:500;box-shadow:0 12px 30px -8px rgba(111,108,255,.9)}
+.preview-link svg{width:16px;height:16px}
+
+/* why section */
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.why .cell{min-height:250px}
+.why .big-ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(139,124,255,.14);border:1px solid rgba(139,124,255,.3);margin-bottom:20px}
+.why .big-ic svg{width:22px;height:22px;color:var(--violet2)}
+.why .demo-strip{margin-top:auto;padding-top:20px;display:flex;gap:8px;flex-wrap:wrap}
+.why .demo-strip span{height:28px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:8px;background:rgba(4,7,22,.55);border:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+.cmp-table{border-radius:22px;overflow:hidden}
+.cmp-table table{width:100%;border-collapse:collapse;font-size:15px}
+.cmp-table th,.cmp-table td{padding:16px 24px;text-align:left;border-bottom:1px solid var(--line)}
+.cmp-table tr:last-child td{border-bottom:0}
+.cmp-table th{font-size:13px;font-weight:500;color:var(--mute);background:rgba(255,255,255,.03)}
+.cmp-table th.us,.cmp-table td.us{background:rgba(139,124,255,.08);color:#fff}
+.cmp-table td{color:var(--ink2)}
+.yes{color:var(--mint)!important;font-weight:500}
+.no{color:var(--faint)!important}
+.tw{overflow-x:auto}
+.tw table{min-width:620px}
+
+/* ---------- APP SHELL ---------- */
+.shell{display:grid;grid-template-columns:252px 1fr;height:100vh;height:100dvh}
+.snav{display:flex;flex-direction:column;gap:4px;padding:16px 12px calc(14px + env(safe-area-inset-bottom,0px));background:#070B20;border-right:1px solid var(--line);overflow-y:auto;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.snav .logo{padding:2px 8px 14px}
+.snav .newchat{margin-bottom:10px}
+.nitem{display:flex;align-items:center;gap:11px;height:40px;padding:0 12px;border-radius:10px;font-size:14.5px;color:var(--ink2);transition:background .15s,color .15s}
+.nitem svg{width:17px;height:17px;color:var(--mute)}
+.nitem:hover{background:rgba(255,255,255,.04);color:#fff}
+.nitem.cur{background:rgba(139,124,255,.14);color:#fff}
+.nitem.cur svg{color:var(--violet2)}
+.nitem .badge{margin-left:auto;font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(61,220,151,.12);color:var(--mint)}
+.snav h6{margin:18px 12px 6px;font-size:12px;font-weight:500;color:var(--faint)}
+.snav .hist{display:flex;flex-direction:column}
+.snav .hist .empty{padding:6px 12px;font-size:13px;color:var(--faint)}
+.snav .wallet-card{margin-top:auto}
+.smain{display:flex;flex-direction:column;min-width:0;min-height:0}
+.atop{display:flex;align-items:center;gap:10px;min-height:62px;padding:calc(10px + env(safe-area-inset-top,0px)) 20px 10px;border-bottom:1px solid var(--line);position:relative;flex-wrap:wrap}
+.atop h1{font-size:17px;font-weight:600;letter-spacing:-.02em;margin-right:auto}
+.atop .sp{flex:1}
+.netpill{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line2);font-size:13px;color:var(--ink2)}
+.netpill i{width:8px;height:8px;border-radius:50%;background:var(--mint)}
+.netpill.bad{border-color:rgba(255,107,122,.4);color:var(--rose)}
+.netpill.bad i{background:var(--rose)}
+.banner{display:flex;align-items:center;gap:12px;padding:12px 20px;font-size:14px;border-bottom:1px solid var(--line)}
+.banner svg{width:18px;height:18px;flex-shrink:0}
+.banner.warn{background:rgba(255,107,122,.08);color:#FFB3BB}
+.banner.info{background:rgba(139,124,255,.08);color:var(--ink2)}
+.banner .btn{margin-left:auto;height:32px;font-size:13px;padding:0 12px;border-radius:9px}
+.acontent{flex:1;min-height:0;overflow-y:auto}
+.page{width:min(1040px,100% - 40px);margin:0 auto;padding:32px 0 60px}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.page-h h2{font-size:28px;font-weight:600;letter-spacing:-.035em}
+.page-h p{color:var(--ink2);margin-top:4px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.kpi{padding:20px;border-radius:18px}
+.kpi span{font-size:13px;color:var(--mute)}
+.kpi b{display:block;margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.kpi small{font-size:12.5px;color:var(--mute)}
+.panel{border-radius:20px;padding:24px;margin-top:16px}
+.panel h3{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.panel .sub2{font-size:14px;color:var(--mute);margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:160px;margin-top:22px}
+.bars div{flex:1;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#8B7CFF,#3B4BD8);opacity:.85;position:relative;min-height:4px;transition:opacity .2s}
+.bars div:hover{opacity:1}
+.bars div:hover::after{content:attr(data-v);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);padding:3px 7px;border-radius:6px;background:#1A2050;font-size:11.5px;white-space:nowrap}
+.bars-x{display:flex;justify-content:space-between;margin-top:8px;font-size:11.5px;color:var(--faint)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:14px}
+.tbl th{text-align:left;font-size:12.5px;font-weight:500;color:var(--mute);padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:13px 12px;border-bottom:1px solid var(--line);color:var(--ink2)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .mono{font-family:var(--mono);font-size:12.5px;color:#fff}
+.tbl a.ext{color:var(--violet2)}
+.tbl a.ext:hover{text-decoration:underline}
+.st{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:7px;font-size:12px;font-weight:500}
+.st.ok{background:rgba(61,220,151,.1);color:var(--mint)}
+.st.bad{background:rgba(255,107,122,.1);color:var(--rose)}
+.st.pend{background:rgba(92,225,230,.1);color:var(--cyan)}
+.empty-state{padding:36px 20px;text-align:center;color:var(--mute);font-size:14.5px}
+.empty-state b{display:block;color:#fff;font-size:16px;margin-bottom:4px}
+.mrow2{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mrow2:last-child{border-bottom:0}
+.mrow2 .track{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden}
+.mrow2 .track i{display:block;height:100%;background:var(--grad);border-radius:6px}
+.mrow2 b{width:70px;text-align:right;font-weight:500;font-variant-numeric:tabular-nums}
+.mrow2 span{width:130px;color:var(--ink2)}
+
+.inp{height:44px;padding:0 14px;border-radius:12px;background:rgba(4,7,22,.6);border:1px solid var(--line2);color:#fff;font:inherit;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;min-width:0}
+.inp:focus{border-color:rgba(139,124,255,.6);box-shadow:0 0 0 4px rgba(139,124,255,.14)}
+.inp::placeholder{color:var(--faint)}
+.row-f{display:flex;gap:10px;flex-wrap:wrap}
+.row-f .inp{flex:1}
+.hint{font-size:13px;color:var(--mute);margin-top:8px}
+.hint.err{color:var(--rose)}
+
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.setrow:last-child{border-bottom:0}
+.setrow h4{font-size:15px;font-weight:500}
+.setrow p{font-size:13.5px;color:var(--mute);margin-top:2px;max-width:52ch}
+.tog{position:relative;width:44px;height:26px;border-radius:999px;background:rgba(255,255,255,.1);flex-shrink:0;transition:background .2s}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.tog[aria-checked=true]{background:var(--violet)}
+.tog[aria-checked=true]::after{transform:translateX(18px)}
+.sel{height:38px;padding:0 12px;border-radius:10px;background:rgba(4,7,22,.6);border:1px solid var(--line2);color:#fff;font:inherit;font-size:14px}
+.btn-danger{background:rgba(255,107,122,.12);color:var(--rose);border:1px solid rgba(255,107,122,.3)}
+.btn-danger:hover{background:rgba(255,107,122,.2)}
+
+/* chat page extras */
+.chatwrap{display:flex;flex-direction:column;height:100%}
+.chatwrap .thread{flex:1}
+.gate{height:100%;display:grid;place-items:center;text-align:center;padding:30px}
+.gate h2{font-size:30px;font-weight:600;letter-spacing:-.035em;margin-top:22px}
+.gate p{color:var(--ink2);margin:10px auto 26px;max-width:34em}
+.gate .logo-mark{width:56px;height:56px;border-radius:16px;margin:0 auto}
+.gate .logo-mark svg{width:28px;height:28px}
+.checklist{width:min(660px,100% - 40px);margin:0 auto 6px;padding:16px 18px;border-radius:16px;background:linear-gradient(160deg,rgba(139,124,255,.12),rgba(56,200,232,.05));border:1px solid rgba(139,124,255,.22)}
+.checklist h4{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.checklist h4 button{font-size:12.5px;font-weight:400;color:var(--mute)}
+.checklist ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:10px}
+.checklist li{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink2)}
+.checklist li i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--faint);display:grid;place-items:center;flex-shrink:0}
+.checklist li.done{color:#fff}
+.checklist li.done i{background:var(--mint);border-color:var(--mint)}
+.checklist li.done i::after{content:"";width:8px;height:4px;border-left:2px solid #062B1B;border-bottom:2px solid #062B1B;transform:rotate(-45deg) translate(1px,-1px)}
+.checklist li button{color:var(--violet2);text-decoration:underline;text-underline-offset:3px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp > div{padding:14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.cmp h5{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
+.cmp h5 small{font-weight:400;color:var(--mute)}
+.errbox{padding:14px 16px;border-radius:14px;background:rgba(255,107,122,.08);border:1px solid rgba(255,107,122,.28);color:#FFC2C8;font-size:14px}
+.errbox b{color:#fff}
+.errbox .btn{margin-top:10px;height:34px;font-size:13px}
+.burnpill{display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line2);font-size:13px;color:var(--ink2)}
+.burnpill svg{width:15px;height:15px;color:var(--pink)}
+.burnpill select{background:none;border:0;color:#fff;font:inherit;font-size:13px;outline:none}
+.burnpill select option{background:#0C1130}
+.m.ai.burnt .b > span:first-child{filter:blur(0)}
+.tag-deg{font-size:11px;padding:2px 6px;border-radius:5px;background:rgba(255,107,122,.14);color:var(--rose);font-style:normal;margin-left:6px}
+
+/* stake */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.tier{padding:20px;border-radius:18px;position:relative}
+.tier.cur{box-shadow:0 0 0 1px rgba(139,124,255,.6),0 20px 40px -20px rgba(111,108,255,.6)}
+.tier .tn{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.tier .tn em{font-style:normal;font-size:11.5px;padding:3px 8px;border-radius:6px;background:var(--grad);color:#fff}
+.tier .need{font-size:13px;color:var(--mute);margin-top:2px}
+.tier .off{font-size:34px;font-weight:600;letter-spacing:-.04em;margin:14px 0 6px}
+.tier ul{list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--ink2)}
+.tier li::before{content:"✓ ";color:var(--mint)}
+.progress2{height:8px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden;margin:14px 0 8px}
+.progress2 i{display:block;height:100%;background:var(--grad);border-radius:8px;transition:width .6s var(--ease)}
+
+/* docs / legal / trust */
+.doc{display:grid;grid-template-columns:220px 1fr;gap:48px;padding:56px 0 40px}
+.doc-nav{position:sticky;top:96px;align-self:start;display:grid;gap:2px}
+.doc-nav a{padding:7px 12px;border-radius:8px;font-size:14px;color:var(--ink2)}
+.doc-nav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.doc-nav h6{font-size:12px;color:var(--faint);font-weight:500;margin:14px 12px 6px}
+.prose h1{font-size:40px;font-weight:600;letter-spacing:-.045em;line-height:1.05}
+.prose h2{font-size:24px;font-weight:600;letter-spacing:-.03em;margin:48px 0 12px;scroll-margin-top:96px}
+.prose h3{font-size:17px;font-weight:600;margin:26px 0 8px}
+.prose p,.prose li{color:var(--ink2);font-size:15.5px}
+.prose p{margin:10px 0}
+.prose ul{margin:10px 0 10px 20px}
+.prose code{font-family:var(--mono);font-size:13px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.07);color:#fff}
+.prose pre{margin:14px 0;padding:18px 20px;border-radius:14px;background:rgba(4,7,22,.8);border:1px solid var(--line2);overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.8;color:#C9CDE6}
+.prose pre code{padding:0;background:none}
+.prose .lead{font-size:18px;color:var(--ink2);margin-top:14px}
+.draft{display:flex;gap:10px;align-items:center;margin:20px 0 8px;padding:12px 16px;border-radius:12px;background:rgba(92,225,230,.07);border:1px solid rgba(92,225,230,.25);color:var(--cyan);font-size:14px}
+.draft svg{width:18px;height:18px;flex-shrink:0}
+.trust-hero{padding:72px 0 20px;text-align:center}
+.trust-hero h1{font-size:clamp(40px,6vw,72px);font-weight:600;letter-spacing:-.05em;line-height:1}
+.trust-hero p{color:var(--ink2);font-size:18px;margin:16px auto 0;max-width:36em}
+.tsec{margin-top:56px}
+.tsec > h2{font-size:26px;font-weight:600;letter-spacing:-.035em;margin-bottom:6px}
+.tsec > p{color:var(--ink2);margin-bottom:18px}
+.uptime{display:flex;gap:2px;height:28px;margin-top:8px}
+.uptime i{flex:1;border-radius:2px;background:var(--mint);opacity:.8}
+.uptime i.w{background:#F5C451}
+.uptime i.d{background:var(--rose)}
+.svc{padding:16px 0;border-bottom:1px solid var(--line)}
+.svc:last-child{border-bottom:0}
+.svc .h{display:flex;justify-content:space-between;align-items:center;font-size:14.5px}
+.svc .h small{color:var(--mute);font-size:12.5px}
+.enc-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.enc-steps div{padding:18px;border-radius:16px}
+.enc-steps b{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--grad);font-size:13px;margin-bottom:12px}
+.enc-steps h4{font-size:15px;font-weight:600}
+.enc-steps p{font-size:13.5px;color:var(--ink2);margin-top:4px}
+.copybtn{margin-left:8px;font-size:12px;color:var(--violet2)}
+
+/* modal extras */
+.merr{display:none;margin:-6px 0 14px;padding:10px 12px;border-radius:10px;background:rgba(255,107,122,.1);border:1px solid rgba(255,107,122,.3);color:#FFC2C8;font-size:13.5px}
+.merr.show{display:block}
+.mwarn{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(245,196,81,.08);border:1px solid rgba(245,196,81,.3);color:#F5D48A;font-size:13.5px}
+.mwarn.show{display:block}
+.mwarn button{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.paytabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:12px;background:rgba(4,7,22,.6);border:1px solid var(--line);margin-bottom:12px}
+.paytabs button{height:36px;border-radius:9px;font-size:13.5px;color:var(--mute)}
+.paytabs button[aria-checked=true]{background:rgba(139,124,255,.2);color:#fff}
+.keybox{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(4,7,22,.7);border:1px solid var(--line2);font-family:var(--mono);font-size:13px;word-break:break-all}
+.keybox button{flex-shrink:0;font-family:var(--sans);font-size:12.5px;color:var(--violet2)}
+.path{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:14px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.03);margin-bottom:8px}
+.path .n{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:rgba(139,124,255,.15);color:var(--violet2);font-weight:600}
+.path h4{font-size:15px;font-weight:600}
+.path p{font-size:13.5px;color:var(--ink2);margin-top:2px}
+.path small{display:inline-block;margin-top:6px;font-size:12px;color:var(--cyan)}
+
+/* demo controls */
+.demo-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:260;height:36px;padding:0 12px;border-radius:10px;background:rgba(20,26,69,.92);border:1px dashed rgba(92,225,230,.5);color:var(--cyan);font-size:12.5px;font-weight:500;backdrop-filter:blur(10px)}
+.demo-panel{position:fixed;right:16px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:260;width:290px;padding:16px;border-radius:16px;background:rgba(14,19,50,.98);border:1px solid rgba(92,225,230,.35);box-shadow:0 30px 60px -20px rgba(0,0,0,.8);display:none}
+.demo-panel.open{display:block}
+.demo-panel h4{font-size:13.5px;font-weight:600}
+.demo-panel p{font-size:12px;color:var(--mute);margin:2px 0 10px}
+.demo-panel label{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13.5px;color:var(--ink2);cursor:pointer}
+.demo-panel input{accent-color:var(--violet)}
+
+body:not(.in-app) .demo-fab,body:not(.in-app) .demo-panel{display:none}
+/* mobile tab bar */
+.tabbar{display:none}
+@media (max-width:1020px){
+  .why{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .enc-steps{grid-template-columns:1fr 1fr}
+  .doc{grid-template-columns:1fr}
+  .doc-nav{display:none}
+}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .snav{display:none}
+  .smain{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:90;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(7,11,32,.95);border-top:1px solid var(--line);backdrop-filter:blur(16px)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:10px;font-size:11px;color:var(--mute)}
+  .tabbar a svg{width:20px;height:20px}
+  .tabbar a.cur{color:#fff}
+  .tabbar a.cur svg{color:var(--violet2)}
+  .grid2,.tiers,.cmp{grid-template-columns:1fr}
+  .atop .burnpill span.l,.netpill span{display:none}
+  .demo-fab{bottom:auto;top:auto;bottom:calc(150px + env(safe-area-inset-bottom,0px));right:10px;height:30px;font-size:11.5px;opacity:.85}
+  .demo-panel{bottom:auto;top:auto;bottom:calc(186px + env(safe-area-inset-bottom,0px));right:10px}
+  .atop[data-p=chat] h1{display:none}
+  .netpill:not(.bad){display:none}
+  .atop{flex-wrap:nowrap;gap:6px}
+  #topAcct .addr{display:none}
+  #chatTools{flex-wrap:nowrap!important;min-width:0;gap:6px!important}
+  #modelName{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .burnpill{padding:0 8px}
+  .checklist ul{grid-template-columns:1fr}
+}
+@media (max-width:600px){
+  .grid4,.enc-steps{grid-template-columns:1fr 1fr}
+  .kpi b{font-size:22px}
+  .page{width:calc(100% - 28px);padding-top:22px}
+  .atop{padding-left:14px;padding-right:14px}
+}
+</style>
+</head>
+<body class="pre">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mk" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 10.5c2.8-2.3 5.7-2.3 8.5 0s5.7 2.3 8.5 0"/><path d="M6.5 15.5c1.9-1.5 3.7-1.5 5.5 0s3.6 1.5 5.5 0" opacity=".7"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+  <symbol id="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3l7.5 3v5.5c0 4.8-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.7-7.5-9.5V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></symbol>
+  <symbol id="bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12z"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3"/></symbol>
+  <symbol id="wal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M16 12.5h2M3 9h15"/></symbol>
+  <symbol id="coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.5c0-1.2-1.1-2-2.5-2s-2.5.8-2.5 2 1.1 1.8 2.5 2.5 2.5 1.3 2.5 2.5-1.1 2-2.5 2-2.5-.8-2.5-2"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2 5.5L19.5 10.5 14 12.5 12 18l-2-5.5L4.5 10.5 10 8.5z"/></symbol>
+  <symbol id="chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2v.2a2 2 0 11-4 0v-.1a1.7 1.7 0 00-2.9-1.2l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00-1.2-2.9H3a2 2 0 110-4h.1a1.7 1.7 0 001.2-2.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 002.9-1.2V3a2 2 0 114 0v.1a1.7 1.7 0 002.9 1.2l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 001.2 2.9h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></symbol>
+  <symbol id="flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21c-4 0-7-2.8-7-6.6C5 10 9 8 9 3c3 2 4.5 4 5 7 1-1 1.5-2 1.5-3.5C18 9 19 11.5 19 14.4 19 18.2 16 21 12 21z"/></symbol>
+  <symbol id="columns" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M12 4v16"/></symbol>
+  <symbol id="swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19V5"/></symbol>
+</svg>
+
+<!-- ============ SITE HEADER ============ -->
+<header id="hdr">
+  <nav class="wrap" aria-label="Main">
+    <a href="#/" class="logo"><span class="logo-mark"><svg><use href="#mk"/></svg></span>Fathom</a>
+    <div class="nav-links" id="navLinks">
+      <a href="#features" data-nav="home">Privacy</a>
+      <a href="#why" data-nav="home">Why Fathom</a>
+      <a href="#pricing" data-nav="home">Pricing</a>
+      <a href="#/trust" data-nav="trust">Trust</a>
+      <a href="#/docs" data-nav="docs">Docs</a>
+    </div>
+    <div class="nav-right">
+      <a href="#/app" class="btn btn-dark btn-sm">Launch app</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg></button>
+    </div>
+  </nav>
+</header>
+
+<main>
+<!-- ================= HOME ================= -->
+<div class="view" id="v-home">
+  <div class="hero">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="grid-lines" aria-hidden="true"></div>
+    <div class="beam" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div>
+    <div class="wrap">
+      <a href="#/trust" class="pill up"><b>New</b>Live on Robinhood Chain · verify our enclave<svg><use href="#arrow"/></svg></a>
+      <h1 class="up" style="transition-delay:.08s">The AI that <span class="grad">forgets you</span> on purpose</h1>
+      <p class="lede up" style="transition-delay:.16s">Compare the best open models side by side, inside sealed hardware. Sign in with your wallet, pay per message with any token, and set chats to self-destruct.</p>
+      <div class="ctas up" style="transition-delay:.24s">
+        <a class="btn btn-dark btn-lg" href="#/app">Start free, 25 credits</a>
+        <a class="btn btn-light btn-lg" href="#/trust">Verify the privacy</a>
+      </div>
+      <div class="ticks up" style="transition-delay:.3s">
+        <span><svg><use href="#chk"/></svg>No email, no KYC</span>
+        <span><svg><use href="#chk"/></svg>Zero prompt logs</span>
+        <span><svg><use href="#chk"/></svg>Pay with USDG, USDC or ETH</span>
+      </div>
+    </div>
+
+    <div class="stage up" style="transition-delay:.4s">
+      <a href="#/app" class="preview-link" aria-label="Open the app"><span>Try it live<svg><use href="#arrow"/></svg></span></a>
+      <div class="frame" aria-hidden="true">
+        <div class="app">
+          <aside class="side">
+            <div class="side-head"><div class="dots"><i></i><i></i><i></i></div></div>
+            <div class="newchat"><svg width="15" height="15"><use href="#plus"/></svg>New chat<kbd>⌘K</kbd></div>
+            <h6>Today</h6>
+            <div class="hist">
+              <a class="on"><svg><use href="#lock"/></svg><span>Where my data goes</span></a>
+              <a><svg><use href="#lock"/></svg><span>Salary negotiation</span></a>
+              <a><svg><use href="#lock"/></svg><span>Audit my token contract</span></a>
+            </div>
+            <div class="wallet-card"><div class="r"><span>Balance</span><span style="font-family:var(--mono);font-size:11.5px">0x7a3F…c91E</span></div><b>1,284 <span style="font-size:13px;font-weight:500;color:var(--mute)">credits</span></b><div class="bar"><i style="width:64%"></i></div></div>
+          </aside>
+          <div class="main">
+            <div class="topbar">
+              <div class="model-btn">DeepSeek V3.1 <span style="color:var(--mute);font-weight:400">vs</span> Qwen3 235B</div>
+              <div class="sealed"><span class="d"></span><span class="t">Sealed enclave verified</span></div>
+            </div>
+            <div class="thread" style="overflow:hidden">
+              <div class="thread-in">
+                <div class="m you">Is my salary offer of 18k fair for a senior designer in Jakarta?</div>
+                <div class="cmp">
+                  <div><h5>DeepSeek V3.1<small>0.50 cr</small></h5><p style="font-size:14px;color:var(--ink2)">For senior product designers in Jakarta, offers usually land in a wider band depending on company stage. Ask for the full package: equity, bonus and remote days…</p></div>
+                  <div><h5>Qwen3 235B<small>0.45 cr</small></h5><p style="font-size:14px;color:var(--ink2)">It's reasonable but not top of market. Before you counter, find out whether the number is gross or net, and what the review cycle looks like…</p></div>
+                </div>
+              </div>
+            </div>
+            <div class="composer-wrap"><div class="composer"><textarea rows="1" placeholder="Ask anything, privately…" tabindex="-1" disabled></textarea><div class="cbar"><span class="chip" aria-pressed="true"><svg><use href="#columns"/></svg>Compare</span><span class="chip"><svg><use href="#flame"/></svg>Burn in 24h</span><span class="sp"></span><span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg></span></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logos"><div class="wrap"><p>Built on infrastructure you can verify</p><ul>
+    <li><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 16H3z" opacity=".85"/></svg>Robinhood Chain</li>
+    <li><svg><use href="#coin"/></svg>USDG</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="14" height="14" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>NVIDIA Confidential</li>
+    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>OpenAI API format</li>
+  </ul></div></div>
+
+  <!-- WHY -->
+  <section id="why">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">Why Fathom</span><h2>More than private. Actually better to use.</h2><p>Privacy is the baseline. These are the reasons people stay.</p></div>
+      <div class="why">
+        <div class="cell rv"><div class="big-ic"><svg><use href="#columns"/></svg></div><h3>Ask two models at once</h3><p>Compare mode sends one question to two models and shows the answers side by side. Pick the better one, pay for both at a fraction of a cent.</p><div class="demo-strip"><span>DeepSeek</span><span>vs</span><span>Qwen3</span></div></div>
+        <div class="cell rv" style="transition-delay:.06s"><div class="big-ic"><svg><use href="#flame"/></svg></div><h3>Chats that self-destruct</h3><p>Set any chat to burn after 1 hour or 24 hours. Even your encrypted copy is wiped, automatically.</p><div class="demo-strip"><span><svg width="13" height="13" style="color:var(--pink)"><use href="#flame"/></svg>Burns in 23h 59m</span></div></div>
+        <div class="cell rv" style="transition-delay:.12s"><div class="big-ic"><svg><use href="#swap"/></svg></div><h3>Pay with what you hold</h3><p>Top up with USDG, USDC or ETH. We route the swap for you, so you don't need to hunt for a specific stablecoin first.</p><div class="demo-strip"><span>USDG</span><span>USDC</span><span>ETH</span></div></div>
+      </div>
+      <div class="cmp-table glass rv tw">
+        <table>
+          <thead><tr><th></th><th class="us">Fathom</th><th>Typical AI apps</th><th>Other private AI</th></tr></thead>
+          <tbody>
+            <tr><td>Sign up without email</td><td class="us yes">Yes, wallet only</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Prompts never logged</td><td class="us yes">Yes, enclave attested</td><td class="no">Stored, may train</td><td class="yes">Yes</td></tr>
+            <tr><td>Compare two models at once</td><td class="us yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>Auto-delete chats</td><td class="us yes">1h or 24h</td><td class="no">Manual only</td><td class="no">Manual only</td></tr>
+            <tr><td>Pay per message</td><td class="us yes">From $0.001</td><td class="no">$20/month</td><td class="yes">Yes</td></tr>
+            <tr><td>Pay with any token</td><td class="us yes">USDG, USDC, ETH</td><td class="no">Card only</td><td>One stablecoin</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES (privacy) -->
+  <section id="features">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">Privacy</span><h2>Private by design, not by promise</h2><p>Most AI apps promise not to read your chats. Fathom is built so it can't, and you can check.</p></div>
+      <div class="bento">
+        <div class="cell c-enclave rv">
+          <h3>Every model runs in a sealed enclave</h3>
+          <p>Inference happens on confidential GPUs with encrypted memory. The proof is public, every session.</p>
+          <div class="enc">
+            <div class="enc-art" aria-hidden="true">
+              <svg viewBox="0 0 260 260" fill="none"><circle class="ring" cx="130" cy="130" r="118" stroke="#8B7CFF" stroke-opacity=".5" stroke-dasharray="3 7"/><circle class="ring r2" cx="130" cy="130" r="92" stroke="#5CE1E6" stroke-opacity=".6" stroke-dasharray="40 14" stroke-width="1.5"/><circle cx="130" cy="130" r="66" fill="#0D1238" stroke="rgba(139,124,255,.35)"/><rect x="100" y="100" width="60" height="60" rx="14" fill="url(#g1)"/><path d="M118 131l8 8 17-17" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><g stroke="#8B7CFF" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"><path d="M112 94v-8M130 94v-8M148 94v-8M112 166v8M130 166v8M148 166v8M94 112h-8M94 130h-8M94 148h-8M166 112h8M166 130h8M166 148h8"/></g><defs><linearGradient id="g1" x1="100" y1="100" x2="160" y2="160"><stop stop-color="#8B7CFF"/><stop offset=".5" stop-color="#5B6CFF"/><stop offset="1" stop-color="#38C8E8"/></linearGradient></defs></svg>
+            </div>
+            <div class="report">
+              <div class="kv"><span>Hardware</span><code>NVIDIA H100</code></div>
+              <div class="kv"><span>Measurement</span><code class="meas">a91f…4c0e</code></div>
+              <div class="kv"><span>Model hash</span><code>3be7…d218</code></div>
+              <div class="kv"><span>Signed</span><code class="attT">just now</code></div>
+              <div class="verdict"><svg><use href="#shield"/></svg><span>Verified and sealed</span></div>
+              <a class="btn btn-light" href="#/trust">Open full report</a>
+            </div>
+          </div>
+        </div>
+        <div class="cell c-logs rv"><h3>Nothing is logged</h3><p>No prompts, no replies, no IP history.</p><div class="viz"><div class="logview"><div class="lh"><span>prompt_log</span><span>0 rows</span></div><div class="ln">01<s></s></div><div class="ln">02<s style="max-width:70%"></s></div><div class="ln">03<s style="max-width:85%"></s></div><div class="empty">Nothing stored. Ever.</div></div></div></div>
+        <div class="cell c-wallet rv"><h3>Your wallet is your account</h3><p>One signature. No email, no password.</p><div class="viz"><div class="siwe"><div class="who"><span class="av"></span><div>Sign in to Fathom<small>0x7a3F…c91E</small></div></div><pre>Chain ID: 4663
+Nonce: 8b2e41f0</pre><div class="b2"><span>Cancel</span><span>Sign</span></div></div></div></div>
+        <div class="cell c-cipher rv"><h3>Encrypted before it leaves your screen</h3><p>The network, the cloud and our servers only ever see noise.</p><div class="viz"><div class="flow"><div class="box"><small>You type</small><p>Help me write a resignation letter that keeps things friendly</p></div><svg><use href="#arrow"/></svg><div class="box enc2"><small>The network sees</small><p id="scr"></p></div></div></div></div>
+        <div class="cell c-tools rv"><h3>Web search that doesn't reveal you</h3><p>When the model browses, requests leave from Fathom, never from your address.</p><div class="viz"><div class="req"><div class="row"><span>Query</span><code>best private health clinics</code></div><div class="row"><span>Sent from</span><code>egress.fathom.ai</code></div><div class="row"><span>Your IP</span><span class="hid"><svg><use href="#chk"/></svg>Never shared</span></div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section id="how">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">How it works</span><h2>Up and running in a minute</h2><p>No sign-up form, no subscription, no card on file.</p></div>
+      <div class="steps">
+        <div class="step rv"><div class="n">1</div><h3>Connect your wallet</h3><p>Sign one message to prove it's yours. It costs no gas. You get 25 free credits.</p><div class="mini"><svg><use href="#wal"/></svg>Robinhood, MetaMask, Rabby<b>1 click</b></div></div>
+        <div class="step rv" style="transition-delay:.08s"><div class="n">2</div><h3>Top up with any token</h3><p>Pay in USDG, USDC or ETH. New to crypto? We walk you through getting USDG.</p><div class="mini"><svg><use href="#coin"/></svg>1 USDG<b>100 credits</b></div></div>
+        <div class="step rv" style="transition-delay:.16s"><div class="n">3</div><h3>Ask, compare, burn</h3><p>Pay a fraction of a credit per message. Compare models or set chats to self-destruct.</p><div class="mini"><svg><use href="#spark"/></svg>Typical message<b>0.1–0.5 cr</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section id="models">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">Models</span><h2>The best open models, in one place</h2><p>All open source, so anyone can audit what's answering you. Prices in credits per million tokens.</p></div>
+      <div class="models rv">
+        <div class="mh"><span>Model</span><span>Best for</span><span>Context</span><span>Input</span><span>Output</span></div>
+        <div class="mr"><div class="mn"><span class="mlogo" style="background:#4D6BFE">D</span><div><b>DeepSeek V3.1</b><small>Default model</small></div></div><div class="chips"><span>Reasoning</span><span>Code</span></div><div class="num"><span class="lbl">Context</span>128K</div><div class="num"><span class="lbl">Input</span>40</div><div class="num"><span class="lbl">Output</span>120</div></div>
+        <div class="mr"><div class="mn"><span class="mlogo" style="background:#7C3AED">Q</span><div><b>Qwen3 235B</b><small>Most capable</small></div></div><div class="chips"><span>Long documents</span><span>Multilingual</span></div><div class="num"><span class="lbl">Context</span>256K</div><div class="num"><span class="lbl">Input</span>35</div><div class="num"><span class="lbl">Output</span>110</div></div>
+        <div class="mr"><div class="mn"><span class="mlogo" style="background:#2A2F5A">O</span><div><b>gpt-oss 120B</b><small>Built for agents</small></div></div><div class="chips"><span>Tools</span><span>Speed</span></div><div class="num"><span class="lbl">Context</span>128K</div><div class="num"><span class="lbl">Input</span>20</div><div class="num"><span class="lbl">Output</span>60</div></div>
+        <div class="mr"><div class="mn"><span class="mlogo" style="background:#0EA5E9">L</span><div><b>Llama 3.3 70B</b><small>Lowest cost</small></div></div><div class="chips"><span>Chat</span><span>Summaries</span></div><div class="num"><span class="lbl">Context</span>128K</div><div class="num"><span class="lbl">Input</span>12</div><div class="num"><span class="lbl">Output</span>30</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">Pricing</span><h2>Pay for messages, not months</h2><p>No subscription. Most people spend a few dollars a month.</p></div>
+      <div class="price">
+        <div class="pcard dark rv">
+          <div class="lab">Pay as you go</div>
+          <div class="big"><b>$1</b><span>= 100 credits</span></div>
+          <p>Top up with USDG, USDC or ETH. Spend only on what you send.</p>
+          <ul class="plist"><li><svg><use href="#chk"/></svg>Credits never expire</li><li><svg><use href="#chk"/></svg>Same balance for app and API</li><li><svg><use href="#chk"/></svg>25 free credits when you join</li><li><svg><use href="#chk"/></svg>Up to 30% off with $FTHM staking</li></ul>
+          <a class="btn btn-lg" href="#/app">Start free</a>
+        </div>
+        <div class="pcard calc rv" style="transition-delay:.08s">
+          <h3>Estimate your month</h3>
+          <div class="read"><b id="usd">$6.00</b><span id="crd">600 credits</span></div>
+          <div class="field"><label for="msgs">Messages per day <b id="msgsV">40</b></label><input type="range" id="msgs" min="5" max="300" step="5" value="40"></div>
+          <div class="field"><label>Model</label><div class="seg" role="radiogroup" id="seg"><button role="radio" aria-checked="true" data-c=".5">DeepSeek</button><button role="radio" aria-checked="false" data-c=".45">Qwen3</button><button role="radio" aria-checked="false" data-c=".25">gpt-oss</button><button role="radio" aria-checked="false" data-c=".12">Llama</button></div></div>
+          <div class="compare"><span>vs a $20/month AI plan</span><b id="save">Save $14.00</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API -->
+  <section id="api">
+    <div class="wrap api">
+      <div class="rv">
+        <div class="shead"><span class="tag">API</span><h2>Switch to private in two lines</h2><p>Fathom uses the OpenAI format. Change the URL and key, keep the rest.</p></div>
+        <div class="api-list">
+          <div><span class="ic"><svg><use href="#wal"/></svg></span><div><h4>One balance for everything</h4><p>API calls use the same wallet credits as the app.</p></div></div>
+          <div><span class="ic"><svg><use href="#bolt"/></svg></span><div><h4>Agents that pay for themselves</h4><p>Give an agent a wallet and USDG. It signs in and buys credits on its own.</p></div></div>
+          <div><span class="ic"><svg><use href="#book"/></svg></span><div><h4>Full documentation</h4><p><a href="#/docs" style="color:var(--violet2)">Read the docs</a> for errors, limits and agent wallets.</p></div></div>
+        </div>
+      </div>
+      <div class="code rv" style="transition-delay:.08s">
+        <div class="ctop" role="tablist"><div class="dots"><i></i><i></i><i></i></div><button role="tab" aria-selected="true" data-tab="py">Python</button><button role="tab" aria-selected="false" data-tab="js">Node.js</button><button role="tab" aria-selected="false" data-tab="sh">cURL</button><button class="copy" id="copy">Copy</button></div>
+<pre id="t-py"><span class="k">from</span> openai <span class="k">import</span> OpenAI
+
+client = <span class="f">OpenAI</span>(
+    base_url=<span class="s">"https://api.fathom.ai/v1"</span>,  <span class="c"># 1. new URL</span>
+    api_key=<span class="s">"fth_live_…"</span>,                 <span class="c"># 2. your key</span>
+)
+
+reply = client.chat.completions.<span class="f">create</span>(
+    model=<span class="s">"deepseek-v3.1"</span>,
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Keep this between us."</span>}],
+)
+<span class="f">print</span>(reply.choices[0].message.content)</pre>
+<pre id="t-js" hidden><span class="k">import</span> OpenAI <span class="k">from</span> <span class="s">"openai"</span>;
+
+<span class="k">const</span> client = <span class="k">new</span> <span class="f">OpenAI</span>({
+  baseURL: <span class="s">"https://api.fathom.ai/v1"</span>, <span class="c">// 1. new URL</span>
+  apiKey: <span class="s">"fth_live_…"</span>,                <span class="c">// 2. your key</span>
+});
+
+<span class="k">const</span> reply = <span class="k">await</span> client.chat.completions.<span class="f">create</span>({
+  model: <span class="s">"deepseek-v3.1"</span>,
+  messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Keep this between us."</span> }],
+});</pre>
+<pre id="t-sh" hidden>curl https://api.fathom.ai/v1/chat/completions \
+  -H <span class="s">"Authorization: Bearer fth_live_…"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"model":"deepseek-v3.1",
+       "messages":[{"role":"user","content":"Keep this between us."}]}'</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOKEN (utility) -->
+  <section id="token">
+    <div class="wrap">
+      <div class="token glass rv">
+        <div>
+          <span class="tag">$FTHM token</span>
+          <h2 style="margin-top:16px">Stake to pay less and get more</h2>
+          <p>$FTHM is a utility token. Stake it to unlock up to 30% off every message, early access to new models, and free monthly credits.</p>
+          <div class="ctas"><a class="btn btn-dark" href="#/app/stake">See staking tiers</a><a class="btn btn-light" href="#/docs#token">How it works</a></div>
+        </div>
+        <div class="stats">
+          <div><span>Explorer tier</span><b>10% off</b></div>
+          <div><span>Diver tier</span><b>20% off</b></div>
+          <div><span>Abyss tier</span><b>30% off</b></div>
+          <div><span>Unstake cooldown</span><b>7 days</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="shead rv"><span class="tag">FAQ</span><h2>Common questions</h2></div>
+      <div class="faq rv">
+        <div class="q"><button aria-expanded="false">Do I need an email or ID?<span class="pm"><svg><use href="#plus"/></svg></span></button><div class="a"><div><p>No. Your wallet signature is the only sign-in. There's no email, phone number or identity check anywhere.</p></div></div></div>
+        <div class="q"><button aria-expanded="false">How can I be sure nothing is logged?<span class="pm"><svg><use href="#plus"/></svg></span></button><div class="a"><div><p>Every session runs in a hardware enclave that publishes a signed attestation report. You can verify it yourself on the <a href="#/trust" style="color:var(--violet2)">Trust page</a>, together with our contract addresses and audit status.</p></div></div></div>
+        <div class="q"><button aria-expanded="false">I don't have USDG. Can I still pay?<span class="pm"><svg><use href="#plus"/></svg></span></button><div class="a"><div><p>Yes. Top up with USDC or ETH and we route the swap for you. If you're new to crypto, the app has a short guide to getting USDG through Robinhood Wallet.</p></div></div></div>
+        <div class="q"><button aria-expanded="false">Is $FTHM an investment?<span class="pm"><svg><use href="#plus"/></svg></span></button><div class="a"><div><p>No. $FTHM is a utility token that gives stakers discounts and early access inside Fathom. It doesn't entitle holders to revenue, dividends or profits.</p></div></div></div>
+        <div class="q"><button aria-expanded="false">What if I lose my wallet?<span class="pm"><svg><use href="#plus"/></svg></span></button><div class="a"><div><p>Your credits and saved chats belong to that wallet. Without it, nobody can recover them, including us. Keep your recovery phrase safe.</p></div></div></div>
+      </div>
+      <div class="cta rv">
+        <div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <h2>Ask the question you'd never type anywhere else</h2>
+        <p>Connect a wallet and get 25 free credits. No card, no email, no trace.</p>
+        <a class="btn btn-dark btn-lg" href="#/app">Launch the app</a>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- ================= TRUST ================= -->
+<div class="view" id="v-trust">
+  <div class="wrap">
+    <div class="trust-hero"><span class="tag">Trust center</span><h1 style="margin-top:18px">Don't trust us.<br>Verify us.</h1><p>Everything we claim about privacy can be checked here: the live enclave report, our contracts, audit status and uptime.</p></div>
+
+    <div class="tsec">
+      <h2>Live attestation</h2><p>Signed by the GPU vendor for the enclave serving you right now.</p>
+      <div class="grid2">
+        <div class="glass panel" style="margin-top:0">
+          <div class="report" style="background:none;border:0;padding:0">
+            <div class="kv"><span>Hardware</span><code>NVIDIA H100 · CC mode on</code></div>
+            <div class="kv"><span>Enclave measurement</span><code class="meas">a91f…4c0e</code></div>
+            <div class="kv"><span>Model weights hash</span><code>sha256:3be7…d218</code></div>
+            <div class="kv"><span>Serving code commit</span><code>fathom-infer@7c1e2a9</code></div>
+            <div class="kv"><span>Report signed</span><code class="attT">just now</code></div>
+            <div class="verdict"><svg><use href="#shield"/></svg><span>Verified and sealed</span></div>
+            <button class="btn btn-light verifyBtn">Verify again</button>
+          </div>
+        </div>
+        <div class="glass panel" style="margin-top:0">
+          <h3>Check it yourself</h3>
+          <p class="sub2">You don't need to trust this page. Run the open-source verifier against our endpoint.</p>
+          <div class="prose"><pre><code>npx @fathom/verify https://api.fathom.ai</code></pre></div>
+          <p class="sub2">It downloads the attestation, checks the vendor signature, and compares the measurement against the build published on GitHub.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tsec">
+      <h2>How your data is protected</h2><p>What happens to one message, step by step.</p>
+      <div class="enc-steps">
+        <div class="glass"><b>1</b><h4>Sealed in your browser</h4><p>Encrypted with a key derived from your wallet signature.</p></div>
+        <div class="glass"><b>2</b><h4>Travels as noise</h4><p>Our servers and the network only see ciphertext.</p></div>
+        <div class="glass"><b>3</b><h4>Opened in the enclave</h4><p>Only the attested GPU can decrypt and answer.</p></div>
+        <div class="glass"><b>4</b><h4>Wiped after reply</h4><p>Memory is cleared. Saved history stays encrypted to you.</p></div>
+      </div>
+    </div>
+
+    <div class="tsec">
+      <h2>Smart contracts</h2><p>All contracts are verified on the Robinhood Chain explorer.</p>
+      <div class="glass panel tw" style="margin-top:0">
+        <table class="tbl" style="margin-top:0">
+          <thead><tr><th>Contract</th><th>Address</th><th>Purpose</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>CreditVault</td><td class="mono">0x4f2a…9c1B</td><td>Receives top-ups, mints credits</td><td><button class="copybtn" data-copy="0x4f2a00000000000000000000000000000000_9c1B">Copy</button></td></tr>
+            <tr><td>SwapRouter</td><td class="mono">0x81cD…04aE</td><td>Converts USDC / ETH to USDG</td><td><button class="copybtn" data-copy="0x81cD000000000000000000000000000000_04aE">Copy</button></td></tr>
+            <tr><td>FTHM Token</td><td class="mono">0xB7e1…33F0</td><td>Utility token</td><td><button class="copybtn" data-copy="0xB7e100000000000000000000000000000000_33F0">Copy</button></td></tr>
+            <tr><td>StakingTiers</td><td class="mono">0x0Dd9…a712</td><td>Discount tiers, 7-day cooldown</td><td><button class="copybtn" data-copy="0x0Dd900000000000000000000000000000000_a712">Copy</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tsec">
+      <h2>Audits and bug bounty</h2><p>We publish every report, including findings.</p>
+      <div class="grid2">
+        <div class="glass panel" style="margin-top:0"><span class="st pend">In progress</span><h3 style="margin-top:12px">Smart contract audit</h3><p class="sub2">Independent review of CreditVault, SwapRouter and StakingTiers. The full report is published here before the token launches.</p></div>
+        <div class="glass panel" style="margin-top:0"><span class="st ok">Open</span><h3 style="margin-top:12px">Bug bounty, up to $50,000</h3><p class="sub2">Found a way to read prompts or move funds? Report it to security@fathom.ai and get paid.</p></div>
+      </div>
+    </div>
+
+    <div class="tsec" id="status">
+      <h2>System status</h2><p>Last 90 days.</p>
+      <div class="glass panel" style="margin-top:0" id="statusList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DOCS ================= -->
+<div class="view" id="v-docs">
+  <div class="wrap doc">
+    <nav class="doc-nav" aria-label="Docs">
+      <h6>Getting started</h6><a href="#/docs#quickstart">Quickstart</a><a href="#/docs#auth">Authentication</a>
+      <h6>API</h6><a href="#/docs#chat">Chat completions</a><a href="#/docs#models-api">Models</a><a href="#/docs#errors">Errors</a><a href="#/docs#limits">Rate limits</a>
+      <h6>Guides</h6><a href="#/docs#agents">Agent wallets</a><a href="#/docs#token">$FTHM staking</a>
+    </nav>
+    <article class="prose">
+      <h1>Fathom API</h1>
+      <p class="lead">An OpenAI-compatible API for private inference. Every request runs inside an attested enclave and nothing is logged.</p>
+      <h2 id="quickstart">Quickstart</h2>
+      <p>1. Connect your wallet in the app and top up credits. 2. Create a key under <a href="#/app/keys" style="color:var(--violet2)">API keys</a>. 3. Point any OpenAI client at our base URL.</p>
+      <pre><code>curl https://api.fathom.ai/v1/chat/completions \
+  -H "Authorization: Bearer fth_live_…" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-v3.1","messages":[{"role":"user","content":"Hello"}]}'</code></pre>
+      <h2 id="auth">Authentication</h2>
+      <p>Send your key in the <code>Authorization: Bearer</code> header. Keys start with <code>fth_live_</code>, are shown once, and don't expire. You can hold up to 10 active keys per wallet and revoke any of them instantly.</p>
+      <h2 id="chat">Chat completions</h2>
+      <p><code>POST /v1/chat/completions</code> accepts the same body as OpenAI, including <code>stream</code>, <code>tools</code> and <code>temperature</code>. Two extra fields are available:</p>
+      <ul><li><code>compare_with</code>: a second model id. The response includes both answers in <code>choices[0]</code> and <code>choices[1]</code>.</li><li><code>web_search</code>: <code>true</code> lets the model browse through Fathom's egress, never your IP.</li></ul>
+      <h2 id="models-api">Models</h2>
+      <p><code>GET /v1/models</code> returns available models with live status. Current ids: <code>deepseek-v3.1</code>, <code>qwen3-235b</code>, <code>gpt-oss-120b</code>, <code>llama-3.3-70b</code>.</p>
+      <h2 id="errors">Errors</h2>
+      <div class="tw"><table class="tbl"><thead><tr><th>Code</th><th>Meaning</th><th>What to do</th></tr></thead><tbody>
+        <tr><td class="mono">401</td><td>Invalid or revoked key</td><td>Create a new key in the app</td></tr>
+        <tr><td class="mono">402</td><td>Not enough credits</td><td>Top up; the request was not charged</td></tr>
+        <tr><td class="mono">429</td><td>Rate limit reached</td><td>Retry after the <code>retry-after</code> header</td></tr>
+        <tr><td class="mono">503</td><td>Model temporarily unavailable</td><td>Retry, or switch to another model</td></tr>
+      </tbody></table></div>
+      <h2 id="limits">Rate limits</h2>
+      <p>60 requests per minute per key by default, 300 for Diver tier stakers and above. Failed requests are never charged.</p>
+      <h2 id="agents">Agent wallets</h2>
+      <p>An agent can own a wallet, sign in with SIWE, and buy its own credits by sending USDG to CreditVault. Use <code>POST /v1/auth/siwe</code> to exchange a signature for a short-lived session key.</p>
+      <h2 id="token">$FTHM staking</h2>
+      <p>$FTHM is a utility token. Staking it unlocks discounts on every message: Explorer (1,000 FTHM) 10%, Diver (10,000) 20% plus early model access, Abyss (50,000) 30% plus 500 free credits a month. Unstaking has a 7-day cooldown. Staking does not pay revenue or yield.</p>
+    </article>
+  </div>
+</div>
+
+<!-- ================= LEGAL ================= -->
+<div class="view" id="v-terms"><div class="wrap doc" style="grid-template-columns:1fr;max-width:760px"><article class="prose">
+  <h1>Terms of Service</h1>
+  <div class="draft"><svg><use href="#info"/></svg>Draft for the prototype. Have a lawyer review before launch.</div>
+  <h2>1. The service</h2><p>Fathom provides access to open-weight AI models through a web app and API. You pay with credits bought in USDG or supported tokens on Robinhood Chain.</p>
+  <h2>2. Your wallet</h2><p>Your wallet is your account. You're responsible for its security. We can't recover credits or data if you lose access to it.</p>
+  <h2>3. Credits</h2><p>Credits are prepaid usage units. They don't expire, aren't refundable once used, and have no value outside Fathom.</p>
+  <h2>4. Acceptable use</h2><p>Don't use Fathom to break the law, harm others, or attack the service. We can't read your prompts, but we can suspend wallets involved in abuse of the service itself, such as payment fraud or attacks.</p>
+  <h2>5. $FTHM</h2><p>$FTHM is a utility token for discounts and early access inside Fathom. It is not an investment and does not entitle holders to revenue or profit.</p>
+  <h2>6. No warranty</h2><p>AI answers can be wrong. Don't rely on them for medical, legal or financial decisions without professional advice.</p>
+</article></div></div>
+
+<div class="view" id="v-privacy"><div class="wrap doc" style="grid-template-columns:1fr;max-width:760px"><article class="prose">
+  <h1>Privacy Policy</h1>
+  <div class="draft"><svg><use href="#info"/></svg>Draft for the prototype. Have a lawyer review before launch.</div>
+  <h2>What we store</h2><ul><li>Your wallet address.</li><li>Your credit balance and top-up transactions (these are public on-chain anyway).</li><li>If you turn on chat history: your chats, encrypted with a key only your wallet can derive.</li></ul>
+  <h2>What we never store</h2><ul><li>Prompts or replies in readable form.</li><li>IP addresses linked to your wallet.</li><li>Email, name, phone number or identity documents.</li></ul>
+  <h2>Analytics</h2><p>We count page views with a self-hosted, cookie-free tool. No tracking pixels, no third-party ad networks.</p>
+  <h2>Deleting your data</h2><p>Settings → Delete all data removes your encrypted history and API keys immediately. On-chain transactions can't be deleted by anyone.</p>
+</article></div></div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot">
+      <div><a href="#/" class="logo"><span class="logo-mark"><svg><use href="#mk"/></svg></span>Fathom</a><p>Private AI on open models, paid in USDG on Robinhood Chain.</p></div>
+      <div><h5>Product</h5><ul><li><a href="#/app">Launch app</a></li><li><a href="#why">Why Fathom</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#/app/stake">Staking</a></li></ul></div>
+      <div><h5>Trust</h5><ul><li><a href="#/trust">Attestation</a></li><li><a href="#/trust">Contracts and audits</a></li><li><a href="#/trust">System status</a></li><li><a href="#/docs">API docs</a></li></ul></div>
+      <div><h5>Company</h5><ul><li><a href="#/terms">Terms</a></li><li><a href="#/privacy">Privacy</a></li><li><a href="#">X</a></li><li><a href="#">Telegram</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 Fathom Labs</span><span>security@fathom.ai</span></div>
+  </div>
+</footer>
+
+<!-- ================= APP ================= -->
+<div class="view" id="v-app">
+  <div class="shell">
+    <aside class="snav">
+      <a href="#/" class="logo"><span class="logo-mark"><svg><use href="#mk"/></svg></span>Fathom</a>
+      <button class="newchat" id="newChat"><svg width="15" height="15"><use href="#plus"/></svg>New chat<kbd>⌘K</kbd></button>
+      <a class="nitem" href="#/app" data-page="chat"><svg><use href="#chat"/></svg>Chat</a>
+      <a class="nitem" href="#/app/credits" data-page="credits"><svg><use href="#coin"/></svg>Credits</a>
+      <a class="nitem" href="#/app/keys" data-page="keys"><svg><use href="#key"/></svg>API keys</a>
+      <a class="nitem" href="#/app/stake" data-page="stake"><svg><use href="#layers"/></svg>Stake<span class="badge" id="tierBadge" hidden></span></a>
+      <a class="nitem" href="#/app/settings" data-page="settings"><svg><use href="#gear"/></svg>Settings</a>
+      <h6>Chats</h6>
+      <div class="hist" id="histList"><div class="empty">No saved chats yet</div></div>
+      <div class="wallet-card">
+        <div class="r"><span>Balance</span><span class="adrs" style="font-family:var(--mono);font-size:11.5px">Not connected</span></div>
+        <b><span class="crs">0</span> <span style="font-size:13px;font-weight:500;color:var(--mute)">credits</span></b>
+        <div class="bar"><i id="bar"></i></div>
+        <button class="btn btn-light" data-act="topup">Top up</button>
+      </div>
+    </aside>
+
+    <div class="smain">
+      <div class="atop">
+        <h1 id="pageTitle">Chat</h1>
+        <div id="chatTools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="model-btn" id="modelBtn" aria-haspopup="true" aria-expanded="false"><span id="modelName">DeepSeek V3.1</span><svg><use href="#down"/></svg></button>
+          <div class="menu" id="menu" role="menu"></div>
+          <label class="burnpill"><svg><use href="#flame"/></svg><span class="l">Burn</span><select id="burnSel" aria-label="Auto-delete this chat"><option value="off">Off</option><option value="1h">1 hour</option><option value="24h">24 hours</option></select></label>
+        </div>
+        <button class="netpill" id="netPill" hidden><i></i><span id="netName">Robinhood Chain</span></button>
+        <button class="btn btn-dark btn-sm" data-act="connect" id="topConnect">Connect wallet</button>
+        <div class="acct" id="topAcct"><button class="bal" data-act="topup"><i></i><span class="crs">0</span><em>credits</em></button><span class="addr"><span class="av"></span><span class="ad adrs">0x…</span></span></div>
+      </div>
+      <div class="banner warn" id="netBanner" hidden><svg><use href="#alert"/></svg><span>Your wallet is on <b>Ethereum</b>. Fathom runs on Robinhood Chain, so top-ups and staking are paused.</span><button class="btn btn-light" data-act="switchnet">Switch network</button></div>
+      <div class="banner info" id="lowBanner" hidden><svg><use href="#info"/></svg><span>You're running low on credits.</span><button class="btn btn-light" data-act="topup">Top up</button></div>
+
+      <div class="acontent" id="acontent">
+        <!-- CHAT -->
+        <div class="apage chatwrap" data-p="chat">
+          <div class="gate" id="gate">
+            <div><span class="logo-mark"><svg><use href="#mk"/></svg></span><h2>Connect to start chatting</h2><p>Your wallet is your account. Sign one message, no gas, and get 25 free credits to try every model.</p><button class="btn btn-dark btn-lg" data-act="connect">Connect wallet</button><p style="font-size:13px;margin-top:14px">New to crypto? <button data-act="getusdg" style="color:var(--violet2);text-decoration:underline">See how to get started</button></p></div>
+          </div>
+          <div class="thread" id="thread" hidden>
+            <div class="checklist" id="checklist" hidden>
+              <h4>Getting started <button id="hideCheck">Hide</button></h4>
+              <ul>
+                <li class="done" data-k="connect"><i></i>Connect your wallet</li>
+                <li class="done" data-k="free"><i></i>Claim 25 free credits</li>
+                <li data-k="msg"><i></i>Send your first private message</li>
+                <li data-k="cmp"><i></i>Try <button data-act="trycmp">Compare mode</button></li>
+                <li data-k="top"><i></i><button data-act="topup">Top up credits</button></li>
+                <li data-k="verify"><i></i><a href="#/trust" style="color:var(--violet2);text-decoration:underline">Verify the enclave</a></li>
+              </ul>
+            </div>
+            <div class="thread-in" id="tin" aria-live="polite"></div>
+          </div>
+          <div class="composer-wrap" id="composerWrap" hidden>
+            <div class="composer">
+              <textarea id="inp" rows="1" placeholder="Ask anything, privately…" aria-label="Message"></textarea>
+              <div class="cbar">
+                <button class="chip" id="cmpBtn" aria-pressed="false"><svg><use href="#columns"/></svg>Compare</button>
+                <button class="chip" id="toolsBtn" aria-pressed="false"><svg><use href="#globe"/></svg>Web search</button>
+                <span class="sp"></span>
+                <button class="send" id="send" aria-label="Send" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg></button>
+              </div>
+            </div>
+            <div class="chint"><span class="l"><svg><use href="#lock"/></svg><span id="chintTxt">End-to-end encrypted · nothing is stored</span></span><button id="forget">Forget this chat</button></div>
+          </div>
+        </div>
+
+        <!-- CREDITS -->
+        <div class="apage" data-p="credits"><div class="page">
+          <div class="page-h"><div><h2>Credits</h2><p>Your balance, spending and top-ups.</p></div><button class="btn btn-dark" data-act="topup">Top up</button></div>
+          <div class="grid4">
+            <div class="kpi glass"><span>Balance</span><b class="crs">0</b><small class="usdEq">≈ $0.00</small></div>
+            <div class="kpi glass"><span>Spent this month</span><b id="kSpent">0</b><small>credits</small></div>
+            <div class="kpi glass"><span>Messages</span><b id="kMsgs">0</b><small>this month</small></div>
+            <div class="kpi glass"><span>Your discount</span><b id="kDisc">0%</b><small id="kTier">No tier</small></div>
+          </div>
+          <div class="grid2">
+            <div class="glass panel"><h3>Daily usage</h3><p class="sub2">Credits spent, last 14 days</p><div class="bars" id="bars"></div><div class="bars-x"><span>14 days ago</span><span>Today</span></div></div>
+            <div class="glass panel"><h3>By model</h3><p class="sub2">Where your credits go</p><div id="byModel" style="margin-top:14px"></div></div>
+          </div>
+          <div class="glass panel tw"><h3>Transactions</h3><p class="sub2">Every top-up is an on-chain transaction you can inspect.</p><div id="txWrap"></div></div>
+        </div></div>
+
+        <!-- KEYS -->
+        <div class="apage" data-p="keys"><div class="page">
+          <div class="page-h"><div><h2>API keys</h2><p>Use the same credits from your own apps and agents. <a href="#/docs" style="color:var(--violet2)">Read the docs</a></p></div></div>
+          <div class="glass panel" style="margin-top:0">
+            <h3>Create a key</h3><p class="sub2">Keys are shown once and never expire. Up to 10 per wallet.</p>
+            <div class="row-f" style="margin-top:14px"><input class="inp" id="keyName" placeholder="Key name, e.g. trading-bot" maxlength="40"><button class="btn btn-dark" id="createKey">Create key</button></div>
+            <p class="hint" id="keyHint"></p>
+          </div>
+          <div class="glass panel tw"><h3>Active keys</h3><div id="keyList"></div></div>
+        </div></div>
+
+        <!-- STAKE -->
+        <div class="apage" data-p="stake"><div class="page">
+          <div class="page-h"><div><h2>Stake $FTHM</h2><p>Stake to get discounts on every message. $FTHM is a utility token and staking pays no yield.</p></div></div>
+          <div class="grid4">
+            <div class="kpi glass"><span>Wallet balance</span><b id="fBal">0</b><small>FTHM</small></div>
+            <div class="kpi glass"><span>Staked</span><b id="fStk">0</b><small>FTHM</small></div>
+            <div class="kpi glass"><span>Current tier</span><b id="fTier">None</b><small id="fDisc">0% off</small></div>
+            <div class="kpi glass"><span>Unstake cooldown</span><b>7 days</b><small>after request</small></div>
+          </div>
+          <div class="glass panel">
+            <h3 id="nextTierTxt">Stake 1,000 FTHM to reach Explorer</h3>
+            <div class="progress2"><i id="tierProg" style="width:0"></i></div>
+            <div class="row-f" style="margin-top:16px"><input class="inp" id="stakeAmt" type="number" min="0" placeholder="Amount of FTHM"><button class="btn btn-light" id="maxBtn">Max</button><button class="btn btn-dark" id="stakeBtn">Stake</button><button class="btn btn-light" id="unstakeBtn">Unstake</button></div>
+            <p class="hint" id="stakeHint"></p>
+          </div>
+          <div class="tiers" id="tiers"></div>
+        </div></div>
+
+        <!-- SETTINGS -->
+        <div class="apage" data-p="settings"><div class="page">
+          <div class="page-h"><div><h2>Settings</h2><p>Control what's kept, and for how long.</p></div></div>
+          <div class="glass panel" style="margin-top:0">
+            <h3>Privacy</h3>
+            <div class="setrow"><div><h4>Save chat history</h4><p>Chats are encrypted with a key only your wallet can derive. Turn off to keep nothing at all.</p></div><button class="tog" role="switch" aria-checked="true" id="togHist" aria-label="Save chat history"></button></div>
+            <div class="setrow"><div><h4>Default auto-delete</h4><p>New chats burn automatically after this time.</p></div><select class="sel" id="defBurn"><option value="off">Never</option><option value="1h">After 1 hour</option><option value="24h">After 24 hours</option></select></div>
+            <div class="setrow"><div><h4>Web search by default</h4><p>Searches leave from Fathom's servers, never your IP.</p></div><button class="tog" role="switch" aria-checked="false" id="togWeb" aria-label="Web search by default"></button></div>
+          </div>
+          <div class="glass panel">
+            <h3>Your data</h3>
+            <div class="setrow"><div><h4>Export</h4><p>Download your settings, keys (names only) and transaction list as JSON.</p></div><button class="btn btn-light" id="exportBtn">Export</button></div>
+            <div class="setrow"><div><h4>Delete all data</h4><p>Removes encrypted history, API keys and settings immediately. On-chain transactions stay on-chain.</p></div><button class="btn btn-danger" data-act="delall">Delete all</button></div>
+            <div class="setrow"><div><h4>Disconnect wallet</h4><p>Signs you out on this device.</p></div><button class="btn btn-light" id="disconnect">Disconnect</button></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+  <nav class="tabbar" aria-label="App">
+    <a href="#/app" data-page="chat"><svg><use href="#chat"/></svg>Chat</a>
+    <a href="#/app/credits" data-page="credits"><svg><use href="#coin"/></svg>Credits</a>
+    <a href="#/app/keys" data-page="keys"><svg><use href="#key"/></svg>Keys</a>
+    <a href="#/app/stake" data-page="stake"><svg><use href="#layers"/></svg>Stake</a>
+    <a href="#/app/settings" data-page="settings"><svg><use href="#gear"/></svg>Settings</a>
+  </nav>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal" id="walletModal" role="dialog" aria-modal="true" aria-labelledby="wT"><div class="sheet">
+  <button class="x" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h3 id="wT">Connect a wallet</h3><p>You'll sign one message to prove it's yours. No gas, no transaction.</p>
+  <div class="merr" id="wErr"></div>
+  <button class="wopt" data-w><i style="background:#1E2408;color:#CCFF00">R</i>Robinhood Wallet<small class="rec">Recommended</small></button>
+  <button class="wopt" data-w><i style="background:#F6851B">M</i>MetaMask<small></small></button>
+  <button class="wopt" data-w><i style="background:#7084FF">R</i>Rabby<small></small></button>
+  <button class="wopt" data-w><i style="background:#3B99FC">W</i>WalletConnect<small>Mobile</small></button>
+  <p class="terms">No wallet yet? <button data-act="getusdg" style="color:var(--violet2);text-decoration:underline">Get started in 3 minutes</button></p>
+</div></div>
+
+<div class="modal" id="buyModal" role="dialog" aria-modal="true" aria-labelledby="bT"><div class="sheet">
+  <button class="x" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h3 id="bT">Top up credits</h3><p>On Robinhood Chain. Credits arrive in seconds.</p>
+  <div class="paytabs" role="radiogroup" id="payTabs"><button role="radio" aria-checked="true" data-t="USDG">USDG</button><button role="radio" aria-checked="false" data-t="USDC">USDC</button><button role="radio" aria-checked="false" data-t="ETH">ETH</button></div>
+  <div class="amts" role="radiogroup" id="amts">
+    <button role="radio" aria-checked="false" data-a="5"><b>$5</b><small>500 cr</small></button>
+    <button role="radio" aria-checked="true" data-a="20"><b>$20</b><small>2,000 cr</small></button>
+    <button role="radio" aria-checked="false" data-a="50"><b>$50</b><small>5,000 cr</small></button>
+    <button role="radio" aria-checked="false" data-a="100"><b>$100</b><small>10,000 cr</small></button>
+  </div>
+  <div class="sum"><div><span>You pay</span><b id="payO">20.00 USDG</b></div><div><span>You get</span><b id="getO">2,000 credits</b></div><div><span>In your wallet</span><b id="walO">—</b></div></div>
+  <div class="mwarn" id="buyWarn"></div>
+  <div class="merr" id="buyErr" style="margin:14px 0 0"></div>
+  <div class="prog" id="prog"><div><i></i><span>Approve</span></div><div><i></i><span>Confirm</span></div><div><i></i><span>Done</span></div></div>
+  <button class="btn btn-dark" id="buy">Buy 2,000 credits</button>
+</div></div>
+
+<div class="modal" id="usdgModal" role="dialog" aria-modal="true" aria-labelledby="uT"><div class="sheet" style="width:min(480px,100%)">
+  <button class="x" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h3 id="uT">Getting started</h3><p>Pick the path that fits you. All three take a few minutes.</p>
+  <div class="path"><span class="n">1</span><div><h4>New to crypto: Robinhood Wallet</h4><p>Download Robinhood Wallet, buy USDG with your card or bank, then connect it here.</p><small>Easiest · about 5 minutes</small></div></div>
+  <div class="path"><span class="n">2</span><div><h4>Already have a wallet: pay with USDC or ETH</h4><p>Connect MetaMask or Rabby and choose USDC or ETH at top-up. We swap it to USDG for you.</p><small>Fastest · 1 transaction</small></div></div>
+  <div class="path"><span class="n">3</span><div><h4>Funds on Ethereum: bridge first</h4><p>Use the official Robinhood Chain bridge to move USDG or ETH over, then top up.</p><small>About 10 minutes</small></div></div>
+  <button class="btn btn-dark" data-close style="width:100%;margin-top:10px;height:48px">Got it</button>
+</div></div>
+
+<div class="modal" id="keyModal" role="dialog" aria-modal="true" aria-labelledby="kT"><div class="sheet">
+  <h3 id="kT">Save your key now</h3><p>This is the only time you'll see it. Store it somewhere safe.</p>
+  <div class="keybox"><span id="newKey"></span><button id="copyKey">Copy</button></div>
+  <div class="mwarn show">Anyone with this key can spend your credits. Never paste it into a website or share it.</div>
+  <button class="btn btn-dark" data-close style="width:100%;margin-top:16px;height:48px">I've saved it</button>
+</div></div>
+
+<div class="modal" id="delModal" role="dialog" aria-modal="true" aria-labelledby="dT"><div class="sheet">
+  <button class="x" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <h3 id="dT">Delete all data?</h3><p>This removes your encrypted chat history, API keys and settings. It can't be undone.</p>
+  <label style="font-size:13.5px;color:var(--ink2)">Type <b style="color:#fff">DELETE</b> to confirm</label>
+  <input class="inp" id="delInp" style="width:100%;margin-top:8px" autocomplete="off">
+  <button class="btn btn-danger" id="delConfirm" style="width:100%;margin-top:14px;height:48px" disabled>Delete everything</button>
+</div></div>
+
+<div class="toast" id="toast" role="status"><i>✓</i><span></span></div>
+
+<!-- Prototype controls: remove in production -->
+<button class="demo-fab" id="demoFab" aria-expanded="false">Prototype controls</button>
+<div class="demo-panel" id="demoPanel">
+  <h4>Simulate edge cases</h4><p>For reviewing error states. Remove before launch.</p>
+  <label>Wallet rejects signature<input type="checkbox" data-sim="rejectSig"></label>
+  <label>Wallet on wrong network<input type="checkbox" data-sim="wrongNet"></label>
+  <label>Low USDG in wallet<input type="checkbox" data-sim="lowUsdg"></label>
+  <label>Transaction fails<input type="checkbox" data-sim="failTx"></label>
+  <label>DeepSeek is down<input type="checkbox" data-sim="modelDown"></label>
+</div>
+
+<script>
+(() => {
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=n=>Math.floor(n).toLocaleString('en-US');
+const fmt2=n=>(+n).toLocaleString('en-US',{maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hex=n=>[...crypto.getRandomValues(new Uint8Array(n))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const ETH_USD=2450;
+
+const M={
+  deepseek:{n:'DeepSeek V3.1',c:.5,d:'Reasoning and code'},
+  qwen:{n:'Qwen3 235B',c:.45,d:'Long documents, multilingual'},
+  oss:{n:'gpt-oss 120B',c:.25,d:'Fast with tools'},
+  llama:{n:'Llama 3.3 70B',c:.12,d:'Quick everyday answers'}
+};
+const TIERS=[
+  {n:'Explorer',need:1000,off:.10,perks:['10% off every message','Priority support']},
+  {n:'Diver',need:10000,off:.20,perks:['20% off every message','Early access to new models','300 req/min API limit']},
+  {n:'Abyss',need:50000,off:.30,perks:['30% off every message','Early access to new models','500 free credits every month']}
+];
+const blank=()=>({on:false,addr:'',cr:0,usdg:0,usdc:0,eth:0,net:'rh',fthm:0,staked:0,cooling:0,keys:[],tx:[],spent:0,msgs:0,usage:Array(14).fill(0),byModel:{},hist:[],
+  set:{hist:true,burn:'off',web:false},model:'deepseek',cmpModel:'qwen',amt:20,tok:'USDG',done:{},hideCheck:false,chatStarted:false});
+let S=blank(); const SIM={};
+
+/* ---------- helpers ---------- */
+let tt; const toast=(t,bad)=>{const e=$('#toast');e.querySelector('i').textContent=bad?'!':'✓';e.querySelector('i').style.background=bad?'var(--rose)':'var(--mint)';e.querySelector('span').textContent=t;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),2600)};
+const tier=()=>{let t=null;TIERS.forEach(x=>{if(S.staked>=x.need)t=x});return t};
+const disc=()=>tier()?tier().off:0;
+
+/* ---------- modals ---------- */
+let last;
+const open=id=>{last=document.activeElement;const m=$('#'+id);m.classList.add('open');setTimeout(()=>{const f=m.querySelector('.x,button,input');f&&f.focus()},40)};
+const close=()=>{$$('.modal.open').forEach(m=>m.classList.remove('open'));last&&last.focus&&last.focus()};
+
+/* ---------- router ---------- */
+const VIEWS=['home','app','trust','docs','terms','privacy'];
+let curView='';
+function show(v){
+  VIEWS.forEach(x=>$('#v-'+x).classList.toggle('on',x===v));
+  document.body.classList.toggle('in-app',v==='app');
+  $$('#navLinks a').forEach(a=>a.classList.toggle('cur',a.dataset.nav===v&&v!=='home'));
+  $('#navLinks').classList.remove('open');
+  if(v!==curView){curView=v;revealScan();}
+}
+function route(){
+  const h=location.hash||'#/';
+  if(!h.startsWith('#/')){show('home');const el=document.getElementById(h.slice(1));if(el)setTimeout(()=>el.scrollIntoView({behavior:RM?'auto':'smooth'}),30);return}
+  const [path,anchor]=h.slice(2).split('#');const parts=path.split('/');const v=parts[0]||'home';
+  if(v==='app'){show('app');page(parts[1]||'chat');return}
+  if(VIEWS.includes(v)){show(v);if(anchor){const el=document.getElementById(anchor);el&&setTimeout(()=>el.scrollIntoView({behavior:RM?'auto':'smooth'}),30)}else scrollTo(0,0);return}
+  show('home');scrollTo(0,0);
+}
+addEventListener('hashchange',route);
+
+const TITLES={chat:'Chat',credits:'Credits',keys:'API keys',stake:'Stake',settings:'Settings'};
+let curPage='chat';
+function page(p){
+  if(!TITLES[p])p='chat';curPage=p;$('.atop').dataset.p=p;
+  $$('.apage').forEach(a=>a.style.display=a.dataset.p===p?(p==='chat'?'flex':'block'):'none');
+  $('#pageTitle').textContent=TITLES[p];
+  $('#chatTools').style.display=p==='chat'?'flex':'none';
+  $$('.nitem,.tabbar a').forEach(a=>a.classList.toggle('cur',a.dataset.page===p));
+  $('#acontent').scrollTop=0;
+  if(p==='credits')renderCredits();if(p==='keys')renderKeys();if(p==='stake')renderStake();if(p==='settings')renderSettings();
+  if(p==='chat'&&S.on)setTimeout(()=>$('#inp').focus(),50);
+}
+
+/* ---------- render global ---------- */
+function render(){
+  document.body.classList.toggle('is-on',S.on);
+  $$('.crs').forEach(e=>e.textContent=fmt2(S.cr));
+  $$('.adrs').forEach(e=>e.textContent=S.on?S.addr:'Not connected');
+  $$('.usdEq').forEach(e=>e.textContent='≈ $'+(S.cr/100).toFixed(2));
+  $('#bar').style.width=Math.min(100,S.cr/20)+'%';
+  $('#topConnect').style.display=S.on?'none':'';
+  $('#topAcct').style.display=S.on?'flex':'none';
+  const np=$('#netPill');np.hidden=!S.on;np.classList.toggle('bad',S.net!=='rh');$('#netName').textContent=S.net==='rh'?'Robinhood Chain':'Wrong network';
+  $('#netBanner').hidden=!(S.on&&S.net!=='rh');
+  $('#lowBanner').hidden=!(S.on&&S.net==='rh'&&S.cr<5);
+  $('#gate').hidden=S.on;$('#thread').hidden=!S.on;$('#composerWrap').hidden=!S.on;
+  $('#checklist').hidden=!S.on||S.hideCheck;
+  $$('#checklist li').forEach(li=>{const k=li.dataset.k;if(['msg','cmp','top','verify'].includes(k))li.classList.toggle('done',!!S.done[k])});
+  if(S.on&&['msg','cmp','top','verify'].every(k=>S.done[k]))S.hideCheck=true;
+  $('#send').disabled=!$('#inp').value.trim();
+  const t=tier();const b=$('#tierBadge');b.hidden=!t;if(t)b.textContent='-'+Math.round(t.off*100)+'%';
+  renderHist();buildMenu();
+}
+
+/* ---------- wallet ---------- */
+function connectDone(b){
+  const first=!S.addr;
+  const h=hex(20);S.on=true;S.addr='0x'+h.slice(0,4)+'…'+h.slice(-4);
+  S.net=SIM.wrongNet?'eth':'rh';S.usdg=SIM.lowUsdg?3.2:142.5;S.usdc=SIM.lowUsdg?1.1:58.2;S.eth=SIM.lowUsdg?.0006:.042;S.fthm=12500;
+  if(first||!S.tx.length){S.cr+=25;S.tx.unshift({d:new Date(),type:'Welcome bonus',pay:'—',cr:25,hash:null,st:'ok'})}
+  close();render();
+  if(!S.chatStarted){newChat(true)}
+  note('Signed in as '+S.addr+(first?' · 25 free credits added':''));
+  toast('Wallet connected');
+}
+$$('[data-w]').forEach(b=>b.onclick=()=>{
+  if(b.classList.contains('busy'))return;
+  const sm=b.querySelector('small'),old=sm.textContent,oc=sm.className;$('#wErr').classList.remove('show');
+  b.classList.add('busy');sm.className='';sm.textContent='Check your wallet…';
+  setTimeout(()=>{b.classList.remove('busy');sm.textContent=old;sm.className=oc;
+    if(SIM.rejectSig){const e=$('#wErr');e.textContent='You rejected the signature request in your wallet. Nothing was shared. Try again when you\'re ready.';e.classList.add('show');return}
+    connectDone(b)},1100);
+});
+function switchNet(){toast('Approve the network switch in your wallet');setTimeout(()=>{S.net='rh';SIM.wrongNet=false;const c=$('[data-sim=wrongNet]');if(c)c.checked=false;render();if($('#buyModal').classList.contains('open'))updBuy();toast('Switched to Robinhood Chain')},1000)}
+
+/* ---------- top up ---------- */
+const walletUsd=t=>t==='USDG'?S.usdg:t==='USDC'?S.usdc:S.eth*ETH_USD;
+const walletStr=t=>t==='USDG'?fmt2(S.usdg)+' USDG':t==='USDC'?fmt2(S.usdc)+' USDC':S.eth.toFixed(4)+' ETH';
+const payStr=(t,a)=>t==='USDG'?a.toFixed(2)+' USDG':t==='USDC'?(a*1.0015).toFixed(2)+' USDC':(a/ETH_USD).toFixed(5)+' ETH';
+function updBuy(){
+  const a=S.amt,t=S.tok;
+  $$('#amts button').forEach(x=>x.setAttribute('aria-checked',+x.dataset.a===a));
+  $$('#payTabs button').forEach(x=>x.setAttribute('aria-checked',x.dataset.t===t));
+  $('#payO').textContent=payStr(t,a)+(t!=='USDG'?' (swapped)':'');
+  $('#getO').textContent=fmt(a*100*(t==='USDG'?1:1))+' credits';
+  $('#walO').textContent=S.on?walletStr(t):'—';
+  const w=$('#buyWarn'),btn=$('#buy');w.classList.remove('show');btn.disabled=false;
+  btn.textContent='Buy '+fmt(a*100)+' credits';
+  if(S.on&&S.net!=='rh'){w.innerHTML='Your wallet is on the wrong network. <button data-act="switchnet">Switch to Robinhood Chain</button> to continue.';w.classList.add('show');btn.disabled=true;return}
+  const need=t==='ETH'?a*1.002:a*(t==='USDC'?1.0015:1);
+  if(S.on&&walletUsd(t)<need){w.innerHTML='Not enough '+t+' in your wallet. You have '+walletStr(t)+'. Pick a smaller amount, try another token, or <button data-act="getusdg">see how to add funds</button>.';w.classList.add('show');btn.disabled=true}
+}
+function openBuy(){if(!S.on){open('walletModal');return}$('#buyErr').classList.remove('show');$$('#prog > div').forEach(s=>s.classList.remove('done'));updBuy();open('buyModal')}
+$$('#amts button').forEach(b=>b.onclick=()=>{S.amt=+b.dataset.a;updBuy()});
+$$('#payTabs button').forEach(b=>b.onclick=()=>{S.tok=b.dataset.t;updBuy()});
+$('#buy').onclick=()=>{
+  const btn=$('#buy'),st=$$('#prog > div'),a=S.amt,t=S.tok;btn.disabled=true;$('#buyErr').classList.remove('show');st.forEach(s=>s.classList.remove('done'));
+  const lb=[t==='ETH'?'Confirm in wallet…':'Approving '+t+'…',t==='USDG'?'Confirming purchase…':'Swapping to USDG…','Adding credits…'];
+  btn.textContent=lb[0];
+  setTimeout(()=>{st[0].classList.add('done');btn.textContent=lb[1]},750);
+  setTimeout(()=>{
+    const h='0x'+hex(32);
+    if(SIM.failTx){st.forEach(s=>s.classList.remove('done'));const e=$('#buyErr');e.textContent='The transaction failed on-chain and was reverted. No funds left your wallet. You can safely try again.';e.classList.add('show');
+      S.tx.unshift({d:new Date(),type:'Top-up',pay:payStr(t,a),cr:0,hash:h,st:'bad'});btn.disabled=false;btn.textContent='Try again';return}
+    st[1].classList.add('done');btn.textContent=lb[2];
+    setTimeout(()=>{st[2].classList.add('done');
+      if(t==='USDG')S.usdg-=a;else if(t==='USDC')S.usdc-=a*1.0015;else S.eth-=a/ETH_USD;
+      S.cr+=a*100;S.done.top=true;S.tx.unshift({d:new Date(),type:'Top-up',pay:payStr(t,a),cr:a*100,hash:h,st:'ok'});
+      render();if(curPage==='credits')renderCredits();close();toast(fmt(a*100)+' credits added');btn.disabled=false;updBuy()},600);
+  },1600);
+};
+
+/* ---------- chat ---------- */
+const tin=$('#tin'),thr=$('#thread'),inp=$('#inp');
+const down=()=>thr.scrollTop=thr.scrollHeight;
+const add=(c,h)=>{const d=document.createElement('div');d.className='m '+c;d.innerHTML=h;tin.appendChild(d);down();return d};
+const note=t=>add('note','<svg><use href="#shield"/></svg>'+esc(t));
+function buildMenu(){
+  const m=$('#menu');if(!m)return;
+  m.innerHTML=Object.entries(M).map(([k,v])=>'<button role="menuitemradio" aria-checked="'+(k===S.model)+'" data-m="'+k+'"><b>'+v.n+(SIM.modelDown&&k==='deepseek'?'<em class="tag-deg">Degraded</em>':'')+'</b><small>'+v.d+'</small><em>'+(v.c*(1-disc())).toFixed(2)+' cr</em></button>').join('');
+  $('#modelName').innerHTML=esc(M[S.model].n)+(cmpOn()?' <span style="color:var(--mute);font-weight:400">vs</span> '+esc(M[S.cmpModel].n):'');
+}
+const cmpOn=()=>$('#cmpBtn').getAttribute('aria-pressed')==='true';
+const menu=on=>{$('#menu').classList.toggle('open',on);$('#modelBtn').setAttribute('aria-expanded',on)};
+$('#modelBtn').onclick=()=>menu(!$('#menu').classList.contains('open'));
+$('#menu').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;const k=b.dataset.m;
+  if(k===S.cmpModel&&cmpOn()){S.cmpModel=S.model}S.model=k;if(S.cmpModel===S.model)S.cmpModel=Object.keys(M).find(x=>x!==k);menu(false);buildMenu()});
+$('#cmpBtn').onclick=()=>{const on=!cmpOn();$('#cmpBtn').setAttribute('aria-pressed',on);if(on&&S.cmpModel===S.model)S.cmpModel=Object.keys(M).find(x=>x!==S.model);buildMenu();toast(on?'Compare on: '+M[S.model].n+' vs '+M[S.cmpModel].n:'Compare off')};
+$('#toolsBtn').onclick=()=>$('#toolsBtn').setAttribute('aria-pressed',$('#toolsBtn').getAttribute('aria-pressed')!=='true');
+
+const ID=/\b(apa|bagaimana|gimana|saya|aku|kenapa|tolong|bisa|kamu|yang|dengan|untuk)\b/i;
+function answer(q,k,alt){
+  const l=q.toLowerCase(),n=M[k].n;
+  if(ID.test(q))return alt?'Singkatnya: pesanmu hanya dibuka di dalam enclave, dijawab, lalu dihapus dari memori. Di versi live, '+n+' akan memberi jawaban lengkap di sini.':'Pertanyaanmu diproses di dalam enclave tersegel dan langsung dihapus setelah dijawab. Di aplikasi versi live, '+n+' akan menjawab lengkap di sini.';
+  if(/price|cost|usdg|credit|pay/.test(l))return alt?'Think of it as roughly a tenth of a cent to half a cent per message. There\'s no plan to cancel, and unused credits stay yours.':'One dollar buys 100 credits. A typical message costs 0.12 to 0.5 credits depending on the model, so a dollar covers a few hundred questions.';
+  if(/log|privat|secret|safe|data|store/.test(l))return alt?'Nothing readable is kept. Only the attested enclave can decrypt your message, and its memory is cleared right after the reply.':'Your question was decrypted only inside the sealed enclave, answered, and wiped. There\'s no copy on disk and no log line, because we never hold the key.';
+  if(/code|python|javascript|contract|solidity|bug/.test(l))return alt?'Share the snippet and the behaviour you expect. I\'ll point out issues first, then suggest a fix.':'Paste the code and tell me what it should do. Nothing you share is stored or used for training, so private code is safe here.';
+  if(/^(hi|hello|hey)\b/.test(l))return alt?'Hey. What do you want to ask that you wouldn\'t ask anywhere else?':'Hi! Ask me anything. This conversation only exists while you keep it.';
+  return alt?n+' would answer here with its own take, so you can compare reasoning and pick the answer you trust more.':'In the live app, '+n+' gives its full answer here. The flow is real: sealed in your browser, answered inside the enclave, and billed in fractions of a credit.';
+}
+function type(el,t,done){if(RM){el.textContent=t;done();return}let i=0;const c=document.createElement('span');c.className='caret';
+  const f=()=>{i+=1+(Math.random()*4|0);el.textContent=t.slice(0,i);el.appendChild(c);down();if(i<t.length)setTimeout(f,14);else{c.remove();done()}};f()}
+const metaHtml=(k,cost)=>'<div class="meta"><span>'+M[k].n+'</span><span>'+cost.toFixed(2)+' credits</span><span class="ok"><svg><use href="#shield"/></svg>Attested</span></div>';
+const isDown=k=>SIM.modelDown&&k==='deepseek';
+const costOf=(k,tools)=>M[k].c*(tools?1.6:1)*(1-disc());
+function charge(k,c){S.cr-=c;S.spent+=c;S.usage[13]+=c;S.byModel[k]=(S.byModel[k]||0)+c}
+function send(retryQ){
+  const q=(retryQ||inp.value).trim();if(!q)return;
+  if(!S.on){open('walletModal');return}
+  const tools=$('#toolsBtn').getAttribute('aria-pressed')==='true',cmp=cmpOn();
+  const ks=cmp?[S.model,S.cmpModel]:[S.model];
+  const live=ks.filter(k=>!isDown(k));
+  const total=live.reduce((s,k)=>s+costOf(k,tools),0);
+  if(!retryQ){add('you',esc(q));inp.value='';inp.style.height='auto'}
+  if(!tin.dataset.titled&&S.set.hist){tin.dataset.titled=1;S.hist.unshift({t:q.slice(0,40),burn:$('#burnSel').value});renderHist()}
+  if(S.cr<total){const e=add('ai','<div class="ic"><svg><use href="#mk"/></svg></div><div class="errbox"><b>Not enough credits.</b> This message needs '+total.toFixed(2)+' credits and you have '+fmt2(S.cr)+'. You weren\'t charged.<br><button class="btn btn-dark" data-act="topup">Top up</button></div>');render();return}
+  if(!cmp&&isDown(S.model)){
+    const e=add('ai','<div class="ic"><svg><use href="#mk"/></svg></div><div class="errbox"><b>'+M[S.model].n+' is temporarily unavailable.</b> We\'re restoring it now. You weren\'t charged.<br><button class="btn btn-dark">Switch to Qwen3 235B and retry</button></div>');
+    e.querySelector('button').onclick=()=>{S.model='qwen';buildMenu();e.remove();send(q)};render();return}
+  S.msgs++;S.done.msg=true;if(cmp)S.done.cmp=true;
+  if(cmp){
+    const box=add('ai','<div class="ic"><svg><use href="#mk"/></svg></div><div class="cmp">'+ks.map(k=>'<div data-k="'+k+'"><h5>'+M[k].n+'<small>'+(isDown(k)?'unavailable':costOf(k,tools).toFixed(2)+' cr')+'</small></h5><span class="shim" style="font-size:14px">'+(isDown(k)?'':'Answering inside the enclave…')+'</span></div>').join('')+'</div>');
+    ks.forEach((k,i)=>{const col=box.querySelector('[data-k="'+k+'"]');
+      if(isDown(k)){col.querySelector('span').outerHTML='<p style="font-size:13.5px;color:#FFC2C8">Temporarily unavailable. Not charged.</p>';return}
+      setTimeout(()=>{const c=costOf(k,tools);charge(k,c);render();const sp=col.querySelector('span');sp.className='';sp.style.cssText='font-size:14px;color:var(--ink2)';type(sp,answer(q,k,i===1),()=>{down()})},800+i*350)});
+  } else {
+    const k=S.model,c=costOf(k,tools);
+    const a=add('ai','<div class="ic"><svg><use href="#mk"/></svg></div><div class="b">'+(tools?'<div class="toolrun"><svg><use href="#globe"/></svg><span class="shim">Searching the web as Fathom…</span></div>':'')+'<span class="shim">Answering inside the enclave…</span></div>');
+    setTimeout(()=>{charge(k,c);render();const b=a.querySelector('.b');
+      b.innerHTML=(tools?'<div class="toolrun"><svg><use href="#chk"/></svg>Read 3 sources · your IP stayed hidden</div>':'')+'<span class="t"></span>';
+      type(b.querySelector('.t'),answer(q,k),()=>{b.insertAdjacentHTML('beforeend',metaHtml(k,c)+(disc()?'':''));down()})},900);
+  }
+  render();
+}
+inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';$('#send').disabled=!inp.value.trim()});
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+$('#send').onclick=()=>send();
+function burnNote(v){const t=v==='1h'?'1 hour':v==='24h'?'24 hours':'';$('#chintTxt').textContent=t?'Encrypted · this chat self-destructs in '+t:'End-to-end encrypted · nothing is stored'}
+$('#burnSel').onchange=e=>{const v=e.target.value;burnNote(v);if(S.hist[0]&&tin.dataset.titled)S.hist[0].burn=v;renderHist();if(v!=='off')note('This chat will self-destruct in '+(v==='1h'?'1 hour':'24 hours'))};
+function newChat(silent){
+  S.chatStarted=true;const ms=$$('#tin .m');
+  const reset=()=>{tin.innerHTML='';delete tin.dataset.titled;$('#burnSel').value=S.set.burn;burnNote(S.set.burn);$('#toolsBtn').setAttribute('aria-pressed',S.set.web);if(!silent)note('New private chat'+(S.set.burn!=='off'?' · burns in '+(S.set.burn==='1h'?'1 hour':'24 hours'):''))};
+  if(!ms.length||silent){reset();return}
+  ms.reverse().forEach((m,i)=>setTimeout(()=>m.classList.add('gone'),RM?0:i*60));setTimeout(reset,RM?0:ms.length*60+700);
+}
+$('#forget').onclick=()=>{if(tin.dataset.titled&&S.hist.length)S.hist.shift();renderHist();newChat();toast('Chat forgotten. Nothing was kept.')};
+$('#newChat').onclick=()=>{location.hash='#/app';newChat()};
+function renderHist(){const h=$('#histList');if(!S.on||!S.hist.length){h.innerHTML='<div class="empty">'+(S.on&&!S.set.hist?'History is off':'No saved chats yet')+'</div>';return}
+  h.innerHTML=S.hist.slice(0,8).map((x,i)=>'<a href="#/app" class="'+(i===0&&tin.dataset.titled?'on':'')+'"><svg><use href="#'+(x.burn!=='off'?'flame':'lock')+'"/></svg><span>'+esc(x.t)+'</span></a>').join('')}
+$('#hideCheck').onclick=()=>{S.hideCheck=true;render()};
+
+/* ---------- credits page ---------- */
+function renderCredits(){
+  $('#kSpent').textContent=fmt2(S.spent);$('#kMsgs').textContent=S.msgs;$('#kDisc').textContent=Math.round(disc()*100)+'%';$('#kTier').textContent=tier()?tier().n+' tier':'Stake $FTHM for discounts';
+  const mx=Math.max(1,...S.usage);$('#bars').innerHTML=S.usage.map((v,i)=>'<div style="height:'+Math.max(3,v/mx*100)+'%" data-v="'+(i===13?'Today':(13-i)+'d ago')+': '+v.toFixed(2)+' cr"></div>').join('');
+  const tot=Object.values(S.byModel).reduce((a,b)=>a+b,0);
+  $('#byModel').innerHTML=tot?Object.entries(S.byModel).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="mrow2"><span>'+M[k].n+'</span><div class="track"><i style="width:'+(v/tot*100)+'%"></i></div><b>'+v.toFixed(2)+'</b></div>').join(''):'<div class="empty-state"><b>No usage yet</b>Send a message and your spending shows up here.</div>';
+  $('#txWrap').innerHTML=S.tx.length?'<table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Paid</th><th>Credits</th><th>Status</th><th></th></tr></thead><tbody>'+S.tx.map(t=>'<tr><td>'+t.d.toLocaleDateString([], {month:'short',day:'numeric'})+' '+t.d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</td><td>'+t.type+'</td><td class="mono">'+t.pay+'</td><td class="mono">'+(t.cr?'+'+fmt(t.cr):'0')+'</td><td><span class="st '+t.st+'">'+(t.st==='ok'?'Confirmed':'Failed · reverted')+'</span></td><td>'+(t.hash?'<a class="ext" href="#/app/credits" title="'+t.hash+'">'+t.hash.slice(0,8)+'…</a>':'')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty-state"><b>No transactions yet</b>Connect a wallet to get 25 free credits.</div>';
+}
+
+/* ---------- keys page ---------- */
+function renderKeys(){
+  const l=$('#keyList');
+  if(!S.keys.length){l.innerHTML='<div class="empty-state"><b>No keys yet</b>Create one above to use Fathom from your code.</div>';return}
+  l.innerHTML='<table class="tbl"><thead><tr><th>Name</th><th>Key</th><th>Created</th><th>Last used</th><th></th></tr></thead><tbody>'+S.keys.map((k,i)=>'<tr><td>'+esc(k.name)+'</td><td class="mono">'+k.pre+'…</td><td>'+k.c.toLocaleDateString()+'</td><td>Never</td><td style="text-align:right"><button class="btn btn-sm btn-danger" data-rev="'+i+'">Revoke</button></td></tr>').join('')+'</tbody></table>';
+  $$('[data-rev]').forEach(b=>b.onclick=()=>{if(b.dataset.sure){S.keys.splice(+b.dataset.rev,1);renderKeys();toast('Key revoked. Apps using it stop working immediately.')}else{b.dataset.sure=1;b.textContent='Confirm revoke';setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent='Revoke'}},3000)}});
+}
+$('#createKey').onclick=()=>{
+  const h=$('#keyHint');h.className='hint';
+  if(!S.on){open('walletModal');return}
+  const n=$('#keyName').value.trim();if(!n){h.textContent='Give the key a name so you know where it\'s used.';h.className='hint err';$('#keyName').focus();return}
+  if(S.keys.length>=10){h.textContent='You have 10 active keys. Revoke one to create another.';h.className='hint err';return}
+  const key='fth_live_'+hex(16);S.keys.unshift({name:n,pre:key.slice(0,14),c:new Date()});$('#keyName').value='';h.textContent='';
+  $('#newKey').textContent=key;renderKeys();open('keyModal');
+};
+$('#copyKey').onclick=()=>copy($('#newKey').textContent,'Key copied');
+
+/* ---------- stake page ---------- */
+function renderStake(){
+  $('#fBal').textContent=fmt(S.fthm);$('#fStk').textContent=fmt(S.staked);const t=tier();$('#fTier').textContent=t?t.n:'None';$('#fDisc').textContent=Math.round(disc()*100)+'% off';
+  const nx=TIERS.find(x=>S.staked<x.need);
+  if(nx){const prev=t?t.need:0;$('#nextTierTxt').textContent='Stake '+fmt(nx.need-S.staked)+' more FTHM to reach '+nx.n;$('#tierProg').style.width=((S.staked-prev)/(nx.need-prev)*100)+'%'}
+  else{$('#nextTierTxt').textContent='You\'re at the top tier';$('#tierProg').style.width='100%'}
+  $('#tiers').innerHTML=TIERS.map(x=>'<div class="tier glass'+(t&&t.n===x.n?' cur':'')+'"><div class="tn">'+x.n+(t&&t.n===x.n?'<em>Current</em>':'')+'</div><div class="need">'+fmt(x.need)+' FTHM staked</div><div class="off">'+Math.round(x.off*100)+'% off</div><ul>'+x.perks.map(p=>'<li>'+p+'</li>').join('')+'</ul></div>').join('');
+}
+function stakeAct(un){
+  const h=$('#stakeHint');h.className='hint';
+  if(!S.on){open('walletModal');return}
+  if(S.net!=='rh'){h.innerHTML='Switch to Robinhood Chain to stake. <button data-act="switchnet" style="color:var(--violet2);text-decoration:underline">Switch now</button>';h.className='hint err';return}
+  const a=Math.floor(+$('#stakeAmt').value);
+  if(!a||a<=0){h.textContent='Enter an amount.';h.className='hint err';return}
+  if(!un&&a>S.fthm){h.textContent='You only have '+fmt(S.fthm)+' FTHM in your wallet.';h.className='hint err';return}
+  if(un&&a>S.staked){h.textContent='You only have '+fmt(S.staked)+' FTHM staked.';h.className='hint err';return}
+  const btn=un?$('#unstakeBtn'):$('#stakeBtn'),old=btn.textContent;btn.disabled=true;btn.textContent=un?'Requesting…':'Staking…';
+  setTimeout(()=>{btn.disabled=false;btn.textContent=old;$('#stakeAmt').value='';
+    if(SIM.failTx){h.textContent='The transaction failed and was reverted. Nothing changed. Try again.';h.className='hint err';return}
+    if(un){S.staked-=a;S.cooling+=a;const d=new Date(Date.now()+7*864e5);h.textContent=fmt(a)+' FTHM unlocks on '+d.toLocaleDateString([], {month:'long',day:'numeric'})+'. Your discount updates now.';toast('Unstake requested')}
+    else{S.fthm-=a;S.staked+=a;h.textContent='Staked '+fmt(a)+' FTHM.';toast(tier()?'You\'re now '+tier().n+' tier: '+Math.round(disc()*100)+'% off':'Staked '+fmt(a)+' FTHM')}
+    renderStake();render()},1100);
+}
+$('#stakeBtn').onclick=()=>stakeAct(false);$('#unstakeBtn').onclick=()=>stakeAct(true);
+$('#maxBtn').onclick=()=>{$('#stakeAmt').value=S.fthm};
+
+/* ---------- settings ---------- */
+function renderSettings(){$('#togHist').setAttribute('aria-checked',S.set.hist);$('#togWeb').setAttribute('aria-checked',S.set.web);$('#defBurn').value=S.set.burn}
+$('#togHist').onclick=()=>{S.set.hist=!S.set.hist;if(!S.set.hist)S.hist=[];renderSettings();render();toast(S.set.hist?'History on, encrypted to your wallet':'History off. Nothing will be kept.')};
+$('#togWeb').onclick=()=>{S.set.web=!S.set.web;renderSettings();$('#toolsBtn').setAttribute('aria-pressed',S.set.web)};
+$('#defBurn').onchange=e=>{S.set.burn=e.target.value;toast('New chats: '+(e.target.value==='off'?'kept until you delete them':'burn after '+(e.target.value==='1h'?'1 hour':'24 hours')))};
+$('#exportBtn').onclick=()=>{if(!S.on){open('walletModal');return}
+  const data={wallet:S.addr,exported:new Date().toISOString(),settings:S.set,credits:S.cr,keys:S.keys.map(k=>({name:k.name,prefix:k.pre,created:k.c})),transactions:S.tx};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='fathom-export.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Export downloaded')};
+$('#delInp').oninput=e=>$('#delConfirm').disabled=e.target.value!=='DELETE';
+$('#delConfirm').onclick=()=>{S.keys=[];S.hist=[];S.set={hist:true,burn:'off',web:false};tin.innerHTML='';delete tin.dataset.titled;$('#delInp').value='';$('#delConfirm').disabled=true;close();renderSettings();render();toast('All your data was deleted')};
+$('#disconnect').onclick=()=>{S=blank();Object.keys(SIM).forEach(k=>SIM[k]=false);$$('[data-sim]').forEach(c=>c.checked=false);tin.innerHTML='';delete tin.dataset.titled;render();location.hash='#/app';page('chat');toast('Disconnected')};
+
+/* ---------- global actions ---------- */
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]');
+  if(a){e.preventDefault();const k=a.dataset.act;
+    if(k==='connect')open('walletModal');
+    if(k==='topup'){close();setTimeout(openBuy,$('.modal.open')?280:0)}
+    if(k==='switchnet')switchNet();
+    if(k==='getusdg'){close();setTimeout(()=>open('usdgModal'),200)}
+    if(k==='delall')open('delModal');
+    if(k==='trycmp'){$('#cmpBtn').setAttribute('aria-pressed','false');$('#cmpBtn').click();inp.focus()}
+    return}
+  if(e.target.closest('[data-close]')||e.target.classList.contains('modal'))close();
+  if(!e.target.closest('#menu,#modelBtn'))menu(false);
+  const cb=e.target.closest('[data-copy]');if(cb)copy(cb.dataset.copy,'Address copied');
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){close();menu(false)}
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'&&curView==='app'){e.preventDefault();location.hash='#/app';setTimeout(()=>inp.focus(),30)}
+});
+$('#netPill').onclick=()=>{if(S.net!=='rh')switchNet();else toast('Connected to Robinhood Chain')};
+function copy(t,msg){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast(msg),()=>toast('Copy blocked by the browser',true))}
+
+/* ---------- demo controls ---------- */
+$('#demoFab').onclick=()=>{const o=$('#demoPanel').classList.toggle('open');$('#demoFab').setAttribute('aria-expanded',o)};
+$$('[data-sim]').forEach(c=>c.onchange=()=>{const k=c.dataset.sim;SIM[k]=c.checked;
+  if(S.on&&k==='wrongNet')S.net=c.checked?'eth':'rh';
+  if(S.on&&k==='lowUsdg'){S.usdg=c.checked?3.2:142.5;S.usdc=c.checked?1.1:58.2;S.eth=c.checked?.0006:.042}
+  render();if($('#buyModal').classList.contains('open'))updBuy()});
+
+/* ---------- landing ---------- */
+const hdr=$('#hdr');const onScroll=()=>hdr.classList.toggle('scrolled',scrollY>8);addEventListener('scroll',onScroll,{passive:true});onScroll();
+$('#menuBtn').onclick=e=>{const o=$('#navLinks').classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o)};
+const scr=$('#scr'),G='abcdef0123456789+/=ABCDEFGHJKLMNPQRSTUVWXYZ';const noise=n=>Array.from({length:n},()=>G[Math.random()*G.length|0]).join('');
+scr.textContent=noise(88);if(!RM)setInterval(()=>{if(curView==='home')scr.textContent=noise(88)},120);
+$$('.verifyBtn').forEach(b=>b.onclick=()=>{const vs=$$('.verdict');vs.forEach(v=>{v.classList.add('wait');v.querySelector('span').textContent='Checking vendor signature…'});
+  setTimeout(()=>vs.forEach(v=>v.querySelector('span').textContent='Matching model hash…'),700);
+  setTimeout(()=>{const h=hex(4);$$('.meas').forEach(m=>m.textContent=h.slice(0,4)+'…'+h.slice(4));$$('.attT').forEach(t=>t.textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+    vs.forEach(v=>{v.classList.remove('wait');v.querySelector('span').textContent='Verified and sealed'});S.done.verify=true;render()},1500)});
+addEventListener('hashchange',()=>{if(location.hash.startsWith('#/trust')){S.done.verify=true}});
+let rate=.5;const calc=()=>{const r=$('#msgs'),n=+r.value,cr=n*30*rate,usd=cr/100;r.style.setProperty('--p',((n-5)/295*100)+'%');$('#msgsV').textContent=n;$('#usd').textContent='$'+usd.toFixed(2);$('#crd').textContent=fmt(cr)+' credits';$('#save').textContent=usd<20?'Save $'+(20-usd).toFixed(2):'No lock-in, stop anytime'};
+$('#msgs').oninput=calc;$$('#seg button').forEach(b=>b.onclick=()=>{rate=+b.dataset.c;$$('#seg button').forEach(x=>x.setAttribute('aria-checked',x===b));calc()});calc();
+$$('.ctop [role=tab]').forEach(b=>b.onclick=()=>{$$('.ctop [role=tab]').forEach(x=>x.setAttribute('aria-selected',x===b));['py','js','sh'].forEach(k=>$('#t-'+k).hidden=k!==b.dataset.tab)});
+$('#copy').onclick=()=>{const p=$$('.code pre').find(x=>!x.hidden);copy(p.innerText,'Code copied')};
+$$('.q button').forEach(b=>b.onclick=()=>{const q=b.parentElement,o=q.hasAttribute('data-open');$$('.q').forEach(x=>{x.removeAttribute('data-open');x.querySelector('button').setAttribute('aria-expanded','false')});if(!o){q.setAttribute('data-open','');b.setAttribute('aria-expanded','true')}});
+$$('.cell,.step,.pcard.calc').forEach(c=>c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px')}));
+// status
+const SV=[['Chat app','100%'],['API','99.98%'],['Enclave attestation','100%'],['Top-ups (CreditVault)','99.95%'],['Web search egress','99.91%']];
+$('#statusList').innerHTML=SV.map(([n,u],j)=>'<div class="svc"><div class="h"><span><span class="st ok" style="margin-right:10px">Operational</span>'+n+'</span><small>'+u+' uptime</small></div><div class="uptime">'+Array.from({length:90},(_,i)=>'<i class="'+((j===3&&i===61)||(j===4&&i===34)?'w':(j===1&&i===77)?'w':'')+'"></i>').join('')+'</div></div>').join('');
+
+/* reveal */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;e.target.classList.add('in');io.unobserve(e.target)}),{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+function revealScan(){$$('.view.on .rv:not(.in)').forEach(el=>io.observe(el))}
+
+requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('pre')));
+route();render();
+})();
+</script>
+</body>
+</html>
