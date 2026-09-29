@@ -1,0 +1,92 @@
+// Fathom database schema (CLAUDE.md §4).
+// Credits are integer micro-credits (1 credit = 1,000,000). No readable chat content is ever stored.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TxType {
+  WELCOME_BONUS
+  TOPUP
+  STAKE
+  UNSTAKE
+}
+
+enum TxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id           String          @id @default(cuid())
+  address      String          @unique // lowercase
+  creditsMicro BigInt          @default(0)
+  settings     Json            @default("{\"saveHistory\":true,\"defaultBurn\":\"off\",\"webSearch\":false}")
+  createdAt    DateTime        @default(now())
+  apiKeys      ApiKey[]
+  txs          Transaction[]
+  usage        UsageDaily[]
+  chats        EncryptedChat[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  prefix     String // e.g. "fth_live_ab12cd" shown in UI
+  hash       String    @unique // sha256 of full key; full key never stored
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  userId       String
+  type         TxType
+  token        String? // USDG | USDC | ETH
+  amountPaid   String? // decimal string in token units
+  creditsMicro BigInt   @default(0)
+  // Null for WELCOME_BONUS; Postgres unique allows multiple NULLs.
+  txHash       String?  @unique
+  status       TxStatus
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+// Aggregates only, never content.
+model UsageDaily {
+  userId       String
+  day          DateTime @db.Date
+  model        String
+  messages     Int      @default(0)
+  creditsMicro BigInt   @default(0)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day, model])
+}
+
+// Only if the user enabled history. Encrypted client-side; the server cannot read it.
+model EncryptedChat {
+  id         String    @id @default(cuid())
+  userId     String
+  ciphertext Bytes
+  iv         Bytes
+  burnAt     DateTime? // cron deletes rows past burnAt
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([burnAt])
+}

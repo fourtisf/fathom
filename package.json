@@ -1,0 +1,16 @@
+{
+  "name": "fathom",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev:web": "pnpm --filter @fathom/web dev",
+    "dev:api": "pnpm --filter @fathom/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @fathom/db generate",
+    "db:migrate": "pnpm --filter @fathom/db migrate"
+  }
+}
