@@ -36,7 +36,7 @@ export function useUi(): Ui {
 const storeKey = (addr: string) => `nx_onboard_${addr.toLowerCase()}`;
 
 export function UiProvider({ children }: { children: ReactNode }) {
-  const { me } = useSession();
+  const { me, config } = useSession();
   const [modal, setModal] = useState<ModalId>(null);
   const [model, setModelState] = useState<string>(DEFAULT_MODEL);
   const [cmpModel, setCmpModel] = useState<string>(FALLBACK_MODEL);
@@ -55,6 +55,18 @@ export function UiProvider({ children }: { children: ReactNode }) {
     }
     setWebSearch(me.settings.webSearch);
   }, [me?.address]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Default to models that are actually online: a provider may not serve every model in the menu.
+  useEffect(() => {
+    const ok = config?.models.filter((m) => m.status === 'ok').map((m) => m.id) ?? [];
+    if (!ok.length) return;
+    const primary = ok.includes(model) ? model : ok[0]!;
+    if (primary !== model) setModelState(primary);
+    if (!ok.includes(cmpModel) || cmpModel === primary) {
+      const alt = ok.find((id) => id !== primary);
+      if (alt) setCmpModel(alt);
+    }
+  }, [config?.models]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const markOnboard = useCallback(
     (k: OnboardKey | 'hidden') =>
