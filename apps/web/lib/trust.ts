@@ -126,8 +126,8 @@ function envAddress(key: string): Address | null {
 /** On-chain addresses that matter today. $NOX and staking contracts are not deployed. */
 export function getAddresses(): AddressRow[] {
   return [
-    { name: 'USDG', purpose: 'Stablecoin used for top-ups', address: envAddress('USDG_ADDRESS') },
-    { name: 'Treasury', purpose: 'Receives USDG top-ups, credited automatically', address: envAddress('TREASURY_ADDRESS') },
+    { name: 'USDG', purpose: 'Stablecoin for top-ups (coming soon)', address: envAddress('USDG_ADDRESS') },
+    { name: 'Treasury', purpose: 'Will receive USDG top-ups (coming soon)', address: envAddress('TREASURY_ADDRESS') },
   ];
 }
 
@@ -147,7 +147,7 @@ export interface ServiceStatus {
 }
 
 const DAYS = 90;
-const FALLBACK_SERVICES = ['Chat app', 'API', 'Model provider', 'Top-ups', 'Web search'];
+const FALLBACK_SERVICES = ['Chat app', 'API', 'Model provider'];
 
 function fallbackStatus(): ServiceStatus[] {
   return FALLBACK_SERVICES.map((name) => ({ name, days: Array<DayStatus>(DAYS).fill(null), uptime: null, today: null }));

@@ -805,3 +805,8 @@ body::before{background:linear-gradient(180deg,#050817 0%,#04061A 50%,#03050F 10
 .snav .hist .unlock{display:flex;align-items:center;gap:8px;width:100%;text-align:left;color:var(--violet2);border-radius:8px}
 .snav .hist .unlock:hover{background:rgba(255,255,255,.04)}
 .snav .hist .unlock svg{width:13px;height:13px}
+
+/* coming-soon states */
+.soon{display:flex;flex-direction:column;gap:4px;margin-top:6px;padding:16px;border-radius:14px;background:linear-gradient(160deg,rgba(139,124,255,.14),rgba(56,200,232,.06));border:1px solid rgba(139,124,255,.3);font-size:14px;color:var(--ink2)}
+.soon b{font-size:15px;color:#fff}
+.soonTag{font-style:normal;font-size:11px;padding:1px 6px;border-radius:5px;background:rgba(139,124,255,.18);color:var(--violet2)}

@@ -114,7 +114,7 @@ export default async function TrustPage() {
 
       <div className="tsec" id="contracts">
         <h2>On-chain addresses</h2>
-        <p>Top-ups are plain USDG transfers on Robinhood Chain. Check any address on the explorer.</p>
+        <p>Top-ups are coming soon. They will be plain USDG transfers on Robinhood Chain that anyone can check on the explorer.</p>
         <div className="glass panel tw" style={{ marginTop: 0 }}>
           <table className="tbl" style={{ marginTop: 0 }}>
             <thead>
@@ -155,8 +155,8 @@ export default async function TrustPage() {
             <span className="st ok">No custom contracts</span>
             <h3 style={{ marginTop: 12 }}>Funds and contracts</h3>
             <p className="sub2">
-              No custom contract holds funds: top-ups go straight to the treasury address above as ordinary USDG transfers,
-              and credits are added after the transfer is confirmed. Any future contract (such as {brand.token.ticker} or
+              No custom contract holds funds: when top-ups open, they will go straight to the treasury address above as ordinary
+              USDG transfers, credited after the transfer is confirmed. Any future contract (such as {brand.token.ticker} or
               staking) is planned to get an independent audit before launch, with the report published here.
             </p>
           </div>

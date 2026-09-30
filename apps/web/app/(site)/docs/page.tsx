@@ -113,7 +113,7 @@ export default function DocsPage() {
 
         <h2 id="quickstart">Quickstart</h2>
         <p>
-          1. Connect your wallet in the <Link href="/app" style={link}>app</Link> and top up credits. 2. Create a key under{' '}
+          1. Connect your wallet in the <Link href="/app" style={link}>app</Link> (new wallets with on-chain activity get free credits; top-ups are coming soon). 2. Create a key under{' '}
           <Link href="/app/keys" style={link}>API keys</Link>. 3. Point any OpenAI client at the base URL:
         </p>
         <pre><code>{base}</code></pre>
@@ -178,7 +178,7 @@ export default function DocsPage() {
             <tbody>
               <tr><td className="mono">400</td><td>Invalid request body or unknown model</td><td>Check the fields and model id</td></tr>
               <tr><td className="mono">401</td><td>Missing, invalid or revoked key</td><td>Create a new key in the app</td></tr>
-              <tr><td className="mono">402</td><td>Not enough credits</td><td>Top up; the request was not charged</td></tr>
+              <tr><td className="mono">402</td><td>Not enough credits</td><td>The request was not charged. Top-ups are coming soon</td></tr>
               <tr><td className="mono">429</td><td>Rate limit reached</td><td>Wait for the <code>retry-after</code> header (seconds)</td></tr>
               <tr><td className="mono">503</td><td>Model or web search temporarily unavailable</td><td>Retry, or switch to another model</td></tr>
             </tbody>
@@ -202,7 +202,8 @@ export default function DocsPage() {
           New wallets with some on-chain activity can get the one-time welcome credits (subject to daily limits); a wallet with no history starts at zero.
         </p>
 
-        <h2 id="topups">Top-ups</h2>
+        <h2 id="topups">Top-ups (coming soon)</h2>
+        <p>Top-ups aren&apos;t open yet. This is how they will work:</p>
         <ul>
           <li>Send USDG on Robinhood Chain to the treasury address shown in the app&apos;s top-up screen and on the{' '}
             <Link href="/trust#contracts" style={link}>Trust page</Link>.</li>

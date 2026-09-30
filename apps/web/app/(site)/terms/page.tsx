@@ -32,7 +32,7 @@ export default function TermsPage() {
         <h2>3. Credits and payments</h2>
         <ul>
           <li>Credits are prepaid usage units. {CREDITS_PER_USDG} credits cost 1 USDG at current prices.</li>
-          <li>Top-ups are made by sending USDG to our treasury address and are credited after the transfer is confirmed. Sending the wrong token, network or address may result in a loss we can&apos;t reverse.</li>
+          <li>Top-ups are coming soon. When they open, they will be made by sending USDG to our treasury address and credited after the transfer is confirmed. Sending the wrong token, network or address may result in a loss we can&apos;t reverse.</li>
           <li>Credits don&apos;t expire. They are non-refundable once used, can&apos;t be transferred or withdrawn, and have no value outside {brand.name}.</li>
           <li>Requests that fail or can&apos;t be served are not charged.</li>
           <li>We may change prices with notice on this site. Changes don&apos;t affect charges already made.</li>

@@ -223,9 +223,9 @@ export function GettingStartedModal() {
       <div className="path">
         <span className="n">2</span>
         <div>
-          <h4>Already have a wallet: pay with USDC or ETH</h4>
-          <p>Connect MetaMask or Rabby and choose USDC or ETH at top-up. We swap it to USDG for you.</p>
-          <small>Fastest · 1 transaction</small>
+          <h4>Already have a wallet: connect it</h4>
+          <p>Connect MetaMask or Rabby. Wallets with activity on Robinhood Chain get free credits; USDG top-ups are coming soon.</p>
+          <small>Fastest · 1 signature</small>
         </div>
       </div>
       <div className="path">
@@ -280,12 +280,16 @@ export function TopUpModal() {
   if (!topup) {
     return (
       <Modal id="topup" title="Top up credits">
-        <p>On Robinhood Chain. Credits arrive in seconds.</p>
-        <div className="mwarn show">
-          Top-ups aren&apos;t open yet. Every new wallet with activity on Robinhood Chain gets {WELCOME_CREDITS} free credits to try every model.
+        <p>With USDG on Robinhood Chain.</p>
+        <div className="soon">
+          <b>Coming soon</b>
+          <span>
+            Top-ups are almost ready. Until then, every new wallet with activity on Robinhood Chain gets {WELCOME_CREDITS} free
+            credits to try every model.
+          </span>
         </div>
-        <button className="btn btn-dark" onClick={() => openModal('start')}>
-          How to get USDG
+        <button className="btn btn-dark" onClick={closeModal}>
+          Got it
         </button>
       </Modal>
     );

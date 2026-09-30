@@ -62,8 +62,8 @@ export function Why() {
           <div className="cell rv" style={delay(0.12)}>
             <div className="big-ic"><Icon name="swap" /></div>
             <h3>Pay per message in USDG</h3>
-            <p>Send USDG on Robinhood Chain and credits arrive automatically. No subscription, no card. USDC and ETH top-ups are planned.</p>
-            <div className="demo-strip"><span>USDG</span><span>USDC soon</span><span>ETH soon</span></div>
+            <p>Top-ups with USDG on Robinhood Chain are coming soon. No subscription, no card. Start today with free credits.</p>
+            <div className="demo-strip"><span>USDG · soon</span><span>USDC · later</span><span>ETH · later</span></div>
           </div>
         </div>
         <div className="cmp-table glass rv tw">
@@ -212,8 +212,8 @@ export function How() {
           </div>
           <div className="step rv" style={delay(0.08)}>
             <div className="n">2</div>
-            <h3>Top up with USDG</h3>
-            <p>Send USDG on Robinhood Chain and credits arrive automatically. New to crypto? We walk you through getting USDG.</p>
+            <h3>Top up with USDG · soon</h3>
+            <p>Top-ups with USDG on Robinhood Chain are coming soon. Until then, new wallets start with free credits.</p>
             <div className="mini"><Icon name="coin" />1 USDG<b>{CREDITS_PER_USDG} credits</b></div>
           </div>
           <div className="step rv" style={delay(0.16)}>
@@ -266,7 +266,7 @@ export function Pricing() {
           <div className="pcard dark rv">
             <div className="lab">Pay as you go</div>
             <div className="big"><b>$1</b><span>= {CREDITS_PER_USDG} credits</span></div>
-            <p>Top up with USDG. Spend only on what you send, charged by the tokens used.</p>
+            <p>USDG top-ups are coming soon. Spend only on what you send, charged by the tokens used.</p>
             <ul className="plist">
               <li><Icon name="chk" />Credits never expire</li>
               <li><Icon name="chk" />Same balance for app and API</li>
@@ -421,7 +421,7 @@ export function FaqAndCta() {
             },
             {
               q: "I don't have USDG. Can I still pay?",
-              a: "Top-ups are USDG only for now; paying with USDC or ETH is planned. If you're new to crypto, the app has a short guide to getting USDG through Robinhood Wallet.",
+              a: "Top-ups are coming soon, starting with USDG on Robinhood Chain; USDC and ETH come later. Until then, new wallets with on-chain activity get free credits to try every model.",
             },
             {
               q: `Is ${brand.token.ticker} an investment?`,

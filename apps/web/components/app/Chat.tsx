@@ -36,7 +36,7 @@ type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) :
 
 export const WELCOME_DENIED_TEXT: Record<WelcomeDenied | 'already_claimed', string> = {
   no_activity:
-    'Free credits need a wallet with some activity on Robinhood Chain (at least one transaction or a balance). Use your main wallet, or top up.',
+    'Free credits need a wallet with some activity on Robinhood Chain (at least one transaction or a balance). Try your main wallet.',
   ip_limit: 'Free credits are limited per network each day. Try again tomorrow.',
   daily_limit: "Today's free credits are all claimed. Try again tomorrow.",
   check_failed: "We couldn't check your wallet right now. Try again in a minute.",
@@ -192,7 +192,7 @@ export function Chat() {
         kind: 'fail',
         title: 'No free credits yet.',
         body: WELCOME_DENIED_TEXT[lastSignIn.welcomeDenied],
-        action: lastSignIn.welcomeDenied === 'no_activity' ? { label: 'Top up', topup: true } : { label: 'Try again', claim: true },
+        action: lastSignIn.welcomeDenied === 'no_activity' ? undefined : { label: 'Try again', claim: true },
       });
     }
     clearLastSignIn();
@@ -487,7 +487,7 @@ export function Chat() {
               </li>
               <li className={ob.top ? 'done' : undefined}>
                 <i />
-                <button onClick={() => ui.openModal('topup')}>Top up credits</button>
+                <button onClick={() => ui.openModal('topup')}>Top up credits</button> <em className="soonTag">soon</em>
               </li>
               <li className={ob.verify ? 'done' : undefined}>
                 <i />
