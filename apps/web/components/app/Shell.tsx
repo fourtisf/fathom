@@ -19,6 +19,8 @@ const NAV: { href: string; label: string; tab: string; icon: IconName }[] = [
 ];
 
 export const fmt2 = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+/** Per-message costs are often fractions of a cent; keep them readable instead of rounding to 0.00. */
+export const fmtCost = (n: number) => (n > 0 && n < 0.01 ? n.toFixed(4) : n.toFixed(2));
 
 function ModelMenu() {
   const { config } = useSession();

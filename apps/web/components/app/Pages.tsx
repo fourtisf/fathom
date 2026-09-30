@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { brand, CREDITS_PER_USDG, MAX_API_KEYS, MODELS, TIERS, UNSTAKE_COOLDOWN_DAYS, WELCOME_CREDITS } from '@fathom/config';
 import { api, type CreditsSummary, type Settings, type TxRow } from '@/lib/api';
 import { useToast } from '../Toast';
-import { fmt2 } from './Shell';
+import { fmt2, fmtCost } from './Shell';
 import { useSession } from './Session';
 import { useUi } from './Ui';
 
@@ -54,7 +54,7 @@ export function CreditsPage() {
   if (!me) return <NeedWallet title="Credits" sub="Your balance, spending and top-ups." />;
 
   const s = summary.data;
-  const max = Math.max(1, ...(s?.usage14.map((u) => u.credits) ?? [0]));
+  const max = Math.max(...(s?.usage14.map((u) => u.credits) ?? [0])) || 1;
   const total = s?.byModel.reduce((a, b) => a + b.credits, 0) ?? 0;
   const explorer = config?.chain?.explorerUrl;
 
@@ -84,7 +84,7 @@ export function CreditsPage() {
               <div
                 key={u.day}
                 style={{ height: `${Math.max(3, (u.credits / max) * 100)}%` }}
-                data-v={`${i === a.length - 1 ? 'Today' : `${a.length - 1 - i}d ago`}: ${u.credits.toFixed(2)} cr`}
+                data-v={`${i === a.length - 1 ? 'Today' : `${a.length - 1 - i}d ago`}: ${fmtCost(u.credits)} cr`}
               />
             ))}
           </div>
@@ -99,7 +99,7 @@ export function CreditsPage() {
                 <div className="mrow2" key={m.model}>
                   <span>{modelName(m.model)}</span>
                   <div className="track"><i style={{ width: `${(m.credits / total) * 100}%` }} /></div>
-                  <b>{m.credits.toFixed(2)}</b>
+                  <b>{fmtCost(m.credits)}</b>
                 </div>
               ))
             ) : (

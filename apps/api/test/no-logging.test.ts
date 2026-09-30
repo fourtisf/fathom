@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { buildCapturingApp } from './helpers';
+import { PrismaClient } from '@fathom/db';
+import { createMockProvider } from '../src/inference';
+import { TEST_ENV, buildCapturingApp, nextIp, servicesUp, signIn, sseEvents } from './helpers';
 
 // CLAUDE.md §0 rules 1 and 3: no prompt/completion text, no IPs, no keys in any log line.
 const MARKER = 'SECRET-PROMPT-7f3a9c';
@@ -57,5 +59,107 @@ describe('no logging of content, IPs or keys', () => {
     expect(all).toContain('request completed');
     expect(all).toContain('request failed');
     for (const secret of [MARKER, IP, KEY]) expect(all).not.toContain(secret);
+  });
+});
+
+const up = await servicesUp();
+
+// The same rules for the real sign-in and chat paths, and nothing readable stored in DB or Redis.
+describe.skipIf(!up)('no content in logs, DB or Redis for /auth/verify and /chat', () => {
+  const COMPLETION = 'SECRET-COMPLETION-4b1e';
+  let chatApp: FastifyInstance;
+  let chatLines: string[];
+  const prisma = new PrismaClient({ datasourceUrl: TEST_ENV.DATABASE_URL });
+  const addresses: string[] = [];
+
+  beforeAll(async () => {
+    ({ app: chatApp, lines: chatLines } = await buildCapturingApp('trace', TEST_ENV, {
+      provider: createMockProvider({
+        delayMs: 1,
+        failModels: ['llama-3.3-70b'],
+        reply: (model) => `${COMPLETION} from ${model}`,
+      }),
+      // A search backend whose error message quotes the query.
+      search: {
+        async search(query) {
+          throw new Error(`search failed for ${query}`);
+        },
+      },
+    }));
+  });
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { address: { in: addresses } } });
+    await prisma.$disconnect();
+    await chatApp.close();
+  });
+
+  it('never writes the prompt, completion, IP, cookie or signature to logs or storage', async () => {
+    const ip = nextIp();
+    // Sign-in message carrying the marker in its statement.
+    const r = await signIn(chatApp, ip, { statement: `Sign in ${MARKER}` });
+    addresses.push(r.account.address.toLowerCase());
+    expect(r.res.statusCode).toBe(200);
+    const session = r.session!;
+    const hdrs = { 'x-forwarded-for': IP, 'content-type': 'application/json' };
+
+    // Failed sign-ins holding the marker.
+    for (const payload of [
+      { message: r.message, signature: r.signature }, // replay
+      { message: `${MARKER}\n${r.message}`, signature: r.signature },
+      { message: MARKER, signature: `0x${'ab'.repeat(65)}` },
+    ]) {
+      const res = await chatApp.inject({ method: 'POST', url: '/auth/verify', remoteAddress: ip, headers: hdrs, payload });
+      expect(res.statusCode).toBeGreaterThanOrEqual(400);
+      expect(res.body).not.toContain(MARKER);
+    }
+
+    const post = (payload: unknown) =>
+      chatApp.inject({
+        method: 'POST',
+        url: `/chat?q=${MARKER}`,
+        headers: hdrs,
+        cookies: { nx_session: session },
+        payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
+      });
+    const messages = [{ role: 'user', content: MARKER }];
+    const ok = await post({ model: 'deepseek-v3.1', compareWith: 'llama-3.3-70b', webSearch: true, messages });
+    const events = sseEvents(ok.body);
+    expect(events.some((e) => e.type === 'done')).toBe(true);
+    expect(events.some((e) => e.type === 'error')).toBe(true); // llama failed: error path logged
+    const streamed = events.filter((e) => e.type === 'delta').map((e) => e.text).join('');
+    expect(streamed).toContain(COMPLETION); // the completion did stream to the client
+    expect(events).toContainEqual({ type: 'search', status: 'unavailable' }); // search failed: error path logged
+    for (const bad of [
+      { model: 'deepseek-v3.1', messages: [{ role: 'assistant', content: MARKER }] },
+      { model: MARKER, messages },
+      `{"model":"deepseek-v3.1","messages":"${MARKER}`,
+    ]) {
+      const res = await post(bad);
+      expect(res.statusCode).toBeGreaterThanOrEqual(400);
+    }
+
+    const all = chatLines.join('\n');
+    expect(all).toContain('chat provider failed'); // not vacuous
+    expect(all).toContain('web search failed');
+    for (const secret of [MARKER, COMPLETION, IP, session, r.signature]) expect(all).not.toContain(secret);
+
+    // Nothing readable in any table or Redis value.
+    for (const table of ['User', 'Transaction', 'UsageDaily', 'ApiKey', 'EncryptedChat']) {
+      const rows = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
+        `SELECT count(*) AS n FROM "${table}" t WHERE t::text LIKE $1 OR t::text LIKE $2`,
+        `%${MARKER}%`,
+        `%${COMPLETION}%`,
+      );
+      expect(rows[0]!.n).toBe(0n);
+    }
+    const redis = chatApp.ctx.redis;
+    for (const key of await redis.keys('*')) {
+      expect(key).not.toContain(MARKER);
+      if ((await redis.type(key)) === 'string') {
+        const v = (await redis.get(key)) ?? '';
+        expect(v).not.toContain(MARKER);
+        expect(v).not.toContain(COMPLETION);
+      }
+    }
   });
 });

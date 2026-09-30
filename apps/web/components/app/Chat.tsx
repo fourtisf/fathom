@@ -8,7 +8,7 @@ import { streamChat, type ChatEvent } from '@/lib/chat';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
 import { useToast } from '../Toast';
-import { fmt2 } from './Shell';
+import { fmt2, fmtCost } from './Shell';
 import { short, useSession } from './Session';
 import { useUi } from './Ui';
 
@@ -43,7 +43,7 @@ function Meta({ slot }: { slot: SlotState }) {
   return (
     <div className="meta">
       <span>{modelName(slot.model)}</span>
-      <span>{(slot.credits ?? 0).toFixed(2)} credits</span>
+      <span>{fmtCost(slot.credits ?? 0)} credits</span>
       <span className="ok">
         <Icon name="shield" />
         Not stored
@@ -354,7 +354,7 @@ export function Chat() {
                         <div key={i}>
                           <h5>
                             {modelName(s.model)}
-                            <small>{s.status === 'done' ? `${(s.credits ?? 0).toFixed(2)} cr` : s.status === 'error' ? 'unavailable' : ''}</small>
+                            <small>{s.status === 'done' ? `${fmtCost(s.credits ?? 0)} cr` : s.status === 'error' ? 'unavailable' : ''}</small>
                           </h5>
                           <SlotBody slot={s} />
                         </div>

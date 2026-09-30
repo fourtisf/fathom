@@ -1,0 +1,34 @@
+import type { ModelId } from '@fathom/config';
+
+export type ProviderKind = 'mock' | 'openai-compatible';
+
+export interface ProviderPreset {
+  kind: ProviderKind;
+  /** Default base URL (INFERENCE_BASE_URL overrides it). */
+  baseUrl?: string;
+  /**
+   * Our model id → provider model id. For a named preset, a model with no entry is
+   * unmapped and reported 'unavailable' (never silently served by a different model).
+   * INFERENCE_MODEL_MAP overrides and extends it.
+   */
+  modelMap?: Partial<Record<ModelId, string>>;
+  /** Generic presets map every model to the same id unless INFERENCE_MODEL_MAP says otherwise. */
+  identityMap?: boolean;
+}
+
+/**
+ * INFERENCE_PROVIDER names one of these. Adding a vetted provider is one entry.
+ * Only add URLs and model ids confirmed from the provider's own docs.
+ */
+export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
+  mock: { kind: 'mock', identityMap: true },
+  'openai-compatible': { kind: 'openai-compatible', identityMap: true },
+  // Tinfoil: OpenAI-compatible, Bearer INFERENCE_API_KEY, the router always includes usage in streams.
+  // Model ids from the models.dev catalog: verify at deploy against GET /v1/models.
+  // DeepSeek V3.1 and Qwen3 235B are not served there, so they stay unmapped (unavailable).
+  tinfoil: {
+    kind: 'openai-compatible',
+    baseUrl: 'https://inference.tinfoil.sh/v1',
+    modelMap: { 'gpt-oss-120b': 'gpt-oss-120b', 'llama-3.3-70b': 'llama3-3-70b' },
+  },
+};

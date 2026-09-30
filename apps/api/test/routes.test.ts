@@ -28,8 +28,24 @@ describe('routes', () => {
       owned_by: brand.name.toLowerCase(),
       context_length: 128 * 1024,
       pricing: { input_per_m: 40, output_per_m: 120 },
-      status: 'unknown',
+      status: 'unavailable', // no inference provider configured
     });
+  });
+
+  it('GET /config reports missing features as unavailable', async () => {
+    const res = await app.inject({ method: 'GET', url: '/config' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.chain).toBeNull();
+    expect(body.inference).toBe(false);
+    expect(body.webSearch).toBe(false);
+    expect(body.models).toHaveLength(MODELS.length);
+    expect(body.models[0]).toEqual({ id: 'deepseek-v3.1', name: 'DeepSeek V3.1', status: 'unavailable' });
+  });
+
+  it('protected routes need a session', async () => {
+    const res = await app.inject({ method: 'GET', url: '/me' });
+    expect([401, 503]).toContain(res.statusCode); // 503 when DATABASE_URL is not set
   });
 
   it('unknown routes use the JSON error shape', async () => {
