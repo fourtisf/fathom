@@ -28,15 +28,16 @@ function SectionHead({ tag, title, sub }: { tag: string; title: string; sub?: st
 }
 
 export function Why() {
-  const rows: [string, string, string, string, string?][] = [
-    ['Sign up without email', 'Yes, wallet only', 'No', 'Yes'],
-    ['Prompts never logged', 'Yes, enclave attested', 'Stored, may train', 'Yes'],
-    ['Compare two models at once', 'Yes', 'No', 'No'],
-    ['Auto-delete chats', '1h or 24h', 'Manual only', 'Manual only'],
-    ['Pay per message', 'From $0.001', '$20/month', 'Yes'],
-    ['Pay with any token', 'USDG, USDC, ETH', 'Card only', 'One stablecoin', 'neutral'],
+  // Compares typical default settings, not every product: claims about others stay generic.
+  const rows: [string, string, string, string][] = [
+    ['Sign up without email', 'Yes, wallet only', 'Usually not', 'Varies'],
+    ['Prompts never logged', 'Yes, never logged or stored', 'Often stored', 'Usually'],
+    ['Compare two models at once', 'Yes', 'Rarely', 'Rarely'],
+    ['Auto-delete chats', '1h or 24h', 'Usually manual', 'Varies'],
+    ['Pay per message', 'From about $0.001', 'Monthly plan', 'Varies'],
+    ['Pay with crypto, no card', 'Yes, USDG', 'Usually card', 'Varies'],
   ];
-  const cls = (v: string) => (v.startsWith('Yes') ? 'yes' : 'no');
+  const cls = (v: string) => (v.startsWith('Yes') ? 'yes' : v === 'Varies' || v === 'Usually' ? undefined : 'no');
   return (
     <section id="why">
       <div className="wrap">
@@ -55,14 +56,14 @@ export function Why() {
           <div className="cell rv" style={delay(0.06)}>
             <div className="big-ic"><Icon name="flame" /></div>
             <h3>Chats that self-destruct</h3>
-            <p>Set any chat to burn after 1 hour or 24 hours. Even your encrypted copy is wiped, automatically.</p>
+            <p>Set any chat to burn after 1 hour or 24 hours. If you save history, even the encrypted copy is deleted automatically.</p>
             <div className="demo-strip"><span><Icon name="flame" width={13} height={13} style={{ color: 'var(--pink)' }} />Burns in 23h 59m</span></div>
           </div>
           <div className="cell rv" style={delay(0.12)}>
             <div className="big-ic"><Icon name="swap" /></div>
-            <h3>Pay with what you hold</h3>
-            <p>Top up with USDG, USDC or ETH. We route the swap for you, so you don&apos;t need to hunt for a specific stablecoin first.</p>
-            <div className="demo-strip"><span>USDG</span><span>USDC</span><span>ETH</span></div>
+            <h3>Pay per message in USDG</h3>
+            <p>Send USDG on Robinhood Chain and credits arrive automatically. No subscription, no card. USDC and ETH top-ups are planned.</p>
+            <div className="demo-strip"><span>USDG</span><span>USDC soon</span><span>ETH soon</span></div>
           </div>
         </div>
         <div className="cmp-table glass rv tw">
@@ -71,17 +72,21 @@ export function Why() {
               <tr><th /><th className="us">{brand.name}</th><th>Typical AI apps</th><th>Other private AI</th></tr>
             </thead>
             <tbody>
-              {rows.map(([label, us, typical, other, otherStyle]) => (
+              {rows.map(([label, us, typical, other]) => (
                 <tr key={label}>
                   <td>{label}</td>
                   <td className="us yes">{us}</td>
-                  <td className="no">{typical}</td>
-                  <td className={otherStyle === 'neutral' ? undefined : cls(other)}>{other}</td>
+                  <td className={cls(typical)}>{typical}</td>
+                  <td className={cls(other)}>{other}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="cmp-note rv">
+          Compares typical default settings of popular AI chat apps and privacy-focused AI services. Individual products and
+          plans vary.
+        </p>
       </div>
     </section>
   );
@@ -95,12 +100,12 @@ export function Privacy() {
         <SectionHead
           tag="Privacy"
           title="Private by design, not by promise"
-          sub={`Most AI apps promise not to read your chats. ${brand.name} is built so it can't, and you can check.`}
+          sub={`${brand.name} keeps only what it needs to run your account. Your prompts and answers aren't logged or stored, and the code is open source so you can check.`}
         />
         <div className="bento">
           <div className="cell c-enclave rv">
-            <h3>Every model runs in a sealed enclave</h3>
-            <p>Inference happens on confidential GPUs with encrypted memory. The proof is public, every session.</p>
+            <h3>What happens to a message</h3>
+            <p>It travels encrypted, is answered by an open model through zero-data-retention providers, and isn&apos;t kept by us.</p>
             <div className="enc">
               <div className="enc-art" aria-hidden="true">
                 <svg viewBox="0 0 260 260" fill="none">
@@ -108,9 +113,13 @@ export function Privacy() {
                   <circle className="ring r2" cx="130" cy="130" r="92" stroke="#5CE1E6" strokeOpacity=".6" strokeDasharray="40 14" strokeWidth="1.5" />
                   <circle cx="130" cy="130" r="66" fill="#0D1238" stroke="rgba(139,124,255,.35)" />
                   <rect x="100" y="100" width="60" height="60" rx="14" fill="url(#g1)" />
-                  <path d="M118 131l8 8 17-17" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                  <g stroke="#8B7CFF" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round">
-                    <path d="M112 94v-8M130 94v-8M148 94v-8M112 166v8M130 166v8M148 166v8M94 112h-8M94 130h-8M94 148h-8M166 112h8M166 130h8M166 148h8" />
+                  {/* Padlock: the message is encrypted in transit and never kept. */}
+                  <path d="M120 127v-7a10 10 0 0 1 20 0v7" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" />
+                  <rect x="114" y="127" width="32" height="22" rx="5" stroke="#fff" strokeWidth="3.5" />
+                  <g fill="#5CE1E6">
+                    <circle cx="130" cy="12" r="3.5" />
+                    <circle cx="222" cy="130" r="3" fillOpacity=".7" />
+                    <circle cx="44" cy="164" r="2.5" fillOpacity=".5" />
                   </g>
                   <defs>
                     <linearGradient id="g1" x1="100" y1="100" x2="160" y2="160">
@@ -121,20 +130,20 @@ export function Privacy() {
                   </defs>
                 </svg>
               </div>
-              {/* Illustrative sample report; the live one is on /trust. */}
+              {/* How one message is handled today; /trust shows the live provider setting. */}
               <div className="report">
-                <div className="kv"><span>Hardware</span><code>NVIDIA H100</code></div>
-                <div className="kv"><span>Measurement</span><code>a91f…4c0e</code></div>
-                <div className="kv"><span>Model hash</span><code>3be7…d218</code></div>
-                <div className="kv"><span>Signed</span><code>per session</code></div>
-                <div className="verdict"><Icon name="shield" /><span>Verified and sealed</span></div>
-                <Link className="btn btn-light" href="/trust">Open full report</Link>
+                <div className="kv"><span>In transit</span><code>HTTPS (TLS)</code></div>
+                <div className="kv"><span>{brand.name} logs</span><code>None</code></div>
+                <div className="kv"><span>Model routing</span><code>Zero data retention</code></div>
+                <div className="kv"><span>Saved history</span><code>Encrypted in browser</code></div>
+                <div className="verdict"><Icon name="shield" /><span>Nothing readable stored</span></div>
+                <Link className="btn btn-light" href="/trust">See the details</Link>
               </div>
             </div>
           </div>
           <div className="cell c-logs rv">
             <h3>Nothing is logged</h3>
-            <p>No prompts, no replies, no IP history.</p>
+            <p>No prompts, no replies, no IP addresses in our logs.</p>
             <div className="viz">
               <div className="logview">
                 <div className="lh"><span>prompt_log</span><span>0 rows</span></div>
@@ -160,8 +169,8 @@ export function Privacy() {
             </div>
           </div>
           <div className="cell c-cipher rv">
-            <h3>Encrypted before it leaves your screen</h3>
-            <p>The network, the cloud and our servers only ever see noise.</p>
+            <h3>Encrypted in transit and in history</h3>
+            <p>Messages travel over HTTPS, so the network only sees noise. Saved history is encrypted in your browser first.</p>
             <div className="viz">
               <div className="flow">
                 <div className="box"><small>You type</small><p>Help me write a resignation letter that keeps things friendly</p></div>
@@ -176,7 +185,7 @@ export function Privacy() {
             <div className="viz">
               <div className="req">
                 <div className="row"><span>Query</span><code>best private health clinics</code></div>
-                <div className="row"><span>Sent from</span><code>{brand.egressHost}</code></div>
+                <div className="row"><span>Sent from</span><code>{brand.name} server</code></div>
                 <div className="row"><span>Your IP</span><span className="hid"><Icon name="chk" />Never shared</span></div>
               </div>
             </div>
@@ -198,13 +207,13 @@ export function How() {
           <div className="step rv">
             <div className="n">1</div>
             <h3>Connect your wallet</h3>
-            <p>Sign one message to prove it&apos;s yours. It costs no gas. You get {WELCOME_CREDITS} free credits.</p>
+            <p>Sign one message to prove it&apos;s yours. It costs no gas. New wallets with on-chain activity get {WELCOME_CREDITS} free credits.</p>
             <div className="mini"><Icon name="wal" />Robinhood, MetaMask, Rabby<b>1 click</b></div>
           </div>
           <div className="step rv" style={delay(0.08)}>
             <div className="n">2</div>
-            <h3>Top up with any token</h3>
-            <p>Pay in USDG, USDC or ETH. New to crypto? We walk you through getting USDG.</p>
+            <h3>Top up with USDG</h3>
+            <p>Send USDG on Robinhood Chain and credits arrive automatically. New to crypto? We walk you through getting USDG.</p>
             <div className="mini"><Icon name="coin" />1 USDG<b>{CREDITS_PER_USDG} credits</b></div>
           </div>
           <div className="step rv" style={delay(0.16)}>
@@ -226,7 +235,7 @@ export function Models() {
         <SectionHead
           tag="Models"
           title="The best open models, in one place"
-          sub="All open source, so anyone can audit what's answering you. Prices in credits per million tokens."
+          sub="All open-weight models, not one company's black box. Prices in credits per million tokens."
         />
         <div className="models rv">
           <div className="mh"><span>Model</span><span>Best for</span><span>Context</span><span>Input</span><span>Output</span></div>
@@ -257,14 +266,15 @@ export function Pricing() {
           <div className="pcard dark rv">
             <div className="lab">Pay as you go</div>
             <div className="big"><b>$1</b><span>= {CREDITS_PER_USDG} credits</span></div>
-            <p>Top up with USDG, USDC or ETH. Spend only on what you send.</p>
+            <p>Top up with USDG. Spend only on what you send, charged by the tokens used.</p>
             <ul className="plist">
               <li><Icon name="chk" />Credits never expire</li>
               <li><Icon name="chk" />Same balance for app and API</li>
-              <li><Icon name="chk" />{WELCOME_CREDITS} free credits when you join</li>
-              <li><Icon name="chk" />Up to {maxDiscount}% off with {brand.token.ticker} staking</li>
+              <li><Icon name="chk" />{WELCOME_CREDITS} free credits for new wallets*</li>
+              <li><Icon name="chk" />Failed requests are never charged</li>
             </ul>
             <Link className="btn btn-lg" href="/app">Start free</Link>
+            <p className="pfine">* Wallets with some on-chain activity, once per address, subject to daily limits.</p>
           </div>
           <PricingCalc />
         </div>
@@ -328,7 +338,7 @@ export function Api() {
             </div>
             <div>
               <span className="ic"><Icon name="bolt" /></span>
-              <div><h4>Agents that pay for themselves</h4><p>Give an agent a wallet and USDG. It signs in and buys credits on its own.</p></div>
+              <div><h4>Agents that pay for themselves</h4><p>Give an agent a wallet and USDG. It signs in with its own signature and tops up by sending USDG.</p></div>
             </div>
             <div>
               <span className="ic"><Icon name="book" /></span>
@@ -357,22 +367,23 @@ export function Token() {
       <div className="wrap">
         <div className="token glass rv">
           <div>
-            <span className="tag">{brand.token.ticker} token</span>
-            <h2 style={{ marginTop: 16 }}>Stake to pay less and get more</h2>
+            <span className="tag">{brand.token.ticker} token · planned</span>
+            <h2 style={{ marginTop: 16 }}>A utility token for paying less</h2>
             <p>
-              {brand.token.ticker} is a utility token. Stake it to unlock up to {maxDiscount}% off every message, early access to
-              new models, and free monthly credits.
+              {brand.token.ticker} is a planned utility token. It has not launched and there is no date. The plan: stake it to
+              unlock up to {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue,
+              no yield. Details may change before launch.
             </p>
             <div className="ctas">
-              <Link className="btn btn-dark" href="/app/stake">See staking tiers</Link>
-              <Link className="btn btn-light" href="/docs#token">How it works</Link>
+              <Link className="btn btn-dark" href="/docs#token">Read the plan</Link>
+              <Link className="btn btn-light" href="/app/stake">Planned tiers</Link>
             </div>
           </div>
           <div className="stats">
             {TIERS.map((t) => (
-              <div key={t.id}><span>{t.name} tier</span><b>{t.discountBps / 100}% off</b></div>
+              <div key={t.id}><span>{t.name} tier (planned)</span><b>{t.discountBps / 100}% off</b></div>
             ))}
-            <div><span>Unstake cooldown</span><b>{UNSTAKE_COOLDOWN_DAYS} days</b></div>
+            <div><span>Unstake cooldown (planned)</span><b>{UNSTAKE_COOLDOWN_DAYS} days</b></div>
           </div>
         </div>
       </div>
@@ -396,19 +407,25 @@ export function FaqAndCta() {
               q: 'How can I be sure nothing is logged?',
               a: (
                 <>
-                  Every session runs in a hardware enclave that publishes a signed attestation report. You can verify it
-                  yourself on the <Link href="/trust" style={link}>Trust page</Link>, together with our contract addresses
-                  and audit status.
+                  {brand.name}&apos;s code never writes prompts or answers to logs, databases or analytics, and an automated
+                  test in our open-source repository fails if it ever does. Models are reached through OpenRouter, restricted
+                  to providers that don&apos;t store or train on your data. That part is the providers&apos; policy, not a
+                  hardware proof: confidential-computing attestation is planned. Details are on the{' '}
+                  <Link href="/trust" style={link}>Trust page</Link>.
                 </>
               ),
             },
             {
+              q: 'Are my prompts end-to-end encrypted?',
+              a: `Not to the model, yet. Your prompt is encrypted in transit (HTTPS) to ${brand.name}, which forwards it over HTTPS to the model provider without logging or storing it. Saved chat history is different: it's encrypted in your browser with a key from your wallet signature, so we only store ciphertext.`,
+            },
+            {
               q: "I don't have USDG. Can I still pay?",
-              a: "Yes. Top up with USDC or ETH and we route the swap for you. If you're new to crypto, the app has a short guide to getting USDG through Robinhood Wallet.",
+              a: "Top-ups are USDG only for now; paying with USDC or ETH is planned. If you're new to crypto, the app has a short guide to getting USDG through Robinhood Wallet.",
             },
             {
               q: `Is ${brand.token.ticker} an investment?`,
-              a: `No. ${brand.token.ticker} is a utility token that gives stakers discounts and early access inside ${brand.name}. It doesn't entitle holders to revenue, dividends or profits.`,
+              a: `No. ${brand.token.ticker} is a planned utility token and hasn't launched. If it launches, it is meant for discounts and early access inside ${brand.name}. It won't entitle holders to revenue, dividends or profits.`,
             },
             {
               q: 'What if I lose my wallet?',
@@ -419,7 +436,7 @@ export function FaqAndCta() {
         <div className="cta rv">
           <div className="aurora" aria-hidden="true"><i /><i /><i /><i /></div>
           <h2>Ask the question you&apos;d never type anywhere else</h2>
-          <p>Connect a wallet and get {WELCOME_CREDITS} free credits. No card, no email, no trace.</p>
+          <p>New wallets with on-chain activity can get {WELCOME_CREDITS} free credits. No card, no email, no prompt logs.</p>
           <Link className="btn btn-dark btn-lg" href="/app">Launch the app</Link>
         </div>
       </div>

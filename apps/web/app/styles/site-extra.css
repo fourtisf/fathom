@@ -1,0 +1,30 @@
+/* Additions for the marketing site (landing, trust, docs, legal, 404). Tokens come from globals.css. */
+
+/* Landing: comparison footnote and fine print under the pay-as-you-go card */
+.cmp-note{margin-top:14px;font-size:12.5px;color:var(--faint);text-align:center}
+.pcard.dark .pfine{margin-top:14px;font-size:12.5px;color:rgba(255,255,255,.72)}
+
+/* Trust: small list of facts inside a panel */
+.facts{list-style:none;display:grid;gap:10px;margin-top:14px}
+.facts li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink2)}
+.facts li svg{width:16px;height:16px;flex-shrink:0;margin-top:3px;color:var(--mint)}
+.facts li.no svg{color:var(--cyan)}
+.panel .note{margin-top:14px;font-size:13px;color:var(--mute)}
+.panel .note a,.tsec .note a{color:var(--violet2)}
+.tsec .note{margin-top:12px;font-size:13.5px;color:var(--mute)}
+
+/* 404 */
+.nf .aurora{inset:-80px 0 0;height:auto}
+.nf{position:relative;isolation:isolate;min-height:62vh;display:grid;place-items:center;text-align:center;padding:96px 0 72px;overflow:hidden}
+.nf .code404{font-family:var(--mono);font-size:14px;color:var(--violet2);letter-spacing:.2em}
+.nf h1{margin-top:14px;font-size:clamp(38px,6vw,68px);font-weight:600;letter-spacing:-.05em;line-height:1.02;background:linear-gradient(180deg,#fff 45%,#C9CCEE);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nf p{margin:16px auto 0;max-width:34em;color:var(--ink2);font-size:17px}
+.nf .ctas{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:30px}
+
+/* Fix: `.api-list div` (globals/prototype) also matched the inner text wrapper, squeezing headings into 36px. */
+.api-list > div > div{display:block}
+
+/* Trust: long provider values and code must wrap/scroll inside the panel on phones. */
+.tsec .grid2 > *{min-width:0}
+.tsec .report code{overflow-wrap:anywhere}
+@media (max-width:560px){.tsec .report .kv{flex-direction:column;gap:4px}.tsec .report .kv code{text-align:left}}

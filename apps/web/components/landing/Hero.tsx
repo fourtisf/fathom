@@ -15,23 +15,23 @@ export function Hero() {
       <div className="stars" aria-hidden="true" />
       <div className="wrap">
         <Link href="/trust" className="pill up">
-          <b>New</b>Live on Robinhood Chain · verify our enclave<Icon name="arrow" />
+          <b>New</b>Live on Robinhood Chain · see where your data goes<Icon name="arrow" />
         </Link>
         <h1 className="up" style={{ transitionDelay: '.08s' }}>
           The AI that <span className="grad">forgets you</span> on purpose
         </h1>
         <p className="lede up" style={{ transitionDelay: '.16s' }}>
-          Compare the best open models side by side, inside sealed hardware. Sign in with your wallet, pay per message
-          with any token, and set chats to self-destruct.
+          Compare the best open models side by side, with zero prompt logs. Sign in with your wallet, pay per message in
+          USDG, and set chats to self-destruct.
         </p>
         <div className="ctas up" style={{ transitionDelay: '.24s' }}>
           <Link className="btn btn-dark btn-lg" href="/app">Start free, {WELCOME_CREDITS} credits</Link>
-          <Link className="btn btn-light btn-lg" href="/trust">Verify the privacy</Link>
+          <Link className="btn btn-light btn-lg" href="/trust">How privacy works</Link>
         </div>
         <div className="ticks up" style={{ transitionDelay: '.3s' }}>
           <span><Icon name="chk" />No email, no KYC</span>
           <span><Icon name="chk" />Zero prompt logs</span>
-          <span><Icon name="chk" />Pay with USDG, USDC or ETH</span>
+          <span><Icon name="chk" />Pay per message in USDG</span>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export function Hero() {
                 <div className="model-btn">
                   {ds.name} <span style={{ color: 'var(--mute)', fontWeight: 400 }}>vs</span> {qw.name}
                 </div>
-                <div className="sealed"><span className="d" /><span className="t">Sealed enclave verified</span></div>
+                <div className="sealed"><span className="d" /><span className="t">Nothing stored</span></div>
               </div>
               <div className="thread" style={{ overflow: 'hidden' }}>
                 <div className="thread-in">
@@ -114,7 +114,7 @@ export function Logos() {
   return (
     <div className="logos">
       <div className="wrap">
-        <p>Built on infrastructure you can verify</p>
+        <p>Built on open infrastructure</p>
         <ul>
           <li>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l9 16H3z" opacity=".85" /></svg>
@@ -126,7 +126,7 @@ export function Logos() {
               <rect x="5" y="5" width="14" height="14" rx="3" />
               <rect x="9" y="9" width="6" height="6" rx="1" />
             </svg>
-            NVIDIA Confidential
+            Open-weight models
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
