@@ -21,7 +21,7 @@ function toChain(c: AppConfig['chain']): Chain | null {
     name: c.name,
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrls: { default: { http: [c.rpcUrl] } },
-    blockExplorers: { default: { name: `${c.name} explorer`, url: c.explorerUrl } },
+    ...(c.explorerUrl ? { blockExplorers: { default: { name: `${c.name} explorer`, url: c.explorerUrl } } } : {}),
   });
 }
 

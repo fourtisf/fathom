@@ -3,7 +3,7 @@
 export type ModelStatus = 'ok' | 'degraded' | 'unavailable';
 
 export interface AppConfig {
-  chain: { id: number; name: string; rpcUrl: string; explorerUrl: string } | null;
+  chain: { id: number; name: string; rpcUrl: string; explorerUrl: string | null } | null;
   models: { id: string; name: string; status: ModelStatus }[];
   webSearch: boolean;
   inference: boolean;

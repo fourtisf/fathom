@@ -762,3 +762,11 @@ body::before{background:linear-gradient(180deg,#050817 0%,#04061A 50%,#03050F 10
 .suggest b{font-size:14px;font-weight:500;color:#fff}
 .suggest span{font-size:12.5px;color:var(--mute)}
 @media (max-width:600px){.suggest{grid-template-columns:1fr}}
+
+/* manual network details when the automatic switch fails */
+.netmanual{align-items:flex-start}
+.netmanual em{font-style:normal;color:#fff}
+.netmanual dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 18px;margin-top:10px}
+.netmanual dt{font-size:12px;color:var(--mute)}
+.netmanual dd{display:flex;align-items:center;gap:4px;min-width:0}
+.netmanual code{font-family:var(--mono);font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

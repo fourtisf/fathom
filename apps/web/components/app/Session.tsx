@@ -27,6 +27,8 @@ interface Session {
   signIn(address: `0x${string}`): Promise<void>;
   signOut(): Promise<void>;
   switchNetwork(): Promise<void>;
+  /** Wallet's reason when the last automatic switch failed; the UI then offers manual network details. */
+  switchError: string | null;
   setCredits(credits: number): void;
   refreshMe(): void;
 }
@@ -42,14 +44,15 @@ export function useSession(): Session {
 export const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 export function isUserRejection(e: unknown): boolean {
-  let cur: unknown = e;
-  for (let i = 0; i < 6 && cur; i++) {
-    const x = cur as { code?: number; name?: string; message?: string; cause?: unknown };
-    if (x.code === 4001 || x.name === 'UserRejectedRequestError' || /user (rejected|denied)|rejected the request/i.test(x.message ?? ''))
-      return true;
-    cur = x.cause;
+  // wagmi wraps some wallet failures (e.g. a refused wallet_addEthereumChain) in UserRejectedRequestError,
+  // so the innermost error with a numeric code decides; names and messages are only a fallback.
+  const chain: { code?: number; name?: string; message?: string }[] = [];
+  for (let cur: unknown = e; cur && chain.length < 8; cur = (cur as { cause?: unknown }).cause) {
+    chain.push(cur as { code?: number; name?: string; message?: string });
   }
-  return false;
+  const coded = [...chain].reverse().find((x) => typeof x.code === 'number');
+  if (coded) return coded.code === 4001;
+  return chain.some((x) => x.name === 'UserRejectedRequestError' || /user (rejected|denied)|rejected the request/i.test(x.message ?? ''));
 }
 
 export function SessionProvider({
@@ -68,6 +71,7 @@ export function SessionProvider({
   const { mutateAsync: switchChain } = useSwitchChain();
   const { mutateAsync: disconnect } = useDisconnect();
   const [lastSignIn, setLastSignIn] = useState<SignInResult | null>(null);
+  const [switchError, setSwitchError] = useState<string | null>(null);
 
   const meQuery = useQuery({
     queryKey: ['me'],
@@ -128,14 +132,24 @@ export function SessionProvider({
 
   const switchNetwork = useCallback(async () => {
     if (!config?.chain) return;
+    setSwitchError(null);
     toast('Approve the network switch in your wallet');
     try {
+      // wagmi falls back to wallet_addEthereumChain (name, RPC, explorer) when the wallet doesn't know the chain.
       await switchChain({ chainId: config.chain.id });
       toast(`Switched to ${config.chain.name}`);
     } catch (e) {
-      toast(isUserRejection(e) ? 'Network switch cancelled' : 'Could not switch network. Switch it in your wallet.', true);
+      if (isUserRejection(e)) return toast('Network switch cancelled');
+      const x = e as { shortMessage?: string; details?: string; message?: string };
+      const reason = (x.details || x.shortMessage || x.message || 'Unknown error').split('\n')[0]!.replace(/\.+$/, '').slice(0, 160);
+      setSwitchError(reason);
+      toast('Could not switch automatically. Add the network manually.', true);
     }
   }, [config?.chain, switchChain, toast]);
+
+  useEffect(() => {
+    if (!wrongNetwork) setSwitchError(null);
+  }, [wrongNetwork]);
 
   const setCredits = useCallback(
     (credits: number) => qc.setQueryData<Me | null>(['me'], (m) => (m ? { ...m, credits } : m)),
@@ -155,6 +169,7 @@ export function SessionProvider({
         signIn,
         signOut,
         switchNetwork,
+        switchError,
         setCredits,
         refreshMe: () => void qc.invalidateQueries({ queryKey: ['me'] }),
       }}

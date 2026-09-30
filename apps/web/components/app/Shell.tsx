@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { brand, estimateMessageCredits, LOW_BALANCE_CREDITS, MODELS } from '@fathom/config';
 import { Icon, type IconName } from '../Icon';
 import { LogoMark } from '../LogoMark';
+import { useCopy } from '../Toast';
 import { AppModals } from './Modals';
 import { short, useSession } from './Session';
 import { useUi } from './Ui';
@@ -83,7 +84,8 @@ function ModelMenu() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { me, config, configError, wrongNetwork, switchNetwork } = useSession();
+  const { me, config, configError, wrongNetwork, switchNetwork, switchError } = useSession();
+  const copy = useCopy();
   const { openModal, newChat } = useUi();
   const page = NAV.find((n) => n.href === pathname) ?? NAV[0]!;
   const isChat = page.href === '/app';
@@ -174,6 +176,34 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button className="btn btn-light" onClick={switchNetwork}>
               Switch network
             </button>
+          </div>
+        )}
+        {wrongNetwork && config?.chain && switchError && (
+          <div className="banner info netmanual">
+            <Icon name="info" />
+            <div>
+              <span>
+                Your wallet said: <em>{switchError}</em>. Add the network manually in your wallet (Settings → Networks → Add
+                network):
+              </span>
+              <dl>
+                {[
+                  ['Network name', config.chain.name],
+                  ['RPC URL', config.chain.rpcUrl],
+                  ['Chain ID', String(config.chain.id)],
+                  ['Currency symbol', 'ETH'],
+                  ...(config.chain.explorerUrl ? [['Block explorer', config.chain.explorerUrl]] : []),
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd>
+                      <code>{v}</code>
+                      <button className="copybtn" onClick={() => copy(v!, `${k} copied`)}>Copy</button>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
         )}
         {me && !wrongNetwork && me.credits < LOW_BALANCE_CREDITS && (

@@ -29,26 +29,40 @@ type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) :
 
 const SUGGESTIONS = [
   {
+    title: 'Spot a memecoin rug pull',
+    sub: 'Liquidity, dev wallets and mint authority',
+    prompt:
+      'How do I spot a memecoin rug pull before buying? Walk me through checking locked liquidity, dev and top-holder wallets, mint and freeze authority, and honeypot sell restrictions.',
+  },
+  {
+    title: 'What is Robinhood Chain?',
+    sub: 'The layer 2, USDG and tokenized stocks',
+    prompt:
+      'Explain what Robinhood Chain is, how it relates to Ethereum and Arbitrum, and what USDG and tokenized stocks are. Say clearly which details you are unsure about or may be out of date.',
+  },
+  {
+    title: 'How memecoin launches work',
+    sub: 'Bonding curves, snipers and bots',
+    prompt:
+      'Explain how memecoin launches work: bonding-curve launchpads, when liquidity migrates to a DEX, and how sniper bots and bundled wallets affect early buyers.',
+  },
+  {
     title: 'Check a token contract',
     sub: 'Red flags to look for before you buy',
     prompt:
       "What red flags should I check in a token's smart contract before buying it? Cover mint functions, blacklists, honeypots, taxes and owner privileges.",
   },
   {
+    title: 'Bridge to Robinhood Chain safely',
+    sub: 'The steps and the mistakes that cost money',
+    prompt:
+      'How do I safely bridge ETH or stablecoins from Ethereum to a layer 2 like Robinhood Chain? List the steps, how to verify the official bridge, and the common mistakes that lose funds.',
+  },
+  {
     title: 'Keep my wallet safe',
     sub: 'Seed phrase, token approvals and phishing',
     prompt:
       'How do I keep my crypto wallet safe? Cover storing the seed phrase, revoking old token approvals and spotting phishing sites and fake airdrops.',
-  },
-  {
-    title: 'How stablecoins hold $1',
-    sub: 'USDG, USDC and the risks behind the peg',
-    prompt: 'How do stablecoins like USDG and USDC keep their 1:1 peg to the dollar, and what risks should I understand before holding them?',
-  },
-  {
-    title: 'Impermanent loss, simply',
-    sub: 'A worked example for liquidity pools',
-    prompt: 'Explain impermanent loss in a DEX liquidity pool with a simple worked example using numbers, and when it matters.',
   },
 ];
 
