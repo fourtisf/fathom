@@ -27,6 +27,29 @@ type Turn =
 
 type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) : never;
 
+const SUGGESTIONS = [
+  {
+    title: 'Is my salary offer fair?',
+    sub: 'Plan a counter-offer without naming your employer',
+    prompt: 'I got a job offer and want to negotiate. Help me judge whether it is fair and write a polite counter-offer.',
+  },
+  {
+    title: 'Explain a lab result',
+    sub: 'Plain words, and what to ask your doctor',
+    prompt: 'Explain what a high LDL cholesterol result means in plain words, and which questions I should ask my doctor.',
+  },
+  {
+    title: 'Audit a smart contract',
+    sub: 'The bugs to look for before you deploy',
+    prompt: 'What are the most common security bugs in Solidity smart contracts, and how do I check my contract for them?',
+  },
+  {
+    title: 'Write a resignation letter',
+    sub: 'Short, friendly, keeps the door open',
+    prompt: 'Write a short, friendly resignation letter that keeps a good relationship with my manager.',
+  },
+];
+
 const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
 const RM = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 let nextId = 1;
@@ -144,8 +167,9 @@ export function Chat() {
     return out.slice(-40);
   }
 
-  async function send(retry?: { q: string; model: string }) {
-    const q = (retry?.q ?? input).trim();
+  async function send(opts: { text?: string; retry?: { q: string; model: string } } = {}) {
+    const { retry } = opts;
+    const q = (retry?.q ?? opts.text ?? input).trim();
     if (!q || busy) return;
     if (!me) return ui.openModal('wallet');
     const model = retry?.model ?? ui.model;
@@ -156,8 +180,10 @@ export function Chat() {
 
     if (!retry) {
       add({ kind: 'you', text: q });
-      setInput('');
-      if (inp.current) inp.current.style.height = 'auto';
+      if (opts.text === undefined) {
+        setInput('');
+        if (inp.current) inp.current.style.height = 'auto';
+      }
     }
     if (!config?.inference) {
       add({ kind: 'fail', title: 'AI models are not connected yet.', body: 'We\'re finishing the setup. You weren\'t charged.' });
@@ -312,7 +338,7 @@ export function Chat() {
                             if (t.action?.retry) {
                               ui.setModel(t.action.retry.model);
                               setTurns((ts) => ts.filter((x) => x.id !== t.id));
-                              void send(t.action.retry);
+                              void send({ retry: t.action.retry });
                             }
                           }}
                         >
@@ -375,6 +401,16 @@ export function Chat() {
               </div>
             );
           })}
+          {!turns.some((t) => t.kind === 'you') && !busy && (
+            <div className="suggest" aria-label="Suggested questions">
+              {SUGGESTIONS.map((x) => (
+                <button key={x.title} onClick={() => void send({ text: x.prompt })}>
+                  <b>{x.title}</b>
+                  <span>{x.sub}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div className="composer-wrap">
