@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 // SVG sprite ported verbatim from the prototype. Render <IconSprite /> once per page.
 const SPRITE = `
-  <symbol id="mk" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M3.5 10.5c2.8-2.3 5.7-2.3 8.5 0s5.7 2.3 8.5 0"/><path d="M6.5 15.5c1.9-1.5 3.7-1.5 5.5 0s3.6 1.5 5.5 0" opacity=".7"/></symbol>
+  <symbol id="mk" viewBox="0 0 64 64"><path fill="#fff" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></symbol>
   <symbol id="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
   <symbol id="chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
   <symbol id="shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3l7.5 3v5.5c0 4.8-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.7-7.5-9.5V6z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></symbol>

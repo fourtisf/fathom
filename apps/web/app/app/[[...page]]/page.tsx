@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { WELCOME_CREDITS } from '@fathom/config';
-import { Icon } from '@/components/Icon';
+import { LogoMark } from '@/components/LogoMark';
 
 export const metadata: Metadata = { title: 'App', robots: { index: false, follow: false } };
 
@@ -13,7 +13,7 @@ export default function AppPlaceholder() {
   return (
     <div className="gate" style={{ minHeight: '100dvh' }}>
       <div>
-        <span className="logo-mark"><Icon name="mk" /></span>
+        <LogoMark />
         <h2>Connect to start chatting</h2>
         <p>
           Your wallet is your account. Sign one message, no gas, and get {WELCOME_CREDITS} free credits to try every model.
