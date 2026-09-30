@@ -344,6 +344,7 @@ export function TopUpModal() {
         return;
       }
       setStep('done');
+      setNote('');
       if (typeof r.balance === 'number') setCredits(r.balance);
       markOnboard('top');
       void qc.invalidateQueries({ queryKey: ['credits'] });

@@ -206,7 +206,6 @@ export function Chat() {
 
   const persist = useCallback(
     async (ts: Turn[], burn = ui.burn) => {
-      if (!history.enabled || !history.unlocked) return;
       const record = toRecord(ts, createdAt, burn);
       if (!record) return;
       try {

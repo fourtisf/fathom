@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useConnection, useSignMessage } from 'wagmi';
 import { api, type ChatBlob } from '@/lib/api';
 import {
@@ -73,6 +73,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [items, setItems] = useState<HistoryItem[]>([]);
   const enabled = Boolean(me?.settings.saveHistory);
+  // Refs so save/load right after unlock() see the new key, not a stale render's.
+  const keyRef = useRef<CryptoKey | null>(null);
+  const enabledRef = useRef(enabled);
+  keyRef.current = key;
+  enabledRef.current = enabled;
 
   const refreshWith = useCallback(async (k: CryptoKey) => {
     const blobs = await api<ChatBlob[]>('/chats');
@@ -114,6 +119,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     const signature = await signMessage({ message: historyKeyMessage(me.address), account: address });
     const k = await deriveHistoryKey(signature);
     await storeHistoryKey(me.address, k);
+    keyRef.current = k;
     setKey(k);
     await refreshWith(k);
   }, [me, connection.address, connection.status, signMessage, refreshWith]);
@@ -124,8 +130,9 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 
   const save = useCallback(
     async (id: string, record: ChatRecord) => {
-      if (!key || !enabled) return;
-      const { ciphertext, iv } = await encryptJson(key, record);
+      const k = keyRef.current;
+      if (!k || !enabledRef.current) return;
+      const { ciphertext, iv } = await encryptJson(k, record);
       const burnAt = burnAtFor(record);
       await api(`/chats/${id}`, { method: 'PUT', body: JSON.stringify({ ciphertext, iv, burnAt }) });
       setItems((xs) => [
@@ -133,11 +140,12 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
         ...xs.filter((x) => x.id !== id),
       ]);
     },
-    [key, enabled],
+    [],
   );
 
   const load = useCallback(
     async (id: string) => {
+      const key = keyRef.current;
       if (!key) return null;
       const blobs = await api<ChatBlob[]>('/chats');
       const b = blobs.find((x) => x.id === id);
@@ -148,7 +156,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    [key],
+    [],
   );
 
   const remove = useCallback(async (id: string) => {
@@ -158,6 +166,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 
   const lock = useCallback(async () => {
     if (me) await deleteHistoryKey(me.address);
+    keyRef.current = null;
     setKey(null);
     setItems([]);
   }, [me]);
