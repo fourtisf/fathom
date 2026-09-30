@@ -58,9 +58,9 @@ export default function TermsPage() {
           for medical, legal or financial decisions without professional advice.
         </p>
 
-        <h2>6. {brand.token.ticker}</h2>
+        <h2>6. The {brand.token.display}</h2>
         <p>
-          {brand.token.ticker} is a planned utility token and has not launched. If it launches, it is intended for discounts
+          The {brand.token.display} is a planned utility token and has not launched. If it launches, it is intended for discounts
           and early access inside {brand.name}. It is not an investment and does not entitle holders to revenue, dividends or
           profit.
         </p>

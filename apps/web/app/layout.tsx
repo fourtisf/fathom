@@ -5,6 +5,7 @@ import { brand } from '@fathom/config';
 import { IconSprite } from '@/components/Icon';
 import { ToastProvider } from '@/components/Toast';
 import './globals.css';
+import './styles/premium.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),

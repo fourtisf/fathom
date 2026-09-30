@@ -367,10 +367,10 @@ export function Token() {
       <div className="wrap">
         <div className="token glass rv">
           <div>
-            <span className="tag">{brand.token.ticker} token · planned</span>
+            <span className="tag">Token · planned</span>
             <h2 style={{ marginTop: 16 }}>A utility token for paying less</h2>
             <p>
-              {brand.token.ticker} is a planned utility token. It has not launched and there is no date. The plan: stake it to
+              The {brand.token.display} is a planned utility token. It has not launched and there is no date. The plan: stake it to
               unlock up to {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue,
               no yield. Details may change before launch.
             </p>
@@ -424,8 +424,8 @@ export function FaqAndCta() {
               a: "Top-ups are coming soon, starting with USDG on Robinhood Chain; USDC and ETH come later. Until then, new wallets with on-chain activity get free credits to try every model.",
             },
             {
-              q: `Is ${brand.token.ticker} an investment?`,
-              a: `No. ${brand.token.ticker} is a planned utility token and hasn't launched. If it launches, it is meant for discounts and early access inside ${brand.name}. It won't entitle holders to revenue, dividends or profits.`,
+              q: `Is the ${brand.token.display} an investment?`,
+              a: `No. The ${brand.token.display} is a planned utility token and hasn't launched. If it launches, it is meant for discounts and early access inside ${brand.name}. It won't entitle holders to revenue, dividends or profits.`,
             },
             {
               q: 'What if I lose my wallet?',

@@ -71,4 +71,4 @@ What is true today (the site copy must match this; see `/trust`):
 - **Provider.** With `INFERENCE_PROVIDER=openrouter`, requests are restricted to upstream providers with `data_collection: deny` and zero-data-retention endpoints (`zdr`). This is a provider policy, not hardware attestation. `tinfoil` (confidential computing) is supported by the adapter; showing its attestation on `/trust` is still to be wired.
 - **Saved history** (optional) is encrypted in the browser with a key derived from the wallet signature; the server stores only ciphertext. Burn timers delete chats automatically.
 - **No IPs linked to wallets.** IPs are only used, hashed, in short-lived Redis rate-limit counters.
-- **Payments.** Top-ups are plain USDG transfers to the treasury, credited after confirmations. No custom contract holds funds. `$NOX` and staking are planned and not deployed.
+- **Payments.** Top-ups are plain USDG transfers to the treasury, credited after confirmations. No custom contract holds funds. The utility token and staking are planned and not deployed.

@@ -75,7 +75,7 @@ export function CreditsPage() {
         <div className="kpi glass"><span>Balance</span><b>{fmt2(me.credits)}</b><small>≈ ${(me.credits / CREDITS_PER_USDG).toFixed(2)}</small></div>
         <div className="kpi glass"><span>Spent this month</span><b>{fmt2(s?.spentMonth ?? 0)}</b><small>credits</small></div>
         <div className="kpi glass"><span>Messages</span><b>{s?.messagesMonth ?? 0}</b><small>this month</small></div>
-        <div className="kpi glass"><span>Your discount</span><b>0%</b><small>Staking opens with {brand.token.ticker}</small></div>
+        <div className="kpi glass"><span>Your discount</span><b>0%</b><small>Staking is planned</small></div>
       </div>
       <div className="grid2">
         <div className="glass panel">
@@ -268,21 +268,21 @@ export function StakePage() {
     <div className="page">
       <div className="page-h">
         <div>
-          <h2>Stake {brand.token.ticker}</h2>
-          <p>Stake to get discounts on every message. {brand.token.ticker} is a utility token and staking pays no yield.</p>
+          <h2>Staking</h2>
+          <p>Planned: stake the {brand.token.display} for discounts on every message. It is a utility token and staking pays no yield.</p>
         </div>
       </div>
       <div className="glass panel" style={{ marginTop: 0 }}>
         <div className="empty-state">
           <b>Staking isn&apos;t open yet</b>
-          {brand.token.ticker} hasn&apos;t launched. Unstaking will have a {UNSTAKE_COOLDOWN_DAYS}-day cooldown. These are the planned tiers:
+          The {brand.token.display} hasn&apos;t launched. Unstaking will have a {UNSTAKE_COOLDOWN_DAYS}-day cooldown. These are the planned tiers:
         </div>
       </div>
       <div className="tiers">
         {TIERS.map((t) => (
           <div className="tier glass" key={t.id}>
             <div className="tn">{t.name}</div>
-            <div className="need">{fmt(t.minStake)} {brand.token.symbol} staked</div>
+            <div className="need">{fmt(t.minStake)} tokens staked</div>
             <div className="off">{t.discountBps / 100}% off</div>
             <ul>{t.perks.map((p) => <li key={p}>{p}</li>)}</ul>
           </div>

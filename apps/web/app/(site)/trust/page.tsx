@@ -142,7 +142,7 @@ export default async function TrustPage() {
           </table>
         </div>
         <p className="note">
-          The {brand.token.ticker} token and staking contracts are not deployed. {brand.token.ticker} is a planned utility
+          The {brand.token.display} and staking contracts are not deployed. The {brand.token.display} is a planned utility
           token with no launch date.
         </p>
       </div>
@@ -156,7 +156,7 @@ export default async function TrustPage() {
             <h3 style={{ marginTop: 12 }}>Funds and contracts</h3>
             <p className="sub2">
               No custom contract holds funds: when top-ups open, they will go straight to the treasury address above as ordinary
-              USDG transfers, credited after the transfer is confirmed. Any future contract (such as {brand.token.ticker} or
+              USDG transfers, credited after the transfer is confirmed. Any future contract (such as the {brand.token.display} or
               staking) is planned to get an independent audit before launch, with the report published here.
             </p>
           </div>

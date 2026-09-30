@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getModel, WELCOME_CREDITS } from '@fathom/config';
+import { getModel, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { Icon } from '../Icon';
 
 const ds = getModel('deepseek-v3.1')!;
@@ -114,7 +114,13 @@ export function Logos() {
   return (
     <div className="logos">
       <div className="wrap">
-        <p>Built on open infrastructure</p>
+        <div className="stats-strip" aria-label="Noxsea at a glance">
+          <div><b>0</b><span>prompts logged or stored</span></div>
+          <div><b>{MODELS.length}</b><span>open-weight models</span></div>
+          <div><b>{WELCOME_CREDITS}</b><span>free credits to start</span></div>
+          <div><b>1</b><span>signature to sign in</span></div>
+        </div>
+        <p style={{ marginTop: 56 }}>Built on open infrastructure</p>
         <ul>
           <li>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3l9 16H3z" opacity=".85" /></svg>

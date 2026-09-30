@@ -1,0 +1,73 @@
+/*
+ * Premium polish layered over the prototype styles (loaded after globals.css).
+ * Typography balance, floating glass nav, refined glass cards, eyebrow labels,
+ * section hairlines, CTA sheen, stats strip and footer wordmark.
+ */
+
+/* ---------- typography ---------- */
+h1,h2,h3,.shead h2,.hero h1,.cta h2{text-wrap:balance}
+p,.lede,.shead p,li{text-wrap:pretty}
+.num,.kpi b,.stats b,.big b,.read b{font-variant-numeric:tabular-nums}
+.shead h2{letter-spacing:-.05em}
+.shead p{font-size:17.5px;line-height:1.6;color:var(--ink2)}
+
+/* ---------- eyebrow labels ---------- */
+.tag{height:26px;padding:0 12px 0 10px;gap:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#C9C3FF}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grad);box-shadow:0 0 10px rgba(139,124,255,.9)}
+
+/* ---------- floating glass nav ---------- */
+header{padding-top:calc(12px + env(safe-area-inset-top,0px));transition:padding .3s}
+header.scrolled{background:transparent;border-bottom-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+header nav.wrap{height:60px;padding:0 8px 0 16px;border-radius:18px;border:1px solid transparent;transition:background .3s,border-color .3s,box-shadow .3s}
+header.scrolled nav.wrap{background:rgba(9,12,34,.9);border-color:rgba(255,255,255,.09);box-shadow:0 18px 50px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px)}
+.nav-links a{font-size:14px}
+@media (max-width:860px){.nav-links.open{top:68px}}
+
+/* ---------- refined glass surfaces ---------- */
+.glass,.cell,.step,.models,.pcard.calc,.token,.q,.code{
+  background:linear-gradient(180deg,rgba(26,31,78,.5),rgba(10,13,38,.62)) padding-box,
+             linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.035) 38%,rgba(139,124,255,.16)) border-box;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 30px 80px -40px rgba(0,0,0,.8)}
+.cell,.step,.pcard.calc,.tier,.kpi{transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+@media (hover:hover){
+  .cell:hover,.step:hover,.pcard.calc:hover{transform:translateY(-3px);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 40px 90px -40px rgba(80,90,255,.45)}
+}
+
+/* ---------- section hairlines ---------- */
+main section{position:relative}
+main section+section::before{content:"";position:absolute;top:56px;left:50%;width:min(720px,70%);height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(179,168,255,.28),rgba(92,225,230,.22),transparent)}
+
+/* ---------- primary button sheen ---------- */
+.btn-dark{overflow:hidden;isolation:isolate}
+.btn-dark::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);transition:transform .8s var(--ease)}
+.btn-dark:hover::after{transform:translateX(120%)}
+.btn-light{backdrop-filter:blur(12px)}
+
+/* ---------- hero ---------- */
+.hero .pill{box-shadow:0 10px 30px -12px rgba(111,108,255,.6)}
+.hero .lede{color:#C3C7E6}
+.stage .frame{box-shadow:0 60px 140px -40px rgba(3,5,20,.95),0 0 0 1px rgba(255,255,255,.07),0 0 120px -30px rgba(111,108,255,.35)}
+
+/* ---------- stats strip ---------- */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);max-width:960px;margin:72px auto 0;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);overflow:hidden}
+.stats-strip div{padding:24px 18px;text-align:center}
+.stats-strip div+div{border-left:1px solid rgba(255,255,255,.07)}
+.stats-strip b{display:block;font-size:34px;font-weight:600;letter-spacing:-.04em;line-height:1;background:linear-gradient(180deg,#fff 30%,#B8B0FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stats-strip span{display:block;margin-top:8px;font-size:13px;color:var(--mute)}
+@media (max-width:700px){.stats-strip{grid-template-columns:1fr 1fr}.stats-strip div:nth-child(3){border-left:0}.stats-strip div:nth-child(n+3){border-top:1px solid rgba(255,255,255,.07)}}
+.logos{padding-top:56px}
+.logos ul{gap:14px 40px}
+.logos li{color:#737AA6;font-weight:500;font-size:15.5px;transition:color .2s}
+.logos li:hover{color:#B7BCDD}
+
+/* ---------- footer wordmark ---------- */
+.site-foot{position:relative;overflow:hidden}
+.foot-mark{margin-top:48px;text-align:center;font-size:clamp(72px,17vw,248px);font-weight:700;letter-spacing:-.06em;line-height:.8;background:linear-gradient(180deg,rgba(179,168,255,.16),rgba(92,225,230,0) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;pointer-events:none}
+
+/* ---------- docs sidebar never covers the footer ---------- */
+/* The prototype styles every <nav> at 68px tall; the docs sidebar must size to its links. */
+.doc-nav{height:auto;max-height:calc(100vh - 120px);overflow-y:auto;scrollbar-width:thin;padding-bottom:8px}
+.doc-nav a.cur,.doc-nav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.prose pre{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+
+@media (prefers-reduced-motion:reduce){.btn-dark::after{display:none}.cell:hover,.step:hover,.pcard.calc:hover{transform:none}}

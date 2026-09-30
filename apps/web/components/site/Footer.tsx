@@ -23,7 +23,7 @@ export function Footer() {
               <li><Link href="/app">Launch app</Link></li>
               <li><Link href="/#why">Why {brand.name}</Link></li>
               <li><Link href="/#pricing">Pricing</Link></li>
-              <li><Link href="/docs#token">{brand.token.ticker} (planned)</Link></li>
+              <li><Link href="/docs#token">Token (planned)</Link></li>
             </ul>
           </div>
           <div>
@@ -50,6 +50,7 @@ export function Footer() {
           <span>© {new Date().getFullYear()} {brand.company}</span>
           <a href={`mailto:${brand.securityEmail}`}>{brand.securityEmail}</a>
         </div>
+        <div className="foot-mark" aria-hidden="true">{brand.name.toLowerCase()}</div>
       </div>
     </footer>
   );

@@ -123,7 +123,7 @@ function envAddress(key: string): Address | null {
   return v && ADDRESS_RE.test(v) ? (v as Address) : null;
 }
 
-/** On-chain addresses that matter today. $NOX and staking contracts are not deployed. */
+/** On-chain addresses that matter today. Token and staking contracts are not deployed. */
 export function getAddresses(): AddressRow[] {
   return [
     { name: 'USDG', purpose: 'Stablecoin for top-ups (coming soon)', address: envAddress('USDG_ADDRESS') },

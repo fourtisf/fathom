@@ -22,7 +22,6 @@ export function buildSystemPrompt(opts: {
   developerApi?: boolean;
 }): string {
   const privacy = (opts.preset && INFERENCE_PRESETS[opts.preset]?.privacy) || 'none';
-  const t = brand.token.ticker;
   const facts = [
     `${brand.name} (${brand.domain}) is a private AI chat app on open-weight models: ${MODELS.map((m) => m.name).join(', ')}.`,
     'Users sign in with a crypto wallet by signing one message (Sign-In with Ethereum): no email, no password, no KYC, and no gas.',
@@ -33,7 +32,7 @@ export function buildSystemPrompt(opts: {
     'Compare mode sends one question to two models and shows both answers side by side; each answer is charged separately.',
     ...(opts.webSearch ? [`Web search runs from ${brand.name}'s servers, so the user's IP address is never sent to the search engine.`] : []),
     `Privacy: ${brand.name} never logs or stores prompts or answers in readable form. Chat history is optional (Settings): when on, chats are encrypted in the browser with a key from the user's wallet signature and the server keeps only ciphertext it cannot read; when off, closing or forgetting a chat erases it. Chats can be set to self-destruct after 1 hour or 24 hours. ${PRIVACY_LINE[privacy]}`,
-    `${t} is a planned utility token for message discounts and early access through staking. It has not launched, it is not an investment, and it pays no yield, dividends or revenue.`,
+    `The ${brand.token.display} is a planned utility token for message discounts and early access through staking. It has not launched, it is not an investment, and it pays no yield, dividends or revenue.${brand.token.announced ? '' : ' Its ticker has not been announced: never state or guess one.'}`,
     opts.developerApi
       ? `An OpenAI-compatible developer API is available at ${brand.apiBaseUrl}: create an API key on the API keys page and use it with the OpenAI SDKs; requests use the same credits. Staking is planned but not available yet.`
       : 'An OpenAI-compatible developer API and staking are planned but not available yet.',

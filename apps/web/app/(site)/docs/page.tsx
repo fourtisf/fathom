@@ -102,7 +102,7 @@ export default function DocsPage() {
         <a href="#agents">Agent wallets</a>
         <a href="#topups">Top-ups</a>
         <a href="#privacy">Privacy</a>
-        <a href="#token">{brand.token.ticker} (planned)</a>
+        <a href="#token">Token (planned)</a>
       </nav>
       <article className="prose">
         <h1>{brand.name} API</h1>
@@ -222,9 +222,9 @@ export default function DocsPage() {
           setting.
         </p>
 
-        <h2 id="token">{brand.token.ticker} (planned)</h2>
+        <h2 id="token">Token (planned)</h2>
         <p>
-          {brand.token.ticker} is a planned utility token. It has not launched and has no launch date. The current plan is
+          The {brand.token.display} is a planned utility token. It has not launched and has no launch date. The current plan is
           that staking it unlocks discounts of up to {maxDiscount}% on messages and early access to new models, with a{' '}
           {UNSTAKE_COOLDOWN_DAYS}-day unstake cooldown. It will not pay revenue, dividends or yield. Details may change
           before launch, and nothing about it affects the API today.

@@ -3,9 +3,15 @@
  * Renamed from the spec's working name "Fathom" to Noxsea (CLAUDE.md §13.1).
  */
 const domain = 'noxsea.xyz';
+const name = 'Noxsea';
+/**
+ * The token ticker stays out of the codebase until launch so it can't leak through the JS bundle.
+ * At launch set TOKEN_TICKER (e.g. '$XYZ'); public copy then switches from the generic label to it.
+ */
+const TOKEN_TICKER = '' as string;
 
 export const brand = {
-  name: 'Noxsea',
+  name,
   company: 'Noxsea Labs',
   domain,
   siteUrl: `https://${domain}`,
@@ -17,8 +23,9 @@ export const brand = {
   /** Prefix for API keys. The full key is shown once and only its sha256 is stored. */
   keyPrefix: 'nox_live_',
   token: {
-    symbol: 'NOX',
-    ticker: '$NOX',
+    announced: TOKEN_TICKER !== '',
+    /** Name to show publicly: the ticker once announced, otherwise a generic label. */
+    display: TOKEN_TICKER || `${name} token`,
   },
   verifierPackage: '@noxsea/verify',
   servingRepo: 'noxsea-infer',
