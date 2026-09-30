@@ -44,6 +44,8 @@ model ApiKey {
   createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
   revokedAt  DateTime?
+  // Set for short-lived agent session keys (POST /v1/auth/siwe); invalid after this time.
+  expiresAt  DateTime?
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -63,6 +65,7 @@ model Transaction {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([status, type])
 }
 
 // Aggregates only, never content.

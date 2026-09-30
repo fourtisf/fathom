@@ -32,6 +32,8 @@ describe.skipIf(!up)('SIWE auth (Postgres + Redis)', () => {
       explorerUrl: 'https://explorer.example.org',
     });
     expect(body.inference).toBe(true);
+    expect(body.turnstileSiteKey).toBeNull();
+    expect(body.topup).toBeNull(); // no USDG_ADDRESS / TREASURY_ADDRESS in TEST_ENV
     expect(body.models.every((m: { status: string }) => m.status === 'ok')).toBe(true);
   });
 
@@ -81,6 +83,7 @@ describe.skipIf(!up)('SIWE auth (Postgres + Redis)', () => {
       address: r.account.address,
       credits: 25,
       settings: { saveHistory: true, defaultBurn: 'off', webSearch: false },
+      welcomeClaimed: true,
     });
     const anon = await app.inject({ method: 'GET', url: '/me' });
     expect(anon.statusCode).toBe(401);

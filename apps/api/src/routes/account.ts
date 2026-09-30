@@ -1,9 +1,11 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply } from 'fastify';
 import { getAddress } from 'viem';
 import type { Prisma } from '@fathom/db';
 import { errorBody } from '../errors';
 import { requireAuth } from '../session';
 import { toCredits, utcDay, utcMonthStart } from '../billing';
+import { fixedWindow } from '../ratelimit';
+import { hasWelcome, tryGrantWelcome } from '../welcome';
 
 export type Burn = 'off' | '1h' | '24h';
 export interface Settings {
@@ -29,13 +31,71 @@ const DAY_MS = 86_400_000;
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
 export const accountRoutes: FastifyPluginAsync = async (app) => {
-  const { prisma } = app.ctx;
+  const { prisma, redis } = app.ctx;
   app.addHook('preHandler', requireAuth);
+
+  /** Per-user limit for endpoints that call the chain RPC. */
+  const limitUser = async (key: string, userId: string, limit: number, reply: FastifyReply): Promise<boolean> => {
+    const rl = await fixedWindow(redis, `${key}:${userId}`, limit, 60);
+    if (rl.ok) return true;
+    void reply.header('retry-after', String(rl.retryAfter)).status(429).send(errorBody(429, 'Too many requests. Try again in a moment.', 'rate_limited'));
+    return false;
+  };
 
   app.get('/me', async (request, reply) => {
     const user = await prisma.user.findUnique({ where: { id: request.userId! } });
     if (!user) return reply.status(401).send(errorBody(401, 'Sign in with your wallet', 'unauthenticated'));
-    return { address: getAddress(user.address), credits: toCredits(user.creditsMicro), settings: readSettings(user.settings) };
+    return {
+      address: getAddress(user.address),
+      credits: toCredits(user.creditsMicro),
+      settings: readSettings(user.settings),
+      welcomeClaimed: await hasWelcome(app.ctx, user.id),
+    };
+  });
+
+  // Re-attempts the welcome grant for a user who never received it (e.g. no on-chain activity at sign-up).
+  app.post('/credits/welcome', async (request, reply) => {
+    const userId = request.userId!;
+    if (!(await limitUser('welcome', userId, 10, reply))) return reply;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, address: true } });
+    if (!user) return reply.status(401).send(errorBody(401, 'Sign in with your wallet', 'unauthenticated'));
+    const r = await tryGrantWelcome(app.ctx, user, request.ip, request.log);
+    if (r.granted) return { credits: toCredits(r.creditsMicro), balance: toCredits(r.balanceMicro) };
+    const messages: Record<typeof r.reason, string> = {
+      already_claimed: 'Welcome credits were already added to this wallet.',
+      no_activity: 'Welcome credits need a wallet with some activity on this network.',
+      ip_limit: 'Too many new wallets from this network today. Try again tomorrow.',
+      daily_limit: "Today's welcome credits are all claimed. Try again tomorrow.",
+      check_failed: "We couldn't check your wallet right now. Try again in a moment.",
+    };
+    return reply.status(403).send(errorBody(403, messages[r.reason], r.reason));
+  });
+
+  app.post('/credits/topup', async (request, reply) => {
+    const userId = request.userId!;
+    const topup = app.ctx.topup;
+    if (!topup?.ready) {
+      return reply.status(503).send(errorBody(503, 'Top-ups are not available right now', 'topups_unavailable'));
+    }
+    const txHash = (request.body as { txHash?: unknown } | null)?.txHash;
+    if (typeof txHash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+      return reply.status(400).send(errorBody(400, 'Expected { txHash: 0x… (32 bytes) }'));
+    }
+    if (!(await limitUser('topup', userId, 30, reply))) return reply;
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { address: true } });
+    if (!user) return reply.status(401).send(errorBody(401, 'Sign in with your wallet', 'unauthenticated'));
+    const r = await topup.claim(userId, user.address, txHash as `0x${string}`);
+    switch (r.kind) {
+      case 'confirmed':
+        return { status: 'confirmed', credits: toCredits(r.creditsMicro), balance: toCredits(r.balanceMicro) };
+      case 'pending':
+        return reply.status(202).send({
+          status: 'pending',
+          ...(r.confirmations !== undefined ? { confirmations: r.confirmations, required: r.required } : {}),
+        });
+      case 'error':
+        return reply.status(r.status).send(errorBody(r.status, r.message, r.code));
+    }
   });
 
   app.patch('/settings', async (request, reply) => {
@@ -52,10 +112,16 @@ export const accountRoutes: FastifyPluginAsync = async (app) => {
     const user = await prisma.user.findUnique({ where: { id: request.userId! }, select: { settings: true } });
     if (!user) return reply.status(401).send(errorBody(401, 'Sign in with your wallet', 'unauthenticated'));
     const settings = { ...readSettings(user.settings), ...patch };
-    await prisma.user.update({
+    const update = prisma.user.update({
       where: { id: request.userId! },
       data: { settings: settings as unknown as Prisma.InputJsonObject },
     });
+    // Turning history off deletes every saved (encrypted) chat in the same transaction.
+    if (patch.saveHistory === false) {
+      await prisma.$transaction([update, prisma.encryptedChat.deleteMany({ where: { userId: request.userId! } })]);
+    } else {
+      await update;
+    }
     return settings;
   });
 

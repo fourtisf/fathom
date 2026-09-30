@@ -22,4 +22,15 @@ describe('system prompt', () => {
     // Utility-token rule (CLAUDE.md §0.6): only negated mentions of yield/revenue.
     expect(router).toMatch(/pays no yield, dividends or revenue/);
   });
+
+  it('describes top-ups and the developer API only when they are live', () => {
+    const off = buildSystemPrompt({ preset: 'tinfoil', webSearch: false });
+    const on = buildSystemPrompt({ preset: 'tinfoil', webSearch: false, topups: true, developerApi: true });
+    expect(off).toMatch(/coming soon and is not live yet/);
+    expect(off).toMatch(/developer API and staking are planned/);
+    expect(on).toMatch(/sending USDG on Robinhood Chain/);
+    expect(on).toMatch(/USDC or ETH is coming soon/);
+    expect(on).toContain(brand.apiBaseUrl);
+    expect(on).toMatch(/Staking is planned/);
+  });
 });

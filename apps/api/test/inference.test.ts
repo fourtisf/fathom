@@ -186,3 +186,42 @@ describe('presets and model health', () => {
     expect(new ModelHealth(null, null, silentLog).status('deepseek-v3.1')).toBe('unavailable');
   });
 });
+
+describe('openai-compatible provider: generation params', () => {
+  it('passes API params through but never lets them override model, messages or streaming', async () => {
+    let body: any;
+    const provider = createOpenAiCompatibleProvider({
+      name: 'test',
+      baseUrl: 'https://p.example/v1',
+      apiKey: null,
+      modelMap: { 'gpt-oss-120b': 'openai/gpt-oss-120b' },
+      extraBody: { provider: { zdr: true } },
+      fetch: (async (_url: string, init: RequestInit) => {
+        body = JSON.parse(init.body as string);
+        return sseResponse(['data: {"choices":[{"delta":{"content":"ok"}}]}\n\n', 'data: [DONE]\n\n']);
+      }) as typeof fetch,
+    });
+    const tools = [{ type: 'function', function: { name: 'f', parameters: {} } }];
+    await collect(
+      provider.chatStream({
+        model: 'gpt-oss-120b',
+        messages: msgs,
+        signal,
+        params: { temperature: 0.2, max_tokens: 50, top_p: 0.9, stop: ['x'], tools, tool_choice: 'auto' },
+      }),
+    );
+    expect(body).toMatchObject({
+      provider: { zdr: true },
+      temperature: 0.2,
+      max_tokens: 50,
+      top_p: 0.9,
+      stop: ['x'],
+      tools,
+      tool_choice: 'auto',
+      model: 'openai/gpt-oss-120b',
+      messages: msgs,
+      stream: true,
+      stream_options: { include_usage: true },
+    });
+  });
+});

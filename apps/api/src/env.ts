@@ -1,3 +1,4 @@
+import { getAddress, isAddress, type Address } from 'viem';
 import { MODELS, type ModelId } from '@fathom/config';
 import { INFERENCE_PRESETS, type ProviderKind } from './inference/presets';
 
@@ -20,6 +21,34 @@ export interface InferenceEnv {
   headers: Record<string, string>;
 }
 
+export interface WelcomeEnv {
+  /** Require on-chain activity (tx count or native balance) before granting welcome credits. */
+  requireActivity: boolean;
+  /** Max welcome grants per client IP per UTC day. */
+  perIpDay: number;
+  /** Max welcome grants per UTC day in total. */
+  dailyCap: number;
+  /** Secret for hashing IPs in rate-limit keys; null = a random value kept in Redis. */
+  salt: string | null;
+}
+
+export interface TurnstileEnv {
+  siteKey: string | null;
+  /** When set, /auth/verify requires a Turnstile token. */
+  secretKey: string | null;
+}
+
+/** USDG top-ups by direct transfer to the treasury. Null unless chain, USDG and treasury are all valid. */
+export interface TopupEnv {
+  usdg: Address;
+  treasury: Address;
+  confirmations: number;
+  /** Minimum top-up in USD (= USDG). */
+  minUsd: number;
+  /** First block the indexer scans when it has no saved position. */
+  startBlock: bigint | null;
+}
+
 export interface ApiEnv {
   port: number;
   host: string;
@@ -36,6 +65,9 @@ export interface ApiEnv {
   /** Null when no inference provider is configured: chat reports every model unavailable. */
   inference: InferenceEnv | null;
   braveSearchApiKey: string | null;
+  welcome: WelcomeEnv;
+  turnstile: TurnstileEnv;
+  topup: TopupEnv | null;
   /** Non-fatal config problems, logged once at startup. Never contains secret values. */
   warnings: string[];
 }
@@ -129,6 +161,63 @@ function loadInference(env: Env, warnings: string[]): InferenceEnv | null {
   };
 }
 
+function optInt(env: Env, key: string, def: number, min: number, warnings: string[]): number {
+  const v = opt(env, key);
+  if (v === null) return def;
+  const n = Number(v);
+  if (!Number.isSafeInteger(n) || n < min) {
+    warnings.push(`${key} must be an integer >= ${min}; using ${def}`);
+    return def;
+  }
+  return n;
+}
+
+function optAddress(env: Env, key: string, warnings: string[]): Address | null {
+  const v = opt(env, key);
+  if (!v) return null;
+  if (!isAddress(v, { strict: false })) {
+    warnings.push(`${key} is not a valid 0x address; ignored`);
+    return null;
+  }
+  return getAddress(v);
+}
+
+function loadWelcome(env: Env, warnings: string[]): WelcomeEnv {
+  return {
+    requireActivity: opt(env, 'WELCOME_REQUIRE_ACTIVITY') !== 'false',
+    perIpDay: optInt(env, 'WELCOME_PER_IP_DAY', 3, 0, warnings),
+    dailyCap: optInt(env, 'WELCOME_DAILY_CAP', 300, 0, warnings),
+    salt: opt(env, 'WELCOME_SALT'),
+  };
+}
+
+function loadTopup(env: Env, chain: ChainEnv | null, warnings: string[]): TopupEnv | null {
+  const usdg = optAddress(env, 'USDG_ADDRESS', warnings);
+  const treasury = optAddress(env, 'TREASURY_ADDRESS', warnings);
+  if (!chain || !usdg || !treasury) return null;
+  const confirmations = optInt(
+    env,
+    'TOPUP_CONFIRMATIONS',
+    optInt(env, 'INDEXER_CONFIRMATIONS', 3, 1, warnings),
+    1,
+    warnings,
+  );
+  let minUsd = 1;
+  const rawMin = opt(env, 'TOPUP_MIN_USD');
+  if (rawMin !== null) {
+    const n = Number(rawMin);
+    if (Number.isFinite(n) && n > 0 && /^\d+(\.\d{1,6})?$/.test(rawMin)) minUsd = n;
+    else warnings.push('TOPUP_MIN_USD must be a positive number with at most 6 decimals; using 1');
+  }
+  let startBlock: bigint | null = null;
+  const rawStart = opt(env, 'TOPUP_START_BLOCK');
+  if (rawStart !== null) {
+    if (/^\d+$/.test(rawStart)) startBlock = BigInt(rawStart);
+    else warnings.push('TOPUP_START_BLOCK must be a block number; ignored');
+  }
+  return { usdg, treasury, confirmations, minUsd, startBlock };
+}
+
 // Every feature var is optional: the server boots without it and the feature reports unavailable.
 export function loadEnv(env: Env = process.env): ApiEnv {
   const warnings: string[] = [];
@@ -155,6 +244,7 @@ export function loadEnv(env: Env = process.env): ApiEnv {
   const databaseUrl = opt(env, 'DATABASE_URL');
   if (!databaseUrl) warnings.push('DATABASE_URL not set; sign-in, credits and chat are unavailable');
 
+  const chain = loadChain(env, warnings);
   return {
     port,
     host: env.API_HOST?.trim() || '127.0.0.1',
@@ -165,9 +255,12 @@ export function loadEnv(env: Env = process.env): ApiEnv {
     redisUrl: opt(env, 'REDIS_URL') ?? 'redis://127.0.0.1:6379',
     siweDomain,
     cookieSecure,
-    chain: loadChain(env, warnings),
+    chain,
     inference: loadInference(env, warnings),
     braveSearchApiKey: opt(env, 'BRAVE_SEARCH_API_KEY'),
+    welcome: loadWelcome(env, warnings),
+    turnstile: { siteKey: opt(env, 'TURNSTILE_SITE_KEY'), secretKey: opt(env, 'TURNSTILE_SECRET_KEY') },
+    topup: loadTopup(env, chain, warnings),
     warnings,
   };
 }

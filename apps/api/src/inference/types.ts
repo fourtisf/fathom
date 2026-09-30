@@ -5,11 +5,27 @@ export interface ChatMessage {
 
 export type ChatChunk = { type: 'delta'; text: string } | { type: 'usage'; input: number; output: number };
 
+/** OpenAI sampling/tool fields passed through from the public API. All optional, pre-validated. */
+export interface GenerationParams {
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  stop?: string | string[];
+  seed?: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+  response_format?: Record<string, unknown>;
+  /** Passed through; tool calls in responses are not supported yet (text content only). */
+  tools?: unknown[];
+  tool_choice?: unknown;
+}
+
 export interface ChatStreamRequest {
   /** Our model id (e.g. "deepseek-v3.1"); the provider maps it to its own id. */
   model: string;
   messages: ChatMessage[];
   signal: AbortSignal;
+  params?: GenerationParams;
 }
 
 export interface Attestation {

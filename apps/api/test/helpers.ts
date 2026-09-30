@@ -3,20 +3,31 @@ import { PrismaClient } from '@fathom/db';
 import { createSiweMessage } from 'viem/siwe';
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import type { FastifyInstance } from 'fastify';
+import { createPublicClient, custom } from 'viem';
 import { buildApp, type BuildAppOptions } from '../src/app';
 import { loadEnv } from '../src/env';
 
 export const TEST_ENV = {
   NODE_ENV: 'test',
   DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgresql://fathom:fathom@localhost:5432/fathom',
-  REDIS_URL: process.env.TEST_REDIS_URL ?? 'redis://127.0.0.1:6379',
+  // A separate Redis DB so test counters and sessions never mix with a dev server's.
+  REDIS_URL: process.env.TEST_REDIS_URL ?? 'redis://127.0.0.1:6379/15',
   SIWE_DOMAIN: 'localhost:3000',
   CHAIN_ID: '46630',
   CHAIN_NAME: 'Robinhood Chain Testnet',
   RPC_URL: 'https://rpc.example.org/rpc',
   EXPLORER_URL: 'https://explorer.example.org',
   INFERENCE_PROVIDER: 'mock',
+  // Welcome anti-abuse off by default in tests; welcome.test.ts turns each rule on.
+  WELCOME_REQUIRE_ACTIVITY: 'false',
+  WELCOME_PER_IP_DAY: '1000000',
+  WELCOME_DAILY_CAP: '1000000000',
 };
+
+/** A chain client whose every RPC call fails: tests must never reach a real network. */
+export const offlineChain = createPublicClient({
+  transport: custom({ request: async () => { throw new Error('network disabled in tests'); } }, { retryCount: 0 }),
+});
 
 /** Builds the app with every log line captured in memory. */
 export async function buildCapturingApp(
@@ -28,6 +39,7 @@ export async function buildCapturingApp(
   const app = await buildApp({
     env: loadEnv(env),
     logger: { level, stream: { write: (msg: string) => void lines.push(msg) } },
+    chainClient: offlineChain,
     ...opts,
   });
   return { app, lines };

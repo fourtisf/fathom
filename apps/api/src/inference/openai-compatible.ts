@@ -106,6 +106,7 @@ export function createOpenAiCompatibleProvider(opts: OpenAiCompatibleOptions): I
             headers: headers(),
             body: JSON.stringify({
               ...opts.extraBody,
+              ...req.params,
               model: providerModel,
               messages: req.messages,
               stream: true,
