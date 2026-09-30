@@ -29,24 +29,26 @@ type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) :
 
 const SUGGESTIONS = [
   {
-    title: 'Is my salary offer fair?',
-    sub: 'Plan a counter-offer without naming your employer',
-    prompt: 'I got a job offer and want to negotiate. Help me judge whether it is fair and write a polite counter-offer.',
+    title: 'Check a token contract',
+    sub: 'Red flags to look for before you buy',
+    prompt:
+      "What red flags should I check in a token's smart contract before buying it? Cover mint functions, blacklists, honeypots, taxes and owner privileges.",
   },
   {
-    title: 'Explain a lab result',
-    sub: 'Plain words, and what to ask your doctor',
-    prompt: 'Explain what a high LDL cholesterol result means in plain words, and which questions I should ask my doctor.',
+    title: 'Keep my wallet safe',
+    sub: 'Seed phrase, token approvals and phishing',
+    prompt:
+      'How do I keep my crypto wallet safe? Cover storing the seed phrase, revoking old token approvals and spotting phishing sites and fake airdrops.',
   },
   {
-    title: 'Audit a smart contract',
-    sub: 'The bugs to look for before you deploy',
-    prompt: 'What are the most common security bugs in Solidity smart contracts, and how do I check my contract for them?',
+    title: 'How stablecoins hold $1',
+    sub: 'USDG, USDC and the risks behind the peg',
+    prompt: 'How do stablecoins like USDG and USDC keep their 1:1 peg to the dollar, and what risks should I understand before holding them?',
   },
   {
-    title: 'Write a resignation letter',
-    sub: 'Short, friendly, keeps the door open',
-    prompt: 'Write a short, friendly resignation letter that keeps a good relationship with my manager.',
+    title: 'Impermanent loss, simply',
+    sub: 'A worked example for liquidity pools',
+    prompt: 'Explain impermanent loss in a DEX liquidity pool with a simple worked example using numbers, and when it matters.',
   },
 ];
 
