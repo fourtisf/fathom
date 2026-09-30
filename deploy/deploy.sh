@@ -7,7 +7,25 @@ git pull --ff-only
 pnpm install --frozen-lockfile
 
 # Export the repo-root .env so Prisma sees DATABASE_URL and Next inlines NEXT_PUBLIC_* at build time.
-set -a; [ -f .env ] && . ./.env; set +a
+# Parsed as plain KEY=VALUE (same rules as ecosystem.config.cjs), never executed: values may contain
+# spaces or JSON without quoting.
+load_env() {
+  local line key val
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%$'\r'}
+    [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+    [[ $line =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*(.*)$ ]] || continue
+    key=${BASH_REMATCH[2]}
+    val=${BASH_REMATCH[3]}
+    if [[ $val =~ ^\"(.*)\"$ || $val =~ ^\'(.*)\'$ ]]; then
+      val=${BASH_REMATCH[1]}
+    else
+      val=$(sed -E 's/[[:space:]]+#.*$//; s/[[:space:]]+$//' <<<"$val")
+    fi
+    export "$key=$val"
+  done < .env
+}
+[ -f .env ] && load_env
 
 pnpm --filter @fathom/db exec prisma generate
 pnpm --filter @fathom/db exec prisma migrate deploy
