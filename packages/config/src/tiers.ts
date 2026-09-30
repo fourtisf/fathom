@@ -1,5 +1,5 @@
 /**
- * $FTHM staking tiers. $FTHM is a utility token: tiers grant discounts and access,
+ * Token staking tiers. The token is a utility token: tiers grant discounts and access,
  * never revenue share, yield or rewards.
  */
 export type TierId = 'explorer' | 'diver' | 'abyss';
@@ -7,7 +7,7 @@ export type TierId = 'explorer' | 'diver' | 'abyss';
 export interface Tier {
   id: TierId;
   name: string;
-  /** Whole FTHM that must be staked. */
+  /** Whole tokens that must be staked. */
   minStake: number;
   /** Discount applied to every charge, in basis points (1000 = 10%). */
   discountBps: number;
@@ -54,7 +54,7 @@ export const TIERS: readonly Tier[] = [
   },
 ] as const;
 
-/** Highest tier reached by a staked amount (whole FTHM), or null. */
+/** Highest tier reached by a staked amount (whole tokens), or null. */
 export function tierForStake(staked: number): Tier | null {
   let found: Tier | null = null;
   for (const t of TIERS) if (staked >= t.minStake) found = t;

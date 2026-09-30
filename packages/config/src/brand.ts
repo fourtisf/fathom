@@ -1,12 +1,12 @@
 /**
  * Every brand string lives here so the product can be renamed in one place.
- * "Fathom" is a working name (see CLAUDE.md §13).
+ * Renamed from the spec's working name "Fathom" to Noxsea (CLAUDE.md §13.1).
  */
-const domain = 'fathom.ai';
+const domain = 'noxsea.xyz';
 
 export const brand = {
-  name: 'Fathom',
-  company: 'Fathom Labs',
+  name: 'Noxsea',
+  company: 'Noxsea Labs',
   domain,
   siteUrl: `https://${domain}`,
   apiUrl: `https://api.${domain}`,
@@ -14,15 +14,15 @@ export const brand = {
   egressHost: `egress.${domain}`,
   securityEmail: `security@${domain}`,
   /** Prefix for API keys. The full key is shown once and only its sha256 is stored. */
-  keyPrefix: 'fth_live_',
+  keyPrefix: 'nox_live_',
   token: {
-    symbol: 'FTHM',
-    ticker: '$FTHM',
+    symbol: 'NOX',
+    ticker: '$NOX',
   },
-  verifierPackage: '@fathom/verify',
-  servingRepo: 'fathom-infer',
-  exportFileName: 'fathom-export.json',
-  title: 'Fathom · Private AI that forgets you',
+  verifierPackage: '@noxsea/verify',
+  servingRepo: 'noxsea-infer',
+  exportFileName: 'noxsea-export.json',
+  title: 'Noxsea · Private AI that forgets you',
   description:
     'Private AI on open models. Compare models side by side, set chats to self-destruct, sign in with your wallet and pay per message with USDG, USDC or ETH on Robinhood Chain.',
   socialDescription: 'Open models in sealed hardware. Wallet login, pay per message, zero logs.',

@@ -5,7 +5,7 @@ import { buildCapturingApp } from './helpers';
 // CLAUDE.md §0 rules 1 and 3: no prompt/completion text, no IPs, no keys in any log line.
 const MARKER = 'SECRET-PROMPT-7f3a9c';
 const IP = '203.0.113.7';
-const KEY = 'fth_live_secret';
+const KEY = 'nox_live_secret';
 const headers = { 'x-forwarded-for': IP, authorization: `Bearer ${KEY}`, cookie: `session=${KEY}` };
 const chatBody = { model: 'deepseek-v3.1', messages: [{ role: 'user', content: MARKER }], prompt: MARKER };
 

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { MODELS } from '@fathom/config';
+import { MODELS, brand } from '@fathom/config';
 import { buildCapturingApp } from './helpers';
 
 let app: FastifyInstance;
@@ -25,7 +25,7 @@ describe('routes', () => {
     expect(body.data[0]).toEqual({
       id: 'deepseek-v3.1',
       object: 'model',
-      owned_by: 'fathom',
+      owned_by: brand.name.toLowerCase(),
       context_length: 128 * 1024,
       pricing: { input_per_m: 40, output_per_m: 120 },
       status: 'unknown',

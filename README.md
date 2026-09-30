@@ -1,4 +1,6 @@
-# Fathom
+# Noxsea
+
+Noxsea (https://noxsea.xyz) is the product name; the spec in CLAUDE.md still uses the working name "Fathom", and internal package names stay `@fathom/*`.
 
 Private AI chat and API on open-weight models. Wallet sign-in, pay-per-message credits on Robinhood Chain, no readable prompts stored.
 
@@ -13,7 +15,7 @@ apps/web        Next.js 14 (landing, trust, docs, legal; app shell from Phase 2)
 apps/api        Fastify (health, /v1/models; auth, credits and chat in later phases)
 packages/config brand, models, pricing, tiers, chain config
 packages/db     Prisma schema, migrations, client
-deploy/nginx    Nginx site config (access logs off)
+deploy/         Nginx site config (access logs off) and deploy script
 ```
 
 `apps/indexer` and `contracts/` arrive in Phase 4 (payments).
@@ -35,4 +37,4 @@ Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Production
 
-`pnpm build`, then `pm2 start ecosystem.config.cjs` behind `deploy/nginx/fathom.conf` (TLS via Let's Encrypt).
+`bash deploy/deploy.sh` (pull, install, build, `pm2 startOrReload`). Nginx: `deploy/nginx/noxsea.conf`, TLS via `certbot --nginx`. Web runs on 127.0.0.1:3200, API on 127.0.0.1:4200.

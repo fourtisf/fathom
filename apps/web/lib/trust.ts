@@ -1,4 +1,4 @@
-import { loadContractAddresses, type Address } from '@fathom/config';
+import { brand, loadContractAddresses, type Address } from '@fathom/config';
 
 /** Live attestation fields shown on /trust. Supplied by provider.attestation() (CLAUDE.md §6). */
 export interface Attestation {
@@ -29,7 +29,7 @@ export function getContracts(): ContractRow[] {
   return [
     { name: 'CreditVault', purpose: 'Receives top-ups, mints credits', address: a.creditVault },
     { name: 'SwapRouter', purpose: 'Converts USDC / ETH to USDG', address: a.swapRouter },
-    { name: 'FTHM Token', purpose: 'Utility token', address: a.fthm },
+    { name: `${brand.token.symbol} Token`, purpose: 'Utility token', address: a.fthm },
     { name: 'StakingTiers', purpose: 'Discount tiers, 7-day cooldown', address: a.staking },
   ];
 }
