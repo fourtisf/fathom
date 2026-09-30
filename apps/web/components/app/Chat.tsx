@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
+import { Markdown } from './Markdown';
 import { useToast } from '../Toast';
 import { fmt2, fmtCost } from './Shell';
 import { short, useSession } from './Session';
@@ -91,15 +92,14 @@ function Meta({ slot }: { slot: SlotState }) {
 }
 
 function SlotBody({ slot, big }: { slot: SlotState; big?: boolean }) {
-  const style = { fontSize: big ? undefined : 14, color: 'var(--ink2)', whiteSpace: 'pre-wrap' as const };
   if (slot.status === 'waiting') return <span className="shim" style={{ fontSize: 14 }}>Answering privately…</span>;
   if (slot.status === 'error')
     return <p style={{ fontSize: 13.5, color: '#FFC2C8' }}>{slot.error ?? 'Temporarily unavailable.'} Not charged.</p>;
   return (
-    <span style={style}>
-      {slot.text}
+    <div style={big ? undefined : { fontSize: 14 }}>
+      <Markdown text={slot.text} />
       {slot.status === 'streaming' && <span className="caret" />}
-    </span>
+    </div>
   );
 }
 

@@ -770,3 +770,23 @@ body::before{background:linear-gradient(180deg,#050817 0%,#04061A 50%,#03050F 10
 .netmanual dt{font-size:12px;color:var(--mute)}
 .netmanual dd{display:flex;align-items:center;gap:4px;min-width:0}
 .netmanual code{font-family:var(--mono);font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* formatted model answers */
+.md{font-size:inherit;line-height:1.65;color:var(--ink2);overflow-wrap:anywhere}
+.md>*+*{margin-top:.7em}
+.md h1,.md h2,.md h3,.md h4,.md h5,.md h6{color:#fff;font-weight:600;letter-spacing:-.01em;line-height:1.3;margin-top:1.1em}
+.md h1{font-size:1.3em}.md h2{font-size:1.18em}.md h3{font-size:1.06em}.md h4,.md h5,.md h6{font-size:1em}
+.md>:first-child{margin-top:0}
+.md strong{color:#fff;font-weight:600}
+.md ul,.md ol{padding-left:1.35em}
+.md li+li{margin-top:.3em}
+.md li>p{margin:0}
+.md a{color:var(--violet2);text-decoration:underline;text-underline-offset:3px}
+.md code{font-family:var(--mono);font-size:.86em;padding:.12em .38em;border-radius:6px;background:rgba(255,255,255,.07);color:#fff}
+.md pre{padding:14px 16px;border-radius:12px;background:rgba(4,7,22,.7);border:1px solid var(--line);overflow-x:auto}
+.md pre code{padding:0;background:none;font-size:13px;line-height:1.6}
+.md blockquote{padding-left:14px;border-left:3px solid rgba(139,124,255,.5);color:var(--mute)}
+.md table{border-collapse:collapse;font-size:.93em;display:block;overflow-x:auto;max-width:100%}
+.md th,.md td{padding:7px 12px;border:1px solid var(--line2);text-align:left}
+.md th{color:#fff;background:rgba(255,255,255,.04);font-weight:600}
+.md hr{border:0;border-top:1px solid var(--line2)}
