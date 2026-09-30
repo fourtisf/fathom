@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { DEFAULT_MODEL, FALLBACK_MODEL } from '@fathom/config';
 import { useSession } from './Session';
 
-export type ModalId = 'wallet' | 'start' | 'topup' | 'delete' | null;
+export type ModalId = 'wallet' | 'start' | 'topup' | 'delete' | 'newkey' | null;
+export type Burn = 'off' | '1h' | '24h';
 export type OnboardKey = 'msg' | 'cmp' | 'top' | 'verify';
 
 interface Ui {
@@ -23,6 +24,18 @@ interface Ui {
   newChat(): void;
   onboard: Partial<Record<OnboardKey, boolean>> & { hidden?: boolean };
   markOnboard(k: OnboardKey | 'hidden'): void;
+  /** Auto-delete timer for the current chat. */
+  burn: Burn;
+  setBurn(b: Burn): void;
+  /** Saved chat the user picked in the sidebar; the chat page loads it. */
+  openChatId: string | null;
+  openChat(id: string | null): void;
+  /** Chat currently shown, for highlighting in the sidebar. */
+  activeChatId: string | null;
+  setActiveChatId(id: string | null): void;
+  /** One-time secret shown after creating an API key. */
+  newKey: string | null;
+  setNewKey(k: string | null): void;
 }
 
 const Ctx = createContext<Ui | null>(null);
@@ -44,6 +57,10 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [webSearch, setWebSearch] = useState(false);
   const [newChatSignal, setSignal] = useState(0);
   const [onboard, setOnboard] = useState<Ui['onboard']>({});
+  const [burn, setBurn] = useState<Burn>('off');
+  const [openChatId, openChat] = useState<string | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [newKey, setNewKey] = useState<string | null>(null);
 
   // Onboarding progress is a per-wallet UI preference, kept in this browser only.
   useEffect(() => {
@@ -54,6 +71,7 @@ export function UiProvider({ children }: { children: ReactNode }) {
       setOnboard({});
     }
     setWebSearch(me.settings.webSearch);
+    setBurn(me.settings.defaultBurn);
   }, [me?.address]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Default to models that are actually online: a provider may not serve every model in the menu.
@@ -109,6 +127,14 @@ export function UiProvider({ children }: { children: ReactNode }) {
         newChat: () => setSignal((n) => n + 1),
         onboard,
         markOnboard,
+        burn,
+        setBurn,
+        openChatId,
+        openChat,
+        activeChatId,
+        setActiveChatId,
+        newKey,
+        setNewKey,
       }}
     >
       {children}

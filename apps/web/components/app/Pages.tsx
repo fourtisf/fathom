@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { brand, CREDITS_PER_USDG, MAX_API_KEYS, MODELS, TIERS, UNSTAKE_COOLDOWN_DAYS, WELCOME_CREDITS } from '@fathom/config';
-import { api, type CreditsSummary, type Settings, type TxRow } from '@/lib/api';
+import { api, ApiError, post, type ApiKeyRow, type CreditsSummary, type Settings, type TxRow } from '@/lib/api';
 import { useToast } from '../Toast';
 import { fmt2, fmtCost } from './Shell';
 import { useSession } from './Session';
-import { useUi } from './Ui';
+import { useHistory } from './History';
+import { useUi, type Burn } from './Ui';
 
 const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
@@ -151,6 +153,54 @@ export function CreditsPage() {
 }
 
 export function KeysPage() {
+  const { me } = useSession();
+  const { openModal, setNewKey } = useUi();
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [name, setName] = useState('');
+  const [hint, setHint] = useState<{ text: string; err?: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [sure, setSure] = useState<string | null>(null);
+  const keys = useQuery({ queryKey: ['keys'], queryFn: () => api<ApiKeyRow[]>('/keys'), enabled: !!me });
+
+  async function create() {
+    if (!me) return openModal('wallet');
+    const n = name.trim();
+    if (!n) return setHint({ text: "Give the key a name so you know where it's used.", err: true });
+    setBusy(true);
+    setHint(null);
+    try {
+      const k = await post<ApiKeyRow & { key: string }>('/keys', { name: n });
+      setName('');
+      setNewKey(k.key);
+      openModal('newkey');
+      await qc.invalidateQueries({ queryKey: ['keys'] });
+    } catch (e) {
+      setHint({
+        text: e instanceof ApiError && e.code === 'key_limit' ? `You have ${MAX_API_KEYS} active keys. Revoke one to create another.` : 'Could not create the key. Try again.',
+        err: true,
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function revoke(id: string) {
+    if (sure !== id) {
+      setSure(id);
+      setTimeout(() => setSure((x) => (x === id ? null : x)), 3000);
+      return;
+    }
+    try {
+      await api(`/keys/${id}`, { method: 'DELETE' });
+      toast('Key revoked. Apps using it stop working immediately.');
+      await qc.invalidateQueries({ queryKey: ['keys'] });
+    } catch {
+      toast('Could not revoke the key. Try again.', true);
+    }
+    setSure(null);
+  }
+
   return (
     <div className="page">
       <div className="page-h">
@@ -164,10 +214,50 @@ export function KeysPage() {
       <div className="glass panel" style={{ marginTop: 0 }}>
         <h3>Create a key</h3>
         <p className="sub2">Keys are shown once and never expire. Up to {MAX_API_KEYS} per wallet.</p>
-        <div className="empty-state">
-          <b>API keys are coming soon</b>
-          The OpenAI-compatible API opens in the next update. Chat in the app works today.
+        <div className="row-f" style={{ marginTop: 14 }}>
+          <input
+            className="inp"
+            placeholder="Key name, e.g. trading-bot"
+            maxLength={40}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && void create()}
+            aria-label="Key name"
+          />
+          <button className="btn btn-dark" onClick={() => void create()} disabled={busy}>
+            {busy ? 'Creating…' : 'Create key'}
+          </button>
         </div>
+        {hint && <p className={`hint${hint.err ? ' err' : ''}`}>{hint.text}</p>}
+      </div>
+      <div className="glass panel tw">
+        <h3>Active keys</h3>
+        {!me ? (
+          <div className="empty-state"><b>Connect your wallet</b>Keys belong to your wallet.</div>
+        ) : keys.data?.length ? (
+          <table className="tbl">
+            <thead>
+              <tr><th>Name</th><th>Key</th><th>Created</th><th>Last used</th><th /></tr>
+            </thead>
+            <tbody>
+              {keys.data.map((k) => (
+                <tr key={k.id}>
+                  <td>{k.name}</td>
+                  <td className="mono">{k.prefix}…</td>
+                  <td>{new Date(k.createdAt).toLocaleDateString()}</td>
+                  <td>{k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString() : 'Never'}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button className="btn btn-sm btn-danger" onClick={() => void revoke(k.id)}>
+                      {sure === k.id ? 'Confirm revoke' : 'Revoke'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="empty-state"><b>No keys yet</b>Create one above to use {brand.name} from your code.</div>
+        )}
       </div>
     </div>
   );
@@ -204,7 +294,8 @@ export function StakePage() {
 
 export function SettingsPage() {
   const { me, config, signOut, refreshMe } = useSession();
-  const { openModal, setWebSearch } = useUi();
+  const { openModal, setWebSearch, setBurn } = useUi();
+  const history = useHistory();
   const toast = useToast();
   if (!me) return <NeedWallet title="Settings" sub="Control what's kept, and for how long." />;
 
@@ -248,9 +339,41 @@ export function SettingsPage() {
         <div className="setrow">
           <div>
             <h4>Save chat history</h4>
-            <p>Encrypted history, with a key only your wallet can derive, is coming soon. Right now nothing is kept: closing or forgetting a chat erases it.</p>
+            <p>Chats are encrypted in this browser with a key only your wallet can derive; we store only ciphertext. Turn off to keep nothing at all.</p>
           </div>
-          <button className="tog" role="switch" aria-checked={false} aria-label="Save chat history" disabled style={{ opacity: 0.5 }} />
+          <button
+            className="tog"
+            role="switch"
+            aria-checked={me.settings.saveHistory}
+            aria-label="Save chat history"
+            onClick={async () => {
+              const on = !me.settings.saveHistory;
+              await patch({ saveHistory: on });
+              if (!on) await history.lock();
+              toast(on ? 'History on, encrypted to your wallet' : 'History off. Saved chats were deleted.');
+            }}
+          />
+        </div>
+        <div className="setrow">
+          <div>
+            <h4>Default auto-delete</h4>
+            <p>New chats burn automatically after this time. Burned chats are deleted from our servers too.</p>
+          </div>
+          <select
+            className="sel"
+            value={me.settings.defaultBurn}
+            onChange={async (e) => {
+              const v = e.target.value as Burn;
+              await patch({ defaultBurn: v });
+              setBurn(v);
+              toast(v === 'off' ? 'New chats: kept until you delete them' : `New chats: burn after ${v === '1h' ? '1 hour' : '24 hours'}`);
+            }}
+            aria-label="Default auto-delete"
+          >
+            <option value="off">Never</option>
+            <option value="1h">After 1 hour</option>
+            <option value="24h">After 24 hours</option>
+          </select>
         </div>
         {config?.webSearch && (
           <div className="setrow">
@@ -286,6 +409,7 @@ export function SettingsPage() {
           <button
             className="btn btn-light"
             onClick={async () => {
+              await history.lock();
               await signOut();
               toast('Disconnected');
             }}

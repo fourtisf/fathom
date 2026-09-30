@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { brand, FALLBACK_MODEL, MODELS, WELCOME_CREDITS } from '@fathom/config';
-import { ApiError } from '@/lib/api';
+import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
+import { useCopy, useToast } from '../Toast';
+import { useHistory, type ChatRecord } from './History';
 import { Markdown } from './Markdown';
-import { useToast } from '../Toast';
 import { fmt2, fmtCost } from './Shell';
 import { short, useSession } from './Session';
 import { useUi } from './Ui';
@@ -16,7 +17,7 @@ import { useUi } from './Ui';
 type SlotState = {
   model: string;
   text: string;
-  status: 'waiting' | 'streaming' | 'done' | 'error';
+  status: 'waiting' | 'streaming' | 'done' | 'error' | 'stopped';
   credits?: number;
   error?: string;
 };
@@ -24,9 +25,23 @@ type Turn =
   | { id: number; kind: 'you'; text: string }
   | { id: number; kind: 'ai'; slots: SlotState[]; search?: 'running' | 'done' | 'unavailable'; sources?: number }
   | { id: number; kind: 'note'; text: string }
-  | { id: number; kind: 'fail'; title: string; body: string; action?: { label: string; retry?: { q: string; model: string }; topup?: boolean } };
-
+  | {
+      id: number;
+      kind: 'fail';
+      title: string;
+      body: string;
+      action?: { label: string; retry?: { q: string; model: string }; topup?: boolean; claim?: boolean };
+    };
 type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) : never;
+
+export const WELCOME_DENIED_TEXT: Record<WelcomeDenied | 'already_claimed', string> = {
+  no_activity:
+    'Free credits need a wallet with some activity on Robinhood Chain (at least one transaction or a balance). Use your main wallet, or top up.',
+  ip_limit: 'Free credits are limited per network each day. Try again tomorrow.',
+  daily_limit: "Today's free credits are all claimed. Try again tomorrow.",
+  check_failed: "We couldn't check your wallet right now. Try again in a minute.",
+  already_claimed: 'This wallet already received its free credits.',
+};
 
 const SUGGESTIONS = [
   {
@@ -68,6 +83,7 @@ const SUGGESTIONS = [
 
 const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
 const RM = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const newChatId = () => crypto.randomUUID().replace(/-/g, '');
 let nextId = 1;
 
 function AiIcon() {
@@ -78,15 +94,24 @@ function AiIcon() {
   );
 }
 
-function Meta({ slot }: { slot: SlotState }) {
+function Actions({ slot, onRegenerate }: { slot: SlotState; onRegenerate?: () => void }) {
+  const copy = useCopy();
   return (
     <div className="meta">
       <span>{modelName(slot.model)}</span>
-      <span>{fmtCost(slot.credits ?? 0)} credits</span>
+      <span>{slot.status === 'stopped' ? 'Stopped · not charged' : `${fmtCost(slot.credits ?? 0)} credits`}</span>
       <span className="ok">
         <Icon name="shield" />
-        Not stored
+        Not logged
       </span>
+      <button className="mact" onClick={() => copy(slot.text, 'Answer copied')} aria-label="Copy answer">
+        Copy
+      </button>
+      {onRegenerate && (
+        <button className="mact" onClick={onRegenerate} aria-label="Regenerate answer">
+          Regenerate
+        </button>
+      )}
     </div>
   );
 }
@@ -103,17 +128,47 @@ function SlotBody({ slot, big }: { slot: SlotState; big?: boolean }) {
   );
 }
 
+function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): ChatRecord | null {
+  const kept: ChatRecord['turns'] = [];
+  for (const t of turns) {
+    if (t.kind === 'you') kept.push({ kind: 'you', text: t.text });
+    if (t.kind === 'ai') {
+      const slots = t.slots
+        .filter((s) => (s.status === 'done' || s.status === 'stopped') && s.text)
+        .map((s) => ({ model: s.model, text: s.text, credits: s.credits }));
+      if (slots.length) kept.push({ kind: 'ai', slots });
+    }
+  }
+  const first = kept.find((t) => t.kind === 'you');
+  if (!first || !kept.some((t) => t.kind === 'ai')) return null;
+  const title = first.text.replace(/\s+/g, ' ').trim().slice(0, 60);
+  return { v: 1, title, createdAt, burn, turns: kept };
+}
+
+function fromRecord(r: ChatRecord): Turn[] {
+  return r.turns.map((t) =>
+    t.kind === 'you'
+      ? { id: nextId++, kind: 'you' as const, text: t.text }
+      : { id: nextId++, kind: 'ai' as const, slots: t.slots.map((s) => ({ ...s, status: 'done' as const })) },
+  );
+}
+
 export function Chat() {
   const { me, config, lastSignIn, clearLastSignIn, setCredits, refreshMe } = useSession();
   const ui = useUi();
+  const history = useHistory();
   const toast = useToast();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [chatId, setChatId] = useState(newChatId);
+  const [createdAt, setCreatedAt] = useState(() => new Date().toISOString());
   const thread = useRef<HTMLDivElement>(null);
   const inp = useRef<HTMLTextAreaElement>(null);
   const abort = useRef<AbortController | null>(null);
+  const turnsRef = useRef<Turn[]>([]);
+  turnsRef.current = turns;
 
   const add = (t: NewTurn) => {
     const turn = { ...t, id: nextId++ } as Turn;
@@ -123,13 +178,23 @@ export function Chat() {
   const patchAi = (id: number, f: (t: Extract<Turn, { kind: 'ai' }>) => Extract<Turn, { kind: 'ai' }>) =>
     setTurns((ts) => ts.map((t) => (t.id === id && t.kind === 'ai' ? f(t) : t)));
 
-  // Greet once right after sign-in.
+  useEffect(() => ui.setActiveChatId(chatId), [chatId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Greet once right after sign-in, and explain when free credits weren't granted.
   useEffect(() => {
     if (!lastSignIn) return;
     add({
       kind: 'note',
       text: `Signed in as ${short(lastSignIn.address)}${lastSignIn.welcome ? ` · ${WELCOME_CREDITS} free credits added` : ''}`,
     });
+    if (lastSignIn.welcomeDenied) {
+      add({
+        kind: 'fail',
+        title: 'No free credits yet.',
+        body: WELCOME_DENIED_TEXT[lastSignIn.welcomeDenied],
+        action: lastSignIn.welcomeDenied === 'no_activity' ? { label: 'Top up', topup: true } : { label: 'Try again', claim: true },
+      });
+    }
     clearLastSignIn();
   }, [lastSignIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -139,24 +204,62 @@ export function Chat() {
     if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 160) el.scrollTop = el.scrollHeight;
   }, [turns]);
 
-  const forget = useCallback(
-    (silent = false) => {
-      abort.current?.abort();
-      const reset = () => {
-        setTurns([]);
-        setLeaving(false);
-        if (!silent) add({ kind: 'note', text: 'New private chat' });
-      };
-      if (RM() || silent) return reset();
-      setLeaving(true);
-      setTimeout(reset, 700);
+  const persist = useCallback(
+    async (ts: Turn[], burn = ui.burn) => {
+      if (!history.enabled || !history.unlocked) return;
+      const record = toRecord(ts, createdAt, burn);
+      if (!record) return;
+      try {
+        await history.save(chatId, record);
+      } catch {
+        toast("Couldn't save this chat. It's still here until you leave.", true);
+      }
     },
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+    [history, chatId, createdAt, ui.burn, toast],
+  );
+
+  const reset = useCallback(
+    (note?: string) => {
+      setTurns([]);
+      setLeaving(false);
+      setChatId(newChatId());
+      setCreatedAt(new Date().toISOString());
+      ui.setBurn(me?.settings.defaultBurn ?? 'off');
+      if (note) add({ kind: 'note', text: note });
+    },
+    [me?.settings.defaultBurn], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const forget = useCallback(
+    (opts: { silent?: boolean; erase?: boolean } = {}) => {
+      abort.current?.abort();
+      if (opts.erase) void history.remove(chatId);
+      const done = () => reset(opts.silent ? undefined : 'New private chat');
+      if (RM() || opts.silent || !turnsRef.current.length) return done();
+      setLeaving(true);
+      setTimeout(done, 700);
+    },
+    [history, chatId, reset],
   );
 
   useEffect(() => {
     if (ui.newChatSignal) forget();
-  }, [ui.newChatSignal, forget]);
+  }, [ui.newChatSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Open a saved chat picked in the sidebar.
+  useEffect(() => {
+    const id = ui.openChatId;
+    if (!id) return;
+    ui.openChat(null);
+    abort.current?.abort();
+    void history.load(id).then((r) => {
+      if (!r) return toast("This chat can't be opened on this device.", true);
+      setTurns(fromRecord(r));
+      setChatId(id);
+      setCreatedAt(r.createdAt);
+      ui.setBurn(r.burn);
+    });
+  }, [ui.openChatId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -171,29 +274,68 @@ export function Chat() {
 
   useEffect(() => () => abort.current?.abort(), []);
 
-  function history(): { role: 'user' | 'assistant'; content: string }[] {
+  // The burn selector lives in the top bar; re-save with the new timer and say what happens.
+  const lastBurn = useRef(ui.burn);
+  useEffect(() => {
+    if (lastBurn.current === ui.burn) return;
+    lastBurn.current = ui.burn;
+    if (!turnsRef.current.length) return;
+    if (ui.burn !== 'off') add({ kind: 'note', text: `This chat will self-destruct in ${ui.burn === '1h' ? '1 hour' : '24 hours'}` });
+    void persist(turnsRef.current, ui.burn);
+  }, [ui.burn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function historyFor(ts: Turn[]): { role: 'user' | 'assistant'; content: string }[] {
     const out: { role: 'user' | 'assistant'; content: string }[] = [];
-    for (const t of turns) {
+    for (const t of ts) {
       if (t.kind === 'you') out.push({ role: 'user', content: t.text });
-      if (t.kind === 'ai' && t.slots[0]?.status === 'done' && t.slots[0].text) out.push({ role: 'assistant', content: t.slots[0].text });
+      const s = t.kind === 'ai' ? t.slots.find((x) => (x.status === 'done' || x.status === 'stopped') && x.text) : undefined;
+      if (s) out.push({ role: 'assistant', content: s.text });
     }
-    // Drop a trailing user message that never got an answer, so roles keep alternating.
-    while (out.length && out[out.length - 1]!.role === 'user') out.pop();
-    return out.slice(-40);
+    // Keep roles alternating: drop user messages that never got an answer.
+    const clean: typeof out = [];
+    for (const m of out) {
+      if (m.role === 'user' && clean.at(-1)?.role === 'user') clean.pop();
+      clean.push(m);
+    }
+    while (clean.at(-1)?.role === 'user') clean.pop();
+    return clean.slice(-40);
   }
 
-  async function send(opts: { text?: string; retry?: { q: string; model: string } } = {}) {
-    const { retry } = opts;
-    const q = (retry?.q ?? opts.text ?? input).trim();
+  async function claimWelcome(failId: number) {
+    try {
+      const r = await post<{ credits: number; balance: number }>('/credits/welcome');
+      setCredits(r.balance);
+      setTurns((ts) => ts.filter((t) => t.id !== failId));
+      add({ kind: 'note', text: `${WELCOME_CREDITS} free credits added` });
+      refreshMe();
+    } catch (e) {
+      const code = e instanceof ApiError ? (e.code as keyof typeof WELCOME_DENIED_TEXT) : 'check_failed';
+      toast(WELCOME_DENIED_TEXT[code] ?? WELCOME_DENIED_TEXT.check_failed, true);
+    }
+  }
+
+  async function send(opts: { text?: string; retry?: { q: string; model: string }; regenerate?: boolean } = {}) {
+    const { retry, regenerate } = opts;
+    let base = turnsRef.current;
+    let q: string;
+    if (regenerate) {
+      const lastYou = [...base].reverse().find((t) => t.kind === 'you') as Extract<Turn, { kind: 'you' }> | undefined;
+      if (!lastYou) return;
+      q = lastYou.text;
+      base = base.slice(0, base.indexOf(lastYou) + 1);
+      setTurns(base);
+    } else {
+      q = (retry?.q ?? opts.text ?? input).trim();
+    }
     if (!q || busy) return;
     if (!me) return ui.openModal('wallet');
     const model = retry?.model ?? ui.model;
     const compare = !retry && ui.compare;
     const web = Boolean(ui.webSearch && config?.webSearch);
     const models = compare ? [model, ui.cmpModel] : [model];
-    const msgs = [...history(), { role: 'user' as const, content: q }];
+    const msgs = [...historyFor(regenerate ? base.slice(0, -1) : base), { role: 'user' as const, content: q }];
 
-    if (!retry) {
+    if (!retry && !regenerate) {
       add({ kind: 'you', text: q });
       if (opts.text === undefined) {
         setInput('');
@@ -201,7 +343,7 @@ export function Chat() {
       }
     }
     if (!config?.inference) {
-      add({ kind: 'fail', title: 'AI models are not connected yet.', body: 'We\'re finishing the setup. You weren\'t charged.' });
+      add({ kind: 'fail', title: 'AI models are not connected yet.', body: "We're finishing the setup. You weren't charged." });
       return;
     }
 
@@ -236,8 +378,19 @@ export function Chat() {
       );
       ui.markOnboard('msg');
       if (compare) ui.markOnboard('cmp');
+      // Wait for React to apply the last events, then save the encrypted copy.
+      setTimeout(() => void persist(turnsRef.current), 0);
     } catch (err) {
-      if (ctrl.signal.aborted) return;
+      if (ctrl.signal.aborted) {
+        // Stopped by the user: keep what arrived; unfinished answers are never charged.
+        patchAi(aiId, (t) => ({
+          ...t,
+          slots: t.slots.map((s) => (s.status === 'streaming' || s.status === 'waiting' ? { ...s, status: s.text ? 'stopped' : 'error', error: 'Stopped.' } : s)),
+        }));
+        refreshMe();
+        setTimeout(() => void persist(turnsRef.current), 0);
+        return;
+      }
       setTurns((ts) => ts.filter((t) => t.id !== aiId));
       const e = err instanceof ApiError ? err : null;
       const body = (e?.body as { error?: { needed?: number; balance?: number; model?: string } } | undefined)?.error;
@@ -250,7 +403,9 @@ export function Chat() {
         });
       } else if (e?.status === 503) {
         const down = body?.model ?? model;
-        const alt = down === FALLBACK_MODEL ? MODELS.find((m) => m.id !== down)!.id : FALLBACK_MODEL;
+        const alt =
+          config.models.find((m) => m.status === 'ok' && m.id !== down)?.id ??
+          (down === FALLBACK_MODEL ? MODELS.find((m) => m.id !== down)!.id : FALLBACK_MODEL);
         add({
           kind: 'fail',
           title: `${modelName(down)} is temporarily unavailable.`,
@@ -259,16 +414,29 @@ export function Chat() {
         });
       } else if (e?.status === 401) {
         refreshMe();
-        add({ kind: 'fail', title: 'Your session expired.', body: 'Connect your wallet again to continue. You weren\'t charged.' });
+        add({ kind: 'fail', title: 'Your session expired.', body: "Connect your wallet again to continue. You weren't charged." });
       } else if (e?.status === 429) {
-        add({ kind: 'fail', title: 'You\'re sending messages quickly.', body: 'Wait a few seconds and try again. You weren\'t charged.' });
+        add({ kind: 'fail', title: "You're sending messages quickly.", body: "Wait a few seconds and try again. You weren't charged." });
       } else {
-        add({ kind: 'fail', title: `Couldn't reach ${brand.name}.`, body: 'Check your connection and try again. You weren\'t charged.' });
+        add({ kind: 'fail', title: `Couldn't reach ${brand.name}.`, body: "Check your connection and try again. You weren't charged." });
       }
     } finally {
       setBusy(false);
       abort.current = null;
     }
+  }
+
+  function edit(turn: Extract<Turn, { kind: 'you' }>) {
+    if (busy) return;
+    setTurns((ts) => ts.slice(0, ts.indexOf(turn)));
+    setInput(turn.text);
+    setTimeout(() => {
+      const el = inp.current;
+      if (!el) return;
+      el.focus();
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+    }, 0);
   }
 
   if (!me) {
@@ -295,7 +463,9 @@ export function Chat() {
   }
 
   const ob = ui.onboard;
-  const showChecklist = !ob.hidden && !(ob.msg && ob.cmp && ob.top && ob.verify);
+  const claimed = me.welcomeClaimed !== false;
+  const showChecklist = !ob.hidden && !(ob.msg && ob.cmp && ob.top && ob.verify && claimed);
+  const lastAiId = [...turns].reverse().find((t) => t.kind === 'ai')?.id;
 
   return (
     <div className="apage chatwrap" style={{ display: 'flex' }}>
@@ -307,7 +477,10 @@ export function Chat() {
             </h4>
             <ul>
               <li className="done"><i />Connect your wallet</li>
-              <li className="done"><i />Claim {WELCOME_CREDITS} free credits</li>
+              <li className={claimed ? 'done' : undefined}>
+                <i />
+                {claimed ? `Claim ${WELCOME_CREDITS} free credits` : <button onClick={() => void claimWelcome(-1)}>Claim {WELCOME_CREDITS} free credits</button>}
+              </li>
               <li className={ob.msg ? 'done' : undefined}><i />Send your first private message</li>
               <li className={ob.cmp ? 'done' : undefined}>
                 <i />Try{' '}
@@ -320,16 +493,46 @@ export function Chat() {
               <li className={ob.verify ? 'done' : undefined}>
                 <i />
                 <Link href="/trust" onClick={() => ui.markOnboard('verify')} style={{ color: 'var(--violet2)', textDecoration: 'underline' }}>
-                  Verify the enclave
+                  See how privacy works
                 </Link>
               </li>
             </ul>
           </div>
         )}
+        {history.enabled && !history.unlocked && turns.some((t) => t.kind === 'ai') && (
+          <div className="savebar">
+            <Icon name="lock" />
+            <span>This chat isn&apos;t saved. Unlock encrypted history with one signature to keep it on your devices.</span>
+            <button
+              className="btn btn-light"
+              onClick={() =>
+                history
+                  .unlock()
+                  .then(() => persist(turnsRef.current))
+                  .then(() => toast('History unlocked. This chat is saved, encrypted.'))
+                  .catch((e: unknown) =>
+                    toast(e instanceof Error && e.message === 'wallet_not_connected' ? 'Reconnect your wallet to unlock history.' : 'History stays locked.', true),
+                  )
+              }
+            >
+              Unlock
+            </button>
+          </div>
+        )}
         <div className="thread-in" aria-live="polite">
           {turns.map((t) => {
             const gone = leaving ? ' gone' : '';
-            if (t.kind === 'you') return <div key={t.id} className={`m you${gone}`} style={{ whiteSpace: 'pre-wrap' }}>{t.text}</div>;
+            if (t.kind === 'you')
+              return (
+                <div key={t.id} className={`m you${gone}`} style={{ whiteSpace: 'pre-wrap' }}>
+                  {t.text}
+                  {!busy && (
+                    <button className="editbtn" onClick={() => edit(t)} aria-label="Edit message">
+                      Edit
+                    </button>
+                  )}
+                </div>
+              );
             if (t.kind === 'note')
               return (
                 <div key={t.id} className={`m note${gone}`}>
@@ -350,6 +553,7 @@ export function Chat() {
                           className="btn btn-dark"
                           onClick={() => {
                             if (t.action?.topup) return ui.openModal('topup');
+                            if (t.action?.claim) return void claimWelcome(t.id);
                             if (t.action?.retry) {
                               ui.setModel(t.action.retry.model);
                               setTurns((ts) => ts.filter((x) => x.id !== t.id));
@@ -384,6 +588,8 @@ export function Chat() {
                 )}
               </div>
             );
+            const finished = t.slots.every((s) => s.status !== 'waiting' && s.status !== 'streaming');
+            const regen = finished && !busy && t.id === lastAiId ? () => void send({ regenerate: true }) : undefined;
             if (t.slots.length === 2)
               return (
                 <div key={t.id} className={`m ai${gone}`}>
@@ -395,12 +601,22 @@ export function Chat() {
                         <div key={i}>
                           <h5>
                             {modelName(s.model)}
-                            <small>{s.status === 'done' ? `${fmtCost(s.credits ?? 0)} cr` : s.status === 'error' ? 'unavailable' : ''}</small>
+                            <small>
+                              {s.status === 'done' ? `${fmtCost(s.credits ?? 0)} cr` : s.status === 'error' ? 'unavailable' : s.status === 'stopped' ? 'stopped' : ''}
+                            </small>
                           </h5>
                           <SlotBody slot={s} />
+                          {(s.status === 'done' || s.status === 'stopped') && s.text && (
+                            <CopyLink text={s.text} />
+                          )}
                         </div>
                       ))}
                     </div>
+                    {regen && (
+                      <div className="meta">
+                        <button className="mact" onClick={regen}>Regenerate both</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -411,7 +627,7 @@ export function Chat() {
                 <div className="b">
                   {search}
                   <SlotBody slot={s} big />
-                  {s.status === 'done' && <Meta slot={s} />}
+                  {(s.status === 'done' || s.status === 'stopped') && <Actions slot={s} onRegenerate={regen} />}
                 </div>
               </div>
             );
@@ -467,21 +683,35 @@ export function Chat() {
               </button>
             )}
             <span className="sp" />
-            <button className="send" aria-label="Send" disabled={!input.trim() || busy} onClick={() => void send()}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
-              </svg>
-            </button>
+            {busy ? (
+              <button className="send" aria-label="Stop answering" onClick={() => abort.current?.abort()}>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="7" y="7" width="10" height="10" rx="2" />
+                </svg>
+              </button>
+            ) : (
+              <button className="send" aria-label="Send" disabled={!input.trim()} onClick={() => void send()}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
         <div className="chint">
           <span className="l">
-            <Icon name="lock" />
-            <span>Encrypted in transit · nothing is stored</span>
+            <Icon name={ui.burn !== 'off' ? 'flame' : 'lock'} />
+            <span>
+              {ui.burn !== 'off'
+                ? `Encrypted · this chat self-destructs ${ui.burn === '1h' ? '1 hour' : '24 hours'} after it started`
+                : history.enabled && history.unlocked
+                  ? 'Never logged · saved encrypted to your wallet'
+                  : 'Never logged · not saved'}
+            </span>
           </span>
           <button
             onClick={() => {
-              forget();
+              forget({ erase: true });
               toast('Chat forgotten. Nothing was kept.');
             }}
           >
@@ -490,5 +720,14 @@ export function Chat() {
         </div>
       </div>
     </div>
+  );
+}
+
+function CopyLink({ text }: { text: string }) {
+  const copy = useCopy();
+  return (
+    <button className="mact" style={{ marginTop: 8 }} onClick={() => copy(text, 'Answer copied')}>
+      Copy
+    </button>
   );
 }

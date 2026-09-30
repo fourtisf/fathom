@@ -5,13 +5,14 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { useConnection, useDisconnect, useSignMessage, useSwitchChain } from 'wagmi';
 import { createSiweMessage } from 'viem/siwe';
 import { brand } from '@fathom/config';
-import { api, ApiError, post, type AppConfig, type Me } from '@/lib/api';
+import { api, ApiError, post, type AppConfig, type Me, type WelcomeDenied } from '@/lib/api';
 import { useToast } from '../Toast';
 
 interface SignInResult {
   address: string;
   credits: number;
   welcome: boolean;
+  welcomeDenied?: WelcomeDenied;
 }
 
 interface Session {
@@ -24,7 +25,7 @@ interface Session {
   /** Set right after a successful sign-in, so the chat can greet the user once. */
   lastSignIn: SignInResult | null;
   clearLastSignIn(): void;
-  signIn(address: `0x${string}`): Promise<void>;
+  signIn(address: `0x${string}`, turnstileToken?: string): Promise<void>;
   signOut(): Promise<void>;
   switchNetwork(): Promise<void>;
   /** Wallet's reason when the last automatic switch failed; the UI then offers manual network details. */
@@ -87,7 +88,7 @@ export function SessionProvider({
   const me = meQuery.data ?? null;
 
   const signIn = useCallback(
-    async (address: `0x${string}`) => {
+    async (address: `0x${string}`, turnstileToken?: string) => {
       const { nonce } = await api<{ nonce: string }>('/auth/nonce');
       const now = new Date();
       const message = createSiweMessage({
@@ -102,7 +103,7 @@ export function SessionProvider({
         expirationTime: new Date(now.getTime() + 10 * 60_000),
       });
       const signature = await signMessage({ message, account: address });
-      const res = await post<SignInResult>('/auth/verify', { message, signature });
+      const res = await post<SignInResult>('/auth/verify', { message, signature, turnstileToken });
       setLastSignIn(res);
       await qc.invalidateQueries({ queryKey: ['me'] });
     },

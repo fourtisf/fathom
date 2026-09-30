@@ -2,11 +2,39 @@
 
 export type ModelStatus = 'ok' | 'degraded' | 'unavailable';
 
+export interface TopupConfig {
+  token: { symbol: string; address: `0x${string}`; decimals: number };
+  treasury: `0x${string}`;
+  minUsd: number;
+  confirmations: number;
+  creditsPerUsd: number;
+}
+
 export interface AppConfig {
   chain: { id: number; name: string; rpcUrl: string; explorerUrl: string | null } | null;
   models: { id: string; name: string; status: ModelStatus }[];
   webSearch: boolean;
   inference: boolean;
+  turnstileSiteKey?: string | null;
+  topup?: TopupConfig | null;
+}
+
+export type WelcomeDenied = 'no_activity' | 'ip_limit' | 'daily_limit' | 'check_failed';
+
+export interface ApiKeyRow {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+export interface ChatBlob {
+  id: string;
+  ciphertext: string;
+  iv: string;
+  burnAt: string | null;
+  updatedAt: string;
 }
 
 export interface Settings {
@@ -19,6 +47,7 @@ export interface Me {
   address: string;
   credits: number;
   settings: Settings;
+  welcomeClaimed?: boolean;
 }
 
 export interface CreditsSummary {

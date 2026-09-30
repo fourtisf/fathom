@@ -790,3 +790,18 @@ body::before{background:linear-gradient(180deg,#050817 0%,#04061A 50%,#03050F 10
 .md th,.md td{padding:7px 12px;border:1px solid var(--line2);text-align:left}
 .md th{color:#fff;background:rgba(255,255,255,.04);font-weight:600}
 .md hr{border:0;border-top:1px solid var(--line2)}
+
+/* chat actions */
+.meta .mact,.cmp .mact{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;border:1px solid var(--line);background:none;font-size:12px;color:var(--ink2);cursor:pointer}
+.meta .mact:hover,.cmp .mact:hover{background:rgba(255,255,255,.06);color:#fff}
+.m.you{position:relative}
+.m.you .editbtn{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);opacity:0;font-size:12px;color:var(--mute);padding:4px 8px;border-radius:7px;transition:opacity .15s}
+.m.you:hover .editbtn,.m.you .editbtn:focus-visible{opacity:1}
+.m.you .editbtn:hover{background:rgba(255,255,255,.06);color:#fff}
+@media (hover:none){.m.you .editbtn{position:static;transform:none;opacity:1;display:block;margin-top:6px;padding:0;text-align:right;width:100%}}
+.savebar{display:flex;align-items:center;gap:10px;width:min(660px,100% - 40px);margin:0 auto 12px;padding:10px 14px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03);font-size:13px;color:var(--ink2)}
+.savebar svg{width:15px;height:15px;flex-shrink:0;color:var(--violet2)}
+.savebar .btn{margin-left:auto;height:30px;font-size:12.5px;padding:0 12px;border-radius:9px}
+.snav .hist .unlock{display:flex;align-items:center;gap:8px;width:100%;text-align:left;color:var(--violet2);border-radius:8px}
+.snav .hist .unlock:hover{background:rgba(255,255,255,.04)}
+.snav .hist .unlock svg{width:13px;height:13px}

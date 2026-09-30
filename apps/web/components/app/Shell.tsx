@@ -1,15 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { brand, estimateMessageCredits, LOW_BALANCE_CREDITS, MODELS } from '@fathom/config';
 import { Icon, type IconName } from '../Icon';
 import { LogoMark } from '../LogoMark';
-import { useCopy } from '../Toast';
+import { useCopy, useToast } from '../Toast';
+import { useHistory } from './History';
 import { AppModals } from './Modals';
 import { short, useSession } from './Session';
-import { useUi } from './Ui';
+import { useUi, type Burn } from './Ui';
 
 const NAV: { href: string; label: string; tab: string; icon: IconName }[] = [
   { href: '/app', label: 'Chat', tab: 'Chat', icon: 'chat' },
@@ -86,7 +87,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { me, config, configError, wrongNetwork, switchNetwork, switchError } = useSession();
   const copy = useCopy();
-  const { openModal, newChat } = useUi();
+  const ui = useUi();
+  const { openModal, newChat } = ui;
+  const history = useHistory();
+  const router = useRouter();
+  const toast = useToast();
   const page = NAV.find((n) => n.href === pathname) ?? NAV[0]!;
   const isChat = page.href === '/app';
 
@@ -109,7 +114,46 @@ export function AppShell({ children }: { children: ReactNode }) {
         ))}
         <h6>Chats</h6>
         <div className="hist">
-          <div className="empty">{me ? 'Chats are not saved' : 'No saved chats yet'}</div>
+          {!me ? (
+            <div className="empty">No saved chats yet</div>
+          ) : !history.enabled ? (
+            <div className="empty">History is off</div>
+          ) : !history.unlocked ? (
+            <button
+              className="empty unlock"
+              onClick={() =>
+                history
+                  .unlock()
+                  .then(() => toast('Encrypted history unlocked'))
+                  .catch((e: unknown) =>
+                    toast(e instanceof Error && e.message === 'wallet_not_connected' ? 'Reconnect your wallet to unlock history.' : 'History stays locked.', true),
+                  )
+              }
+            >
+              <Icon name="lock" />
+              Unlock saved chats
+            </button>
+          ) : history.items.length === 0 ? (
+            <div className="empty">No saved chats yet</div>
+          ) : (
+            history.items.slice(0, 30).map((c) => (
+              <a
+                key={c.id}
+                href="/app"
+                className={c.id === ui.activeChatId ? 'on' : undefined}
+                title={c.burnAt ? `Burns ${new Date(c.burnAt).toLocaleString()}` : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (c.locked) return toast("This chat was saved with a different key and can't be opened here.", true);
+                  if (pathname !== '/app') router.push('/app');
+                  ui.openChat(c.id);
+                }}
+              >
+                <Icon name={c.burnAt ? 'flame' : 'lock'} />
+                <span>{c.title}</span>
+              </a>
+            ))
+          )}
         </div>
         <div className="wallet-card">
           <div className="r">
@@ -134,6 +178,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           {isChat && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <ModelMenu />
+              {me && history.enabled && (
+                <label className="burnpill">
+                  <Icon name="flame" />
+                  <span className="l">Burn</span>
+                  <select aria-label="Auto-delete this chat" value={ui.burn} onChange={(e) => ui.setBurn(e.target.value as Burn)}>
+                    <option value="off">Off</option>
+                    <option value="1h">1 hour</option>
+                    <option value="24h">24 hours</option>
+                  </select>
+                </label>
+              )}
             </div>
           )}
           {me && config?.chain && (
