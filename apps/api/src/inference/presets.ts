@@ -18,6 +18,12 @@ export interface ProviderPreset {
   extraBody?: Record<string, unknown>;
   /** Extra request headers (non-secret). */
   headers?: Record<string, string>;
+  /**
+   * What the assistant may truthfully say about where prompts are processed:
+   * 'tee' = confidential-computing hardware with attestation; 'no-retention' = third-party
+   * providers under a no-storage/no-training policy. Unset = no claim beyond Noxsea's own.
+   */
+  privacy?: 'tee' | 'no-retention';
 }
 
 /**
@@ -33,6 +39,7 @@ export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
   tinfoil: {
     kind: 'openai-compatible',
     baseUrl: 'https://inference.tinfoil.sh/v1',
+    privacy: 'tee',
     modelMap: { 'gpt-oss-120b': 'gpt-oss-120b', 'llama-3.3-70b': 'llama3-3-70b' },
   },
   // OpenRouter: a router, NOT confidential computing. Requests are restricted to upstream providers
@@ -41,6 +48,7 @@ export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
   openrouter: {
     kind: 'openai-compatible',
     baseUrl: 'https://openrouter.ai/api/v1',
+    privacy: 'no-retention',
     modelMap: {
       'deepseek-v3.1': 'deepseek/deepseek-chat-v3.1',
       'qwen3-235b': 'qwen/qwen3-235b-a22b-2507',

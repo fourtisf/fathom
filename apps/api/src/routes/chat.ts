@@ -6,6 +6,7 @@ import { fixedWindow } from '../ratelimit';
 import { chargeUsage, toCredits } from '../billing';
 import { estimateTokens, ProviderError, type ChatMessage } from '../inference';
 import { searchSystemMessage } from '../search';
+import { buildSystemPrompt } from '../prompt';
 
 /**
  * POST /chat: streams model answers as Server-Sent Events.
@@ -21,9 +22,6 @@ const OUTPUT_RESERVE_TOKENS = 1000;
 const SEARCH_QUERY_CHARS = 300;
 const PING_MS = 15_000;
 
-export const SYSTEM_PROMPT =
-  `You are ${brand.name}, a private assistant running on open-weight models. ` +
-  'Be helpful, accurate and concise. Use Markdown when it helps. If you are not sure about something, say so.';
 
 type Role = 'user' | 'assistant';
 interface ChatBody {
@@ -83,6 +81,7 @@ function unavailable(reply: FastifyReply, model: string) {
 
 export const chatRoutes: FastifyPluginAsync = async (app) => {
   const { prisma, redis, health, activeStreams } = app.ctx;
+  const systemPrompt = buildSystemPrompt({ preset: app.ctx.env.inference?.preset ?? null, webSearch: !!app.ctx.search });
 
   app.post('/chat', { preHandler: requireAuth }, async (request, reply) => {
     const userId = request.userId!;
@@ -109,7 +108,7 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
 
     // Search only when requested and configured; unavailable search means no ×1.6.
     const search = body.webSearch ? app.ctx.search : null;
-    const baseMessages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, ...body.messages];
+    const baseMessages: ChatMessage[] = [{ role: 'system', content: systemPrompt }, ...body.messages];
 
     // Pre-check against an estimate, before anything streams. Staking discounts arrive in Phase 6.
     const discountBps = 0;

@@ -29,6 +29,11 @@ type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) :
 
 const SUGGESTIONS = [
   {
+    title: `What is ${brand.name}?`,
+    sub: 'Privacy, credits and how it works',
+    prompt: `What is ${brand.name}, how does it keep my chats private, and how do credits work?`,
+  },
+  {
     title: 'Spot a memecoin rug pull',
     sub: 'Liquidity, dev wallets and mint authority',
     prompt:
@@ -45,12 +50,6 @@ const SUGGESTIONS = [
     sub: 'Bonding curves, snipers and bots',
     prompt:
       'Explain how memecoin launches work: bonding-curve launchpads, when liquidity migrates to a DEX, and how sniper bots and bundled wallets affect early buyers.',
-  },
-  {
-    title: 'Check a token contract',
-    sub: 'Red flags to look for before you buy',
-    prompt:
-      "What red flags should I check in a token's smart contract before buying it? Cover mint functions, blacklists, honeypots, taxes and owner privileges.",
   },
   {
     title: 'Bridge to Robinhood Chain safely',
