@@ -132,6 +132,38 @@ describe('presets and model health', () => {
     expect(extended.warnings.some((w) => w.includes('bogus'))).toBe(true);
   });
 
+  it('openrouter maps all four models and sends the no-retention provider policy', async () => {
+    const env = loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_API_KEY: 'k' });
+    const inf = env.inference!;
+    expect(inf.baseUrl).toBe('https://openrouter.ai/api/v1');
+    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v3.1', 'gpt-oss-120b', 'llama-3.3-70b', 'qwen3-235b']);
+    let sent: any;
+    const provider = createOpenAiCompatibleProvider({
+      name: 'openrouter',
+      baseUrl: inf.baseUrl!,
+      apiKey: 'k',
+      modelMap: inf.modelMap,
+      extraBody: { ...inf.extraBody, model: 'must-not-override', stream: false },
+      extraHeaders: inf.headers,
+      fetch: (async (_url: string, init: RequestInit) => {
+        sent = { headers: init.headers, body: JSON.parse(init.body as string) };
+        return sseResponse(['data: {"choices":[{"delta":{"content":"ok"}}]}\n\n', 'data: [DONE]\n\n']);
+      }) as typeof fetch,
+    });
+    await collect(provider.chatStream({ model: 'deepseek-v3.1', messages: msgs, signal }));
+    expect(sent.body).toMatchObject({
+      model: 'deepseek/deepseek-chat-v3.1',
+      stream: true,
+      provider: { data_collection: 'deny', zdr: true },
+    });
+    expect(sent.headers['X-Title']).toBeTruthy();
+    expect(sent.headers.authorization).toBe('Bearer k');
+
+    const relaxed = loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_EXTRA_BODY: '{"provider":{"data_collection":"deny"}}' });
+    expect(relaxed.inference!.extraBody).toEqual({ provider: { data_collection: 'deny' } });
+    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_EXTRA_BODY: 'nope' }).warnings.some((w) => w.includes('INFERENCE_EXTRA_BODY'))).toBe(true);
+  });
+
   it('generic preset maps identity; listing unsupported means all ok; failures degrade', async () => {
     expect(loadEnv({ INFERENCE_PROVIDER: 'openai-compatible' }).inference).toBeNull(); // needs a base URL
     const env = loadEnv({ INFERENCE_PROVIDER: 'openai-compatible', INFERENCE_BASE_URL: 'https://p.example/v1' });

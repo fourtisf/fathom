@@ -6,6 +6,9 @@ export interface OpenAiCompatibleOptions {
   baseUrl: string;
   apiKey: string | null;
   modelMap: Partial<Record<string, string>>;
+  /** Merged into each chat request body; can't override model, messages or streaming fields. */
+  extraBody?: Record<string, unknown>;
+  extraHeaders?: Record<string, string>;
   firstByteTimeoutMs?: number;
   totalTimeoutMs?: number;
   fetch?: typeof fetch;
@@ -39,6 +42,7 @@ export function createOpenAiCompatibleProvider(opts: OpenAiCompatibleOptions): I
   const firstByteMs = opts.firstByteTimeoutMs ?? 15_000;
   const totalMs = opts.totalTimeoutMs ?? 120_000;
   const headers = (): Record<string, string> => ({
+    ...opts.extraHeaders,
     'content-type': 'application/json',
     accept: 'text/event-stream, application/json',
     ...(opts.apiKey ? { authorization: `Bearer ${opts.apiKey}` } : {}),
@@ -101,6 +105,7 @@ export function createOpenAiCompatibleProvider(opts: OpenAiCompatibleOptions): I
             method: 'POST',
             headers: headers(),
             body: JSON.stringify({
+              ...opts.extraBody,
               model: providerModel,
               messages: req.messages,
               stream: true,

@@ -18,6 +18,8 @@ export function createProvider(env: InferenceEnv | null): InferenceProvider | nu
         baseUrl: env.baseUrl!,
         apiKey: env.apiKey,
         modelMap: env.modelMap,
+        extraBody: env.extraBody,
+        extraHeaders: env.headers,
       });
   }
 }

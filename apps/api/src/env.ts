@@ -16,6 +16,8 @@ export interface InferenceEnv {
   apiKey: string | null;
   /** Our model id → provider model id. Unmapped models are unavailable. */
   modelMap: Partial<Record<ModelId, string>>;
+  extraBody: Record<string, unknown>;
+  headers: Record<string, string>;
 }
 
 export interface ApiEnv {
@@ -105,7 +107,26 @@ function loadInference(env: Env, warnings: string[]): InferenceEnv | null {
       warnings.push('INFERENCE_MODEL_MAP is not a JSON object; using defaults');
     }
   }
-  return { preset, kind: p.kind, baseUrl, apiKey: opt(env, 'INFERENCE_API_KEY'), modelMap };
+  let extraBody: Record<string, unknown> = p.extraBody ?? {};
+  const rawExtra = opt(env, 'INFERENCE_EXTRA_BODY');
+  if (rawExtra) {
+    try {
+      const parsed: unknown = JSON.parse(rawExtra);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+      extraBody = parsed as Record<string, unknown>;
+    } catch {
+      warnings.push('INFERENCE_EXTRA_BODY is not a JSON object; using the preset default');
+    }
+  }
+  return {
+    preset,
+    kind: p.kind,
+    baseUrl,
+    apiKey: opt(env, 'INFERENCE_API_KEY'),
+    modelMap,
+    extraBody,
+    headers: p.headers ?? {},
+  };
 }
 
 // Every feature var is optional: the server boots without it and the feature reports unavailable.
