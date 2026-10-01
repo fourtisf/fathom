@@ -6,11 +6,11 @@ import { Scanner } from '@/components/scan/Scanner';
 export const metadata: Metadata = {
   title: `Token Scanner · ${brand.name}`,
   description:
-    'Free token scanner for Robinhood Chain. Paste a contract address and see the red flags in seconds: mint, blacklist, taxes, owner, proxy and holder concentration. No wallet needed.',
+    'Free multi-chain token scanner: Robinhood Chain, Solana, Ethereum, Base, BNB Chain and more. Paste a token address and see the red flags in seconds: mint, freeze, honeypot, taxes, owner, liquidity and holder concentration. No wallet needed.',
   alternates: { canonical: '/scan' },
   openGraph: {
     title: `Token Scanner · ${brand.name}`,
-    description: 'Paste a contract address on Robinhood Chain and see the red flags in seconds. Free, no wallet needed.',
+    description: 'Paste a token address from Robinhood Chain, Solana, Ethereum, Base and more. See the red flags in seconds. Free, no wallet needed.',
     url: '/scan',
   },
 };

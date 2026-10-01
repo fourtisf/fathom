@@ -64,7 +64,7 @@ const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean 
   },
   {
     title: 'Check a token for red flags',
-    sub: 'Paste a contract address on Robinhood Chain',
+    sub: 'Paste a token address: Robinhood Chain, Solana, Base and more',
     prompt: TOKEN_CHECK_PREFIX,
     fill: true,
   },
@@ -699,7 +699,7 @@ export function Chat() {
             const pr = t.tools?.price;
             const tools = (tk || pr) && (
               <>
-                {tk && (tk.status !== 'done' || !tk.report) && <ToolLine tool="token" state={tk} chain={config?.chain?.name} />}
+                {tk && (tk.status !== 'done' || !tk.report) && <ToolLine tool="token" state={tk} />}
                 {tk?.status === 'done' && tk.report && <TokenCard report={tk.report} />}
                 {pr && (pr.status !== 'done' || !pr.prices?.length) && <ToolLine tool="price" state={pr} />}
                 {pr?.status === 'done' && pr.prices && pr.prices.length > 0 && (
@@ -874,7 +874,7 @@ export function Chat() {
                 aria-label="Check a token"
                 onClick={() => {
                   fillComposer(input.startsWith(TOKEN_CHECK_PREFIX) ? input : TOKEN_CHECK_PREFIX + input);
-                  toast('Paste a contract address on Robinhood Chain');
+                  toast('Paste a token address (0x… or a Solana mint)');
                 }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

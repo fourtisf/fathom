@@ -1,16 +1,20 @@
-import type { Address } from 'viem';
 import type { ChatMessage } from '../inference';
-import { tokenSystemMessage, type TokenReport, type TokenScanner } from './blockscout';
+import { tokenSystemMessage, type TokenReport } from './blockscout';
+import { chainHint, detectSolanaAddress, type MultiScanner } from './multichain';
 import { detectPriceQuestion, priceSystemMessage, type CoinPrice, type PriceFeed } from './prices';
 
 export type { TokenReport, RiskFlag, TokenScanner } from './blockscout';
 export type { CoinPrice, PriceFeed } from './prices';
 export { createTokenScanner, tokenSystemMessage } from './blockscout';
+export { createMultiScanner, ScanInputError, chainHint, detectSolanaAddress, type MultiScanner } from './multichain';
+export { createSolanaScanner } from './solana';
+export { createDexScreener, type MarketFeed } from './market';
+export { createGoPlus, type SecurityFeed } from './goplus';
 export { createCoinGecko, detectPriceQuestion, priceSystemMessage } from './prices';
 
 /** Crypto tools for the app's chat. Each is null when not configured. */
 export interface CryptoTools {
-  scanner: TokenScanner | null;
+  scanner: (Pick<MultiScanner, 'scan'> & Partial<Pick<MultiScanner, 'chains'>>) | null;
   prices: PriceFeed | null;
 }
 
@@ -23,10 +27,17 @@ export type ToolEvent =
 
 const ADDRESS_RE = /\b0x[a-fA-F0-9]{40}\b/;
 
-/** The first contract/wallet address in a message, if any. */
-export function detectAddress(text: string): Address | null {
+/** The first contract/wallet address in a message (0x… or a Solana address), if any. */
+export function detectAddress(text: string): string | null {
   const m = text.match(ADDRESS_RE);
-  return m ? (m[0] as Address) : null;
+  return m ? m[0] : detectSolanaAddress(text);
+}
+
+/** The chain to scan for a chat message: the one it names, if that fits the address, else auto-detect. */
+function chainFor(text: string, address: string): string {
+  const hint = chainHint(text);
+  const solana = !address.startsWith('0x');
+  return (hint === 'solana') === solana ? hint : 'auto';
 }
 
 /**
@@ -48,7 +59,7 @@ export async function runCryptoTools(
   if (address && tools.scanner) {
     emit({ type: 'tool', tool: 'token', status: 'running' });
     jobs.push(
-      tools.scanner.scan(address, signal).then(
+      tools.scanner.scan(address, signal, chainFor(text, address)).then(
         (report) => {
           out.push({ role: 'system', content: tokenSystemMessage(report) });
           emit({ type: 'tool', tool: 'token', status: 'done', report });

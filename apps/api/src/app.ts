@@ -6,6 +6,7 @@ import sensible from '@fastify/sensible';
 import { Redis } from 'ioredis';
 import { PrismaClient, purgeBurnedChats } from '@fathom/db';
 import { loadEnv, type ApiEnv } from './env';
+import { getScanChain } from '@fathom/config';
 import { fastifyLoggingOptions, type LoggerOptions } from './logger';
 import { registerErrorHandlers } from './errors';
 import { createProvider, type InferenceProvider } from './inference';
@@ -29,7 +30,15 @@ import { createChainClient, type ChainClient } from './chain';
 import { TopupService } from './topup';
 import { SearchHealth, runStatusProbe } from './status';
 import { createTurnstileVerifier, type CaptchaVerifier } from './turnstile';
-import { createCoinGecko, createTokenScanner, type CryptoTools } from './crypto';
+import {
+  createCoinGecko,
+  createDexScreener,
+  createGoPlus,
+  createMultiScanner,
+  createSolanaScanner,
+  createTokenScanner,
+  type CryptoTools,
+} from './crypto';
 
 export interface BuildAppOptions {
   env?: ApiEnv;
@@ -124,17 +133,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
       ? opts.crypto
       : env.crypto.enabled
         ? {
-            // Explorer first; the chain's RPC alone still gives a useful check when the explorer is blocked.
-            scanner:
-              env.crypto.explorerApi || chain
-                ? createTokenScanner({
-                    apiBase: env.crypto.explorerApi,
-                    apiKey: env.crypto.explorerApiKey,
-                    explorerUrl: env.chain?.explorerUrl ?? null,
-                    chainName: env.chain?.name ?? 'Robinhood Chain',
-                    chain,
-                  })
-                : null,
+            scanner: createScanner(env, chain),
             prices: createCoinGecko({
               apiKey: env.crypto.coingeckoKey,
               plan: env.crypto.coingeckoPlan,
@@ -218,4 +217,33 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(v1AuthRoutes, { prefix: '/v1' });
 
   return app;
+}
+
+/** Token Safety Check: the home chain (explorer first, RPC when it's blocked) plus, unless turned off, other chains. */
+function createScanner(env: ApiEnv, chain: ChainClient | null): CryptoTools['scanner'] {
+  const homeName = env.chain?.name ?? 'Robinhood Chain';
+  const home =
+    env.crypto.explorerApi || chain
+      ? createTokenScanner({
+          apiBase: env.crypto.explorerApi,
+          apiKey: env.crypto.explorerApiKey,
+          explorerUrl: env.chain?.explorerUrl ?? null,
+          chainName: homeName,
+          chain,
+        })
+      : null;
+  if (!home && !env.crypto.multichain) return null;
+  const solana = getScanChain('solana')!;
+  return createMultiScanner({
+    home,
+    homeClient: chain,
+    homeName,
+    solana: env.crypto.multichain
+      ? createSolanaScanner({ rpcUrl: env.crypto.scanRpc.solana ?? solana.rpc, explorerUrl: solana.explorer })
+      : null,
+    market: env.crypto.multichain ? createDexScreener({ baseUrl: env.crypto.dexscreenerUrl ?? undefined }) : null,
+    security: env.crypto.multichain ? createGoPlus({ baseUrl: env.crypto.goplusUrl ?? undefined }) : null,
+    rpc: env.crypto.scanRpc,
+    onlyHome: !env.crypto.multichain,
+  });
 }

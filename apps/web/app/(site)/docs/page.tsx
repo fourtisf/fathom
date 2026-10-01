@@ -141,10 +141,13 @@ export default function DocsPage() {
         </p>
         <ul>
           <li>
-            <b>Check token.</b> Paste a contract address on Robinhood Chain. {brand.name} reads public on-chain data and shows a
-            risk card: mint and blacklist functions, adjustable taxes, trading switches, pause, owner and renounce status,
-            upgradeable proxies and, when the block explorer responds, top-holder concentration and source verification. The
-            AI explains each flag. Automatic checks can miss honeypots and liquidity pulls; this is not financial advice. The
+            <b>Check token.</b> Paste a token address from Robinhood Chain, Solana, Ethereum, Base, BNB Chain, Arbitrum,
+            Polygon, Optimism or Avalanche ({brand.name} finds the chain an 0x address is on; add &ldquo;on Base&rdquo; to pick
+            one). It reads public on-chain data and shows a risk card: mint and blacklist functions, adjustable taxes, trading
+            switches, pause, owner and renounce status, upgradeable proxies and top-holder concentration. On Solana it checks
+            mint and freeze authority and Token-2022 extensions such as transfer fees and permanent delegates. Liquidity and
+            pool age come from DexScreener, and on EVM chains other than Robinhood Chain, honeypot, tax and holder checks come
+            from GoPlus. Lookups leave from our servers, so these services never see your IP. The AI explains each flag. Automatic checks can miss honeypots and liquidity pulls; this is not financial advice. The
             same check is free at <Link href="/scan" style={link}>noxsea.xyz/scan</Link>, with no wallet and no credits (10 scans
             a minute, 150 a day). We don&apos;t keep a record of who scanned what, and a link like <code>/scan?address=0x…</code> opens a scan directly.
           </li>

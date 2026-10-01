@@ -148,3 +148,11 @@
 .scan-hero h1 .grad{background:linear-gradient(95deg,#C4BCFF,#8B7CFF 45%,#6FE3F0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .tool-link{display:inline-block;margin-top:14px;font-size:14px;font-weight:500;color:var(--violet2)}
 .tool-link:hover{color:#fff}
+.scan-chains{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:min(720px,100%);margin:30px auto 0}
+.scan-chains button{height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--ink2);font:500 13px var(--sans,inherit);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.scan-chains button:hover{color:#fff;border-color:rgba(255,255,255,.22)}
+.scan-chains button.on{color:#fff;background:rgba(139,124,255,.18);border-color:rgba(179,168,255,.5)}
+.scan-chains button:focus-visible{outline:2px solid var(--violet2);outline-offset:2px}
+.scan-chains + .scan-form{margin-top:14px}
+.scan-also{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center;margin:4px 0 6px;font-size:13.5px;color:var(--mute)}
+@media (max-width:600px){.scan-chains{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;width:auto;padding:0 16px}.scan-chains::-webkit-scrollbar{display:none}.scan-chains button{flex:none}}

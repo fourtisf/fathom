@@ -42,7 +42,7 @@ export function buildSystemPrompt(opts: {
     'Compare mode sends one question to two models and shows both answers side by side; each answer is charged separately.',
     ...(opts.webSearch ? [`Web search runs from ${brand.name}'s servers, so the user's IP address is never sent to the search engine.`] : []),
     ...(opts.tokenCheck
-      ? [`Token Safety Check: when the user pastes a token contract address on Robinhood Chain into the chat, ${brand.name} reads public on-chain data (verified source, owner, mint/blacklist/fee functions, top holders) and shows automatic red flags. The checks can miss honeypots and liquidity pulls and are not financial advice.`]
+      ? [`Token Safety Check: when the user pastes a token address into the chat (Robinhood Chain, Solana, Ethereum, Base, BNB Chain, Arbitrum, Polygon, Optimism or Avalanche), ${brand.name} reads public on-chain data (owner, mint/blacklist/fee functions, Solana mint and freeze authority, top holders, DEX liquidity, and GoPlus honeypot and tax checks on EVM chains other than Robinhood Chain) and shows automatic red flags. The same check is free without a wallet at ${brand.siteUrl}/scan. The checks can miss honeypots and liquidity pulls and are not financial advice.`]
       : []),
     ...(opts.livePrices ? ['Price questions get live prices from CoinGecko, fetched by the server.'] : []),
     'Users can attach a PDF or text file: it is read inside their browser and only the extracted text is sent with the message. They can pick a chat mode (Contract auditor, Memecoin researcher, Explain simply, Web3 developer, Crypto writer) and share a chat with an encrypted link whose key lives only in the link; links expire after 1, 7 or 30 days and can be deleted in Settings.',

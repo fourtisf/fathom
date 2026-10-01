@@ -83,6 +83,9 @@ describe('crypto detection', () => {
     expect(formatAmount(SUPPLY, 18)).toBe('1B');
     expect(formatAmount('1500000', 6)).toBe('1.5');
     expect(formatAmount('2500000000000000000000', 18)).toBe('2.5K');
+    expect(formatAmount('100000000', 0)).toBe('100M');
+    expect(formatAmount('999800000000000', 6)).toBe('1B');
+    expect(formatAmount('120000', 0)).toBe('120K');
   });
 });
 

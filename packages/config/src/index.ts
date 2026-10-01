@@ -4,3 +4,4 @@ export * from './tiers';
 export * from './credits';
 export * from './chain';
 export * from './personas';
+export * from './scanChains';

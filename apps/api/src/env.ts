@@ -1,5 +1,5 @@
 import { getAddress, isAddress, type Address } from 'viem';
-import { MODELS, type ModelId } from '@fathom/config';
+import { MODELS, SCAN_CHAINS, type ModelId } from '@fathom/config';
 import { INFERENCE_PRESETS, type ProviderKind } from './inference/presets';
 
 export interface ChainEnv {
@@ -59,6 +59,13 @@ export interface CryptoEnv {
   coingeckoPlan: 'demo' | 'pro';
   /** Override for the CoinGecko API base (proxy or test server). */
   coingeckoUrl: string | null;
+  /** Scan other chains (Solana, Ethereum, Base…) besides the home chain. SCAN_MULTICHAIN=off turns it off. */
+  multichain: boolean;
+  /** RPC overrides by scanner chain key, from SCAN_RPC_<KEY> (SOLANA_RPC_URL also works for Solana). */
+  scanRpc: Record<string, string | undefined>;
+  /** Overrides for the DexScreener and GoPlus API bases (proxy or test server). */
+  dexscreenerUrl: string | null;
+  goplusUrl: string | null;
 }
 
 export interface ApiEnv {
@@ -132,6 +139,15 @@ function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): Crypt
     coingeckoKey: opt(env, 'COINGECKO_API_KEY'),
     coingeckoPlan: plan,
     coingeckoUrl: optUrl(env, 'COINGECKO_API_URL', warnings),
+    multichain: (opt(env, 'SCAN_MULTICHAIN') ?? 'on').toLowerCase() !== 'off',
+    scanRpc: Object.fromEntries(
+      SCAN_CHAINS.map((c) => [
+        c.key,
+        optUrl(env, `SCAN_RPC_${c.key.toUpperCase()}`, warnings) ?? (c.key === 'solana' ? optUrl(env, 'SOLANA_RPC_URL', warnings) : null) ?? undefined,
+      ]),
+    ),
+    dexscreenerUrl: optUrl(env, 'DEXSCREENER_API_URL', warnings),
+    goplusUrl: optUrl(env, 'GOPLUS_API_URL', warnings),
   };
 }
 

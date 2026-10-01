@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import type { Address } from 'viem';
+import { addressKind } from '@fathom/config';
 import { errorBody } from '../errors';
+import { ScanInputError } from '../crypto';
 import { fixedWindow } from '../ratelimit';
 import { ipHash } from '../iphash';
 
@@ -10,7 +11,7 @@ import { ipHash } from '../iphash';
  * Rate limited per salted IP hash; results come from the scanner's 5-minute cache when warm.
  */
 
-const ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/;
+const CHAIN_RE = /^[a-z]{2,20}$/;
 export const SCAN_RATE_PER_MIN = 10;
 export const SCAN_RATE_PER_DAY = 150;
 const SCAN_TIMEOUT_MS = 25_000;
@@ -23,8 +24,11 @@ export const scanRoutes: FastifyPluginAsync = async (app) => {
 
     const b = (request.body && typeof request.body === 'object' ? request.body : {}) as Record<string, unknown>;
     const address = typeof b.address === 'string' ? b.address.trim() : '';
-    if (!ADDRESS_RE.test(address)) {
-      return reply.status(400).send(errorBody(400, 'Paste a contract address: 0x followed by 40 hex characters.', 'invalid_address'));
+    const chain = typeof b.chain === 'string' && CHAIN_RE.test(b.chain) ? b.chain : 'auto';
+    if (!addressKind(address)) {
+      return reply
+        .status(400)
+        .send(errorBody(400, 'Paste a token address: 0x… for EVM chains, or a Solana mint address.', 'invalid_address'));
     }
 
     const who = await ipHash(app.ctx, request.ip, 'scan');
@@ -42,9 +46,10 @@ export const scanRoutes: FastifyPluginAsync = async (app) => {
     }
 
     try {
-      const report = await scanner.scan(address as Address, AbortSignal.timeout(SCAN_TIMEOUT_MS));
+      const report = await scanner.scan(address, AbortSignal.timeout(SCAN_TIMEOUT_MS), chain);
       return { report };
     } catch (err) {
+      if (err instanceof ScanInputError) return reply.status(400).send(errorBody(400, err.message, err.code));
       request.log.warn({ err }, 'public scan failed');
       return reply.status(502).send(errorBody(502, "Couldn't read this address right now. Try again in a moment.", 'scan_failed'));
     }

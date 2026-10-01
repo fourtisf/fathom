@@ -96,7 +96,7 @@ export function Why() {
 const TOOLS: { title: string; text: string; icon: string; tag?: string; link?: [string, string] }[] = [
   {
     title: 'Token Safety Check',
-    text: 'Paste a contract address on Robinhood Chain and get the red flags in seconds: mint and blacklist functions, owner, verified source and top-holder concentration.',
+    text: 'Paste a token address from Robinhood Chain, Solana, Ethereum, Base, BNB Chain and more. Get the red flags in seconds: mint and freeze powers, honeypots, taxes, liquidity and top-holder concentration.',
     icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z M9 12l2 2 4-4',
     tag: 'New',
     link: ['/scan', 'Scan a token free, no wallet →'],

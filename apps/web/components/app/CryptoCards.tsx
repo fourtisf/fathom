@@ -40,7 +40,7 @@ export function ToolLine({ tool, state, chain }: { tool: 'token' | 'price'; stat
   const label =
     tool === 'token'
       ? state.status === 'running'
-        ? `Checking on-chain data on ${chain ?? 'Robinhood Chain'}…`
+        ? `Checking on-chain data${chain ? ` on ${chain}` : ''}…`
         : state.status === 'done'
           ? 'On-chain check done · your IP stayed hidden'
           : "Couldn't reach the block explorer, answering without it"
@@ -63,21 +63,29 @@ export function TokenCard({ report: r }: { report: TokenReport }) {
   const title = r.kind === 'wallet' ? 'Wallet' : r.name ? `${r.name}${r.symbol ? ` (${r.symbol})` : ''}` : r.contractName ?? 'Contract';
   const stats: [string, string][] = [];
   if (r.kind === 'wallet' && r.wallet) {
-    stats.push(['Balance', `${r.wallet.balance} ETH`]);
+    stats.push(['Balance', `${r.wallet.balance} ${r.nativeSymbol ?? 'ETH'}`]);
     if (r.wallet.txCount !== null) stats.push(['Transactions', r.wallet.txCount.toLocaleString('en-US')]);
   } else {
     if (r.holders !== null) stats.push(['Holders', r.holders.toLocaleString('en-US')]);
     if (r.top10Pct !== null) stats.push(['Top 10 hold', `${r.top10Pct}%`]);
     if (r.totalSupply) stats.push(['Supply', r.totalSupply]);
     if (r.priceUsd !== null) stats.push(['Price', usd(r.priceUsd)]);
-    stats.push(['Source', r.verified === null ? 'Unknown' : r.verified ? 'Verified' : 'Not verified']);
-    stats.push(['Owner', r.owner ? (r.owner.renounced ? 'Renounced' : short(r.owner.address ?? '')) : 'Not found']);
+    if (r.market) stats.push(['Liquidity', compactUsd(r.market.liquidityUsd)]);
+    if (r.solana) {
+      stats.push(['Mint authority', r.solana.mintAuthority ? 'Active' : 'Renounced']);
+      stats.push(['Freeze authority', r.solana.freezeAuthority ? 'Active' : 'None']);
+    } else {
+      if (r.verified !== null || r.source !== 'rpc') stats.push(['Source', r.verified === null ? 'Unknown' : r.verified ? 'Verified' : 'Not verified']);
+      stats.push(['Owner', r.owner ? (r.owner.renounced ? 'Renounced' : short(r.owner.address ?? '')) : 'Not found']);
+    }
   }
   return (
     <div className={`tcard v-${v.level}`}>
       <div className="tcard-hd">
         <div>
-          <div className="tcard-k">{r.kind === 'wallet' ? 'Address check' : 'Token Safety Check'}</div>
+          <div className="tcard-k">
+            {r.kind === 'wallet' ? 'Address check' : 'Token Safety Check'} · {r.chain}
+          </div>
           <div className="tcard-t">{title}</div>
           <div className="tcard-a">
             <span className="mono">{short(r.address)}</span>
@@ -85,6 +93,11 @@ export function TokenCard({ report: r }: { report: TokenReport }) {
             {r.explorerUrl && (
               <a className="mact" href={r.explorerUrl} target="_blank" rel="noopener noreferrer nofollow">
                 Explorer ↗
+              </a>
+            )}
+            {r.market?.pairUrl && (
+              <a className="mact" href={r.market.pairUrl} target="_blank" rel="noopener noreferrer nofollow">
+                Chart ↗
               </a>
             )}
           </div>
@@ -112,8 +125,9 @@ export function TokenCard({ report: r }: { report: TokenReport }) {
         ))}
       </ul>
       <div className="tcard-ft">
-        {r.source === 'rpc' ? 'Read directly from' : 'Automatic checks of public data on'} {r.chain}. They can miss honeypots, liquidity pulls and other
-        tricks. Not financial advice.
+        {r.source === 'rpc' ? 'Read directly from' : 'Automatic checks of public data on'} {r.chain}
+        {r.market !== undefined ? ', with market data from DexScreener' : ''}. They can miss honeypots, liquidity pulls and other tricks.
+        Not financial advice.
       </div>
     </div>
   );

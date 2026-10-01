@@ -25,9 +25,36 @@ export interface HolderShare {
   name?: string | null;
 }
 
+/** Trading data from DexScreener: the deepest pool plus totals across pools. */
+export interface MarketInfo {
+  priceUsd: number | null;
+  liquidityUsd: number;
+  fdvUsd: number | null;
+  marketCapUsd: number | null;
+  volume24hUsd: number | null;
+  pairs: number;
+  dex: string | null;
+  pairUrl: string | null;
+  /** When the deepest pool was created (ms since epoch). */
+  pairCreatedAt: number | null;
+}
+
+/** Solana mint facts (SPL Token or Token-2022). */
+export interface SolanaMintInfo {
+  program: 'SPL Token' | 'Token-2022';
+  mintAuthority: string | null;
+  freezeAuthority: string | null;
+  /** Token-2022 extensions present on the mint. */
+  extensions: string[];
+}
+
 export interface TokenReport {
   address: string;
+  /** Chain display name. */
   chain: string;
+  /** Scanner chain key (see SCAN_CHAINS). */
+  chainKey: string;
+  nativeSymbol: string;
   explorerUrl: string | null;
   kind: 'token' | 'contract' | 'wallet';
   name: string | null;
@@ -47,8 +74,12 @@ export interface TokenReport {
   marketCapUsd: number | null;
   /** Where the data came from: the block explorer, or the chain's RPC when the explorer is unreachable. */
   source: 'explorer' | 'rpc';
-  /** Wallets only: native balance (ether units) and transaction count. */
+  /** Wallets only: native balance (whole coins) and transaction count. */
   wallet?: { balance: string; txCount: number | null };
+  market?: MarketInfo | null;
+  solana?: SolanaMintInfo;
+  /** Other supported chains where this address is also a contract. */
+  alsoOn?: { key: string; name: string }[];
   flags: RiskFlag[];
   fetchedAt: string;
 }
@@ -87,7 +118,9 @@ export function formatAmount(raw: string, decimals: number): string {
     return raw;
   }
   const units: [number, string][] = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
-  for (const [n, u] of units) if (v >= n) return `${(v / n).toFixed(v / n >= 100 ? 0 : 2).replace(/\.?0+$/, '')}${u}`;
+  // 999.8M reads better as 1B; trim zeros only after a decimal point (100M must stay 100M).
+  const short = (x: number) => (x >= 100 ? x.toFixed(0) : x.toFixed(2).replace(/\.?0+$/, ''));
+  for (const [n, u] of units) if (v >= n * 0.9995) return `${short(v / n)}${u}`;
   return v.toLocaleString('en-US', { maximumFractionDigits: 4 });
 }
 
@@ -165,6 +198,10 @@ export interface ScannerOptions {
   explorerUrl: string | null;
   chainName: string;
   chain: ChainClient | null;
+  chainKey?: string;
+  nativeSymbol?: string;
+  /** Info flag added to RPC-only reports. Default: the explorer did not respond. */
+  rpcNote?: string;
   /** Optional explorer API key (sent as ?apikey=). */
   apiKey?: string | null;
   fetch?: typeof fetch;
@@ -227,8 +264,7 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
       if (!opts.chain) throw new Error('no explorer or RPC configured');
       report = await rpcScan(address);
     }
-    const order: Record<FlagLevel, number> = { high: 0, medium: 1, info: 2, ok: 3 };
-    report.flags.sort((a, b) => order[a.level] - order[b.level]);
+    sortFlags(report);
     cache.set(key, { at: now(), report });
     if (cache.size > 500) cache.delete(cache.keys().next().value!);
     return report;
@@ -238,6 +274,8 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
     return {
       address,
       chain: opts.chainName,
+      chainKey: opts.chainKey ?? 'robinhood',
+      nativeSymbol: opts.nativeSymbol ?? 'ETH',
       explorerUrl: opts.explorerUrl ? `${opts.explorerUrl.replace(/\/$/, '')}/address/${address}` : null,
       kind: 'wallet',
       name: null,
@@ -306,7 +344,9 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
     report.flags.push({
       level: 'info',
       code: 'rpc_only',
-      text: 'Read directly from the chain: holder concentration and source verification need the block explorer, which did not respond. Check them there.',
+      text:
+        opts.rpcNote ??
+        'Read directly from the chain: holder concentration and source verification need the block explorer, which did not respond. Check them there.',
     });
     return report;
   }
@@ -402,14 +442,27 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
   return { scan };
 }
 
+const LEVEL_ORDER: Record<FlagLevel, number> = { high: 0, medium: 1, info: 2, ok: 3 };
+export function sortFlags(report: TokenReport): void {
+  report.flags.sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
+}
+
 /** Risk flags from the report's facts plus the privileged-function rule codes that matched. */
 function addFlags(report: TokenReport, codes: Set<string>): void {
+  if (report.verified === false) unverifiedFlag(report);
+  ruleFlags(report, codes);
+  holderFlags(report);
+}
+
+export function unverifiedFlag(report: TokenReport): void {
+  report.flags.push({ level: 'high', code: 'unverified', text: 'Source code is not verified on the explorer, so nobody can check what the contract does.' });
+}
+
+/** Proxy, privileged functions and owner (EVM). */
+function ruleFlags(report: TokenReport, codes: Set<string>): void {
   const flags = report.flags;
   const owner = report.owner;
   const renounced = owner?.renounced === true;
-  if (report.verified === false) {
-    flags.push({ level: 'high', code: 'unverified', text: 'Source code is not verified on the explorer, so nobody can check what the contract does.' });
-  }
   if (report.proxy) {
     flags.push({ level: 'medium', code: 'proxy', text: 'Upgradeable proxy: the contract code can be replaced later.' });
   }
@@ -425,6 +478,14 @@ function addFlags(report: TokenReport, codes: Set<string>): void {
         : { level: 'info', code: 'owned', text: `Has an active owner (${shortAddr(owner.address)}) who can call owner-only functions.` },
     );
   }
+  if (report.kind === 'contract') {
+    flags.push({ level: 'info', code: 'not_token', text: "This is a contract, but it doesn't look like a standard token." });
+  }
+}
+
+/** Holder concentration and holder count, on any chain. */
+export function holderFlags(report: TokenReport): void {
+  const flags = report.flags;
   if (report.top10Pct !== null) {
     const biggestWallet = report.topHolders.filter((h) => h.label === 'wallet').sort((a, b) => b.pct - a.pct)[0];
     if (report.top10Pct >= 70) {
@@ -444,30 +505,42 @@ function addFlags(report: TokenReport, codes: Set<string>): void {
   if (report.holders !== null && report.holders < 50 && report.kind === 'token') {
     flags.push({ level: 'medium', code: 'few_holders', text: `Only ${report.holders} holders so far.` });
   }
-  if (report.kind === 'contract') {
-    flags.push({ level: 'info', code: 'not_token', text: "This is a contract, but it doesn't look like a standard token." });
-  }
 }
 
 /** The report as context for the model: data plus how to talk about it. */
 export function tokenSystemMessage(r: TokenReport): string {
-  const from = r.source === 'rpc' ? "the chain's public RPC (the block explorer did not respond)" : 'the public block explorer';
+  const from = r.source === 'rpc' ? "the chain's public RPC" : 'the public block explorer';
   const lines: string[] = [`On-chain data for ${r.address} on ${r.chain}, read just now from ${from}:`];
   if (r.kind === 'wallet') {
     lines.push(`- Type: regular wallet (not a token contract)`);
-    if (r.wallet) lines.push(`- Native balance: ${r.wallet.balance} ETH`, `- Transactions: ${r.wallet.txCount ?? 'unknown'}`);
+    if (r.wallet) lines.push(`- Native balance: ${r.wallet.balance} ${r.nativeSymbol}`, `- Transactions: ${r.wallet.txCount ?? 'unknown'}`);
   } else {
     lines.push(`- Type: ${r.kind === 'token' ? `token (${r.tokenType ?? 'unknown standard'})` : 'contract (not listed as a token)'}`);
     if (r.name || r.symbol) lines.push(`- Name: ${r.name ?? '?'} (${r.symbol ?? '?'})`);
     if (r.totalSupply) lines.push(`- Total supply: ${r.totalSupply}`);
     if (r.holders !== null) lines.push(`- Holders: ${r.holders}`);
-    lines.push(`- Source verified: ${r.verified === null ? 'unknown' : r.verified ? 'yes' : 'no'}`);
-    lines.push(`- Upgradeable proxy: ${r.proxy ? 'yes' : 'no'}`);
-    lines.push(`- Owner: ${r.owner ? (r.owner.renounced ? 'renounced' : r.owner.address) : 'no owner() function found or not readable'}`);
+    if (r.solana) {
+      lines.push(`- Program: ${r.solana.program}`);
+      lines.push(`- Mint authority: ${r.solana.mintAuthority ?? 'none (renounced)'}`);
+      lines.push(`- Freeze authority: ${r.solana.freezeAuthority ?? 'none (renounced)'}`);
+      if (r.solana.extensions.length) lines.push(`- Token-2022 extensions: ${r.solana.extensions.join(', ')}`);
+    } else {
+      lines.push(`- Source verified: ${r.verified === null ? 'unknown' : r.verified ? 'yes' : 'no'}`);
+      lines.push(`- Upgradeable proxy: ${r.proxy ? 'yes' : 'no'}`);
+      lines.push(`- Owner: ${r.owner ? (r.owner.renounced ? 'renounced' : r.owner.address) : 'no owner() function found or not readable'}`);
+    }
     if (r.top10Pct !== null) lines.push(`- Top 10 holders (burn excluded): ${r.top10Pct}% of supply`);
     for (const h of r.topHolders.slice(0, 5)) lines.push(`  - ${h.address} ${h.pct}% (${h.label}${h.name ? `, ${h.name}` : ''})`);
     if (r.priceUsd !== null) lines.push(`- Price: $${r.priceUsd}`);
     if (r.marketCapUsd !== null) lines.push(`- Market cap: $${r.marketCapUsd}`);
+    if (r.market) {
+      lines.push(`- DEX liquidity (DexScreener, ${r.market.pairs} pool${r.market.pairs === 1 ? '' : 's'}): $${Math.round(r.market.liquidityUsd)}`);
+      if (r.market.volume24hUsd !== null) lines.push(`- 24h volume: $${Math.round(r.market.volume24hUsd)}`);
+      if (r.market.pairCreatedAt) lines.push(`- Main pool created: ${new Date(r.market.pairCreatedAt).toISOString()}`);
+    } else if (r.market === null) {
+      lines.push('- DEX market: no trading pool found on DexScreener');
+    }
+    if (r.alsoOn?.length) lines.push(`- Same address is also a contract on: ${r.alsoOn.map((c) => c.name).join(', ')}`);
   }
   lines.push('', 'Automatic checks:');
   for (const f of r.flags) lines.push(`- [${f.level}] ${f.text}`);
