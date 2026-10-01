@@ -93,6 +93,75 @@ export function Why() {
   );
 }
 
+const TOOLS: { title: string; text: string; icon: string; tag?: string }[] = [
+  {
+    title: 'Token Safety Check',
+    text: 'Paste a contract address on Robinhood Chain and get the red flags in seconds: mint and blacklist functions, owner, verified source and top-holder concentration.',
+    icon: 'M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z M9 12l2 2 4-4',
+    tag: 'New',
+  },
+  {
+    title: 'Live prices',
+    text: 'Ask about BTC, ETH, SOL or any $TICKER and the answer uses live CoinGecko data instead of old training data.',
+    icon: 'M3 17l6-6 4 4 8-8 M15 7h6v6',
+    tag: 'New',
+  },
+  {
+    title: 'Read PDFs privately',
+    text: 'Attach a whitepaper or audit. It\'s read inside your browser and never uploaded; only the text goes into your message.',
+    icon: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5',
+  },
+  {
+    title: 'Encrypted share links',
+    text: 'Share a chat with a link that carries its own key. We store only ciphertext, and links expire in 1 to 30 days.',
+    icon: 'M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1 M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1',
+  },
+  {
+    title: 'Expert modes',
+    text: 'Switch to Contract auditor, Memecoin researcher, Web3 developer, Crypto writer or Explain simply in one click.',
+    icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6',
+  },
+];
+
+export function Tools() {
+  return (
+    <section id="tools">
+      <div className="wrap">
+        <SectionHead
+          tag="Built for crypto"
+          title="Tools for the onchain world"
+          sub="Everything runs through the same private pipeline: no prompt logs, and outside lookups leave from our servers so your IP stays hidden."
+        />
+        <div className="tools-grid">
+          {TOOLS.map((t) => (
+            <div key={t.title} className="cell glass tool-card rv">
+              <div className="tool-ic" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {t.icon.split(' M').map((d, i) => (
+                    <path key={i} d={i ? `M${d}` : d} />
+                  ))}
+                </svg>
+              </div>
+              <h3>
+                {t.title}
+                {t.tag && <em className="tool-tag">{t.tag}</em>}
+              </h3>
+              <p>{t.text}</p>
+            </div>
+          ))}
+          <div className="cell tool-card tool-cta rv">
+            <h3>Try them now</h3>
+            <p>Sign in with your wallet. No email, no card.</p>
+            <Link className="btn btn-dark" href="/app">
+              Launch app
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Privacy() {
   const chain = process.env.CHAIN_ID ? `Chain ID: ${process.env.CHAIN_ID}` : 'Chain: Robinhood Chain';
   return (

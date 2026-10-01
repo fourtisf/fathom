@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { brand, FALLBACK_MODEL, MODELS, WELCOME_CREDITS } from '@fathom/config';
+import { brand, FALLBACK_MODEL, MODELS, PERSONAS, getPersona, WELCOME_CREDITS } from '@fathom/config';
 import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
 import type { ToolState } from '@/lib/crypto-types';
+import { DocError, readDocument, withDocument, type DocText } from '@/lib/pdf-text';
+import type { ShareDoc } from '@/lib/share-doc';
 import { PriceStrip, TokenCard, ToolLine } from './CryptoCards';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
@@ -24,7 +26,7 @@ type SlotState = {
   error?: string;
 };
 type Turn =
-  | { id: number; kind: 'you'; text: string }
+  | { id: number; kind: 'you'; text: string; doc?: DocText }
   | {
       id: number;
       kind: 'ai';
@@ -141,7 +143,7 @@ function SlotBody({ slot, big }: { slot: SlotState; big?: boolean }) {
 function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): ChatRecord | null {
   const kept: ChatRecord['turns'] = [];
   for (const t of turns) {
-    if (t.kind === 'you') kept.push({ kind: 'you', text: t.text });
+    if (t.kind === 'you') kept.push({ kind: 'you', text: t.text, ...(t.doc ? { doc: t.doc } : {}) });
     if (t.kind === 'ai') {
       const slots = t.slots
         .filter((s) => (s.status === 'done' || s.status === 'stopped') && s.text)
@@ -160,7 +162,7 @@ function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): C
 function fromRecord(r: ChatRecord): Turn[] {
   return r.turns.map((t) =>
     t.kind === 'you'
-      ? { id: nextId++, kind: 'you' as const, text: t.text }
+      ? { id: nextId++, kind: 'you' as const, text: t.text, ...(t.doc ? { doc: t.doc } : {}) }
       : {
           id: nextId++,
           kind: 'ai' as const,
@@ -173,6 +175,24 @@ function fromRecord(r: ChatRecord): Turn[] {
   );
 }
 
+function toShareDoc(turns: Turn[]): ShareDoc | null {
+  const out: ShareDoc['turns'] = [];
+  for (const t of turns) {
+    if (t.kind === 'you') out.push({ kind: 'you', text: t.text, ...(t.doc ? { doc: { name: t.doc.name, pages: t.doc.pages } } : {}) });
+    if (t.kind === 'ai') {
+      const slots = t.slots.filter((s) => (s.status === 'done' || s.status === 'stopped') && s.text).map((s) => ({ model: s.model, text: s.text }));
+      const token = t.tools?.token?.status === 'done' ? t.tools.token.report : undefined;
+      const prices = t.tools?.price?.status === 'done' ? t.tools.price.prices : undefined;
+      if (slots.length) out.push({ kind: 'ai', slots, ...(token ? { token } : {}), ...(prices?.length ? { prices } : {}) });
+    }
+  }
+  const first = out.find((t) => t.kind === 'you');
+  if (!first || !out.some((t) => t.kind === 'ai')) return null;
+  return { v: 1, title: first.text.replace(/\s+/g, ' ').trim().slice(0, 80) || 'Shared chat', createdAt: new Date().toISOString(), turns: out };
+}
+
+const DOC_DEFAULT_QUESTION = 'Summarize this document and point out anything risky or unclear.';
+
 export function Chat() {
   const { me, config, lastSignIn, clearLastSignIn, setCredits, refreshMe } = useSession();
   const ui = useUi();
@@ -180,6 +200,10 @@ export function Chat() {
   const toast = useToast();
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState('');
+  const [attached, setAttached] = useState<DocText | null>(null);
+  const [reading, setReading] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const fileInp = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [chatId, setChatId] = useState(newChatId);
@@ -306,7 +330,7 @@ export function Chat() {
   function historyFor(ts: Turn[]): { role: 'user' | 'assistant'; content: string }[] {
     const out: { role: 'user' | 'assistant'; content: string }[] = [];
     for (const t of ts) {
-      if (t.kind === 'you') out.push({ role: 'user', content: t.text });
+      if (t.kind === 'you') out.push({ role: 'user', content: t.doc ? withDocument(t.text, t.doc) : t.text });
       const s = t.kind === 'ai' ? t.slots.find((x) => (x.status === 'done' || x.status === 'stopped') && x.text) : undefined;
       if (s) out.push({ role: 'assistant', content: s.text });
     }
@@ -337,25 +361,33 @@ export function Chat() {
     const { retry, regenerate } = opts;
     let base = turnsRef.current;
     let q: string;
+    let doc: DocText | undefined;
     if (regenerate) {
       const lastYou = [...base].reverse().find((t) => t.kind === 'you') as Extract<Turn, { kind: 'you' }> | undefined;
       if (!lastYou) return;
       q = lastYou.text;
+      doc = lastYou.doc;
       base = base.slice(0, base.indexOf(lastYou) + 1);
       setTurns(base);
     } else {
       q = (retry?.q ?? opts.text ?? input).trim();
+      if (!retry && opts.text === undefined && attached) {
+        doc = attached;
+        if (!q) q = DOC_DEFAULT_QUESTION;
+      }
+      if (retry) doc = (turnsRef.current.filter((t) => t.kind === 'you').at(-1) as Extract<Turn, { kind: 'you' }> | undefined)?.doc;
     }
-    if (!q || busy) return;
+    if (!q || busy || reading) return;
     if (!me) return ui.openModal('wallet');
     const model = retry?.model ?? ui.model;
     const compare = !retry && ui.compare;
     const web = Boolean(ui.webSearch && config?.webSearch);
     const models = compare ? [model, ui.cmpModel] : [model];
-    const msgs = [...historyFor(regenerate ? base.slice(0, -1) : base), { role: 'user' as const, content: q }];
+    const msgs = [...historyFor(regenerate ? base.slice(0, -1) : base), { role: 'user' as const, content: doc ? withDocument(q, doc) : q }];
 
     if (!retry && !regenerate) {
-      add({ kind: 'you', text: q });
+      add({ kind: 'you', text: q, ...(doc ? { doc } : {}) });
+      if (doc) setAttached(null);
       // A new question always brings the thread to the bottom, even after a tall card.
       setTimeout(() => {
         const el = thread.current;
@@ -401,7 +433,13 @@ export function Chat() {
 
     try {
       await streamChat(
-        { model, compareWith: compare ? ui.cmpModel : undefined, webSearch: web, messages: msgs },
+        {
+          model,
+          compareWith: compare ? ui.cmpModel : undefined,
+          webSearch: web,
+          persona: ui.persona !== 'default' ? ui.persona : undefined,
+          messages: msgs,
+        },
         onEvent,
         ctrl.signal,
       );
@@ -458,7 +496,8 @@ export function Chat() {
   function edit(turn: Extract<Turn, { kind: 'you' }>) {
     if (busy) return;
     setTurns((ts) => ts.slice(0, ts.indexOf(turn)));
-    setInput(turn.text);
+    setInput(turn.text === DOC_DEFAULT_QUESTION && turn.doc ? '' : turn.text);
+    setAttached(turn.doc ?? null);
     setTimeout(() => {
       const el = inp.current;
       if (!el) return;
@@ -466,6 +505,22 @@ export function Chat() {
       el.style.height = 'auto';
       el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
     }, 0);
+  }
+
+  async function attachFile(file: File | undefined) {
+    if (!file) return;
+    setReading(true);
+    try {
+      const d = await readDocument(file);
+      setAttached(d);
+      if (d.truncated) toast('Long document: only the first part will be sent.');
+      inp.current?.focus();
+    } catch (e) {
+      toast(e instanceof DocError ? e.message : "Couldn't read this file.", true);
+    } finally {
+      setReading(false);
+      if (fileInp.current) fileInp.current.value = '';
+    }
   }
 
   function fillComposer(text: string) {
@@ -566,6 +621,7 @@ export function Chat() {
             if (t.kind === 'you')
               return (
                 <div key={t.id} className={`m you${gone}`} style={{ whiteSpace: 'pre-wrap' }}>
+                  {t.doc && <DocChip doc={t.doc} />}
                   {t.text}
                   {!busy && (
                     <button className="editbtn" onClick={() => edit(t)} aria-label="Edit message">
@@ -704,10 +760,34 @@ export function Chat() {
       </div>
       <div className="composer-wrap">
         <div className="composer">
+          {(attached || reading) && (
+            <div className="attach-row">
+              {reading ? (
+                <span className="docchip"><span className="shim">Reading document in your browser…</span></span>
+              ) : (
+                attached && (
+                  <DocChip
+                    doc={attached}
+                    onRemove={() => {
+                      setAttached(null);
+                      inp.current?.focus();
+                    }}
+                  />
+                )
+              )}
+            </div>
+          )}
+          <input
+            ref={fileInp}
+            type="file"
+            hidden
+            accept=".pdf,application/pdf,.txt,.md,.csv,.json,.sol,text/plain,text/markdown,text/csv"
+            onChange={(e) => void attachFile(e.target.files?.[0])}
+          />
           <textarea
             ref={inp}
             rows={1}
-            placeholder="Ask anything, privately…"
+            placeholder={attached ? 'Ask about this document…' : 'Ask anything, privately…'}
             aria-label="Message"
             value={input}
             onChange={(e) => {
@@ -725,6 +805,7 @@ export function Chat() {
           <div className="cbar">
             <button
               className="chip"
+              aria-label="Compare two models"
               aria-pressed={ui.compare}
               onClick={() => {
                 ui.setCompare(!ui.compare);
@@ -732,11 +813,55 @@ export function Chat() {
               }}
             >
               <Icon name="columns" />
-              Compare
+              <span className="cl">Compare</span>
             </button>
+            <button className="chip" onClick={() => fileInp.current?.click()} disabled={reading} aria-label="Attach a PDF or text file" title="Attach a PDF or text file. It's read in your browser, never uploaded.">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9" />
+              </svg>
+              <span className="cl">Attach</span>
+            </button>
+            <div className="modewrap">
+              <button
+                className="chip"
+                aria-haspopup="menu"
+                aria-expanded={modeOpen}
+                aria-pressed={ui.persona !== 'default'}
+                aria-label={`Chat mode: ${getPersona(ui.persona)?.name ?? 'Default'}`}
+                onClick={() => setModeOpen((o) => !o)}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                </svg>
+                <span className="cl">{ui.persona === 'default' ? 'Mode' : getPersona(ui.persona)?.name}</span>
+              </button>
+              {modeOpen && (
+                <div className="modemenu" role="menu" onMouseLeave={() => setModeOpen(false)}>
+                  {PERSONAS.map((p) => (
+                    <button
+                      key={p.id}
+                      role="menuitemradio"
+                      aria-checked={ui.persona === p.id}
+                      className={ui.persona === p.id ? 'on' : undefined}
+                      onClick={() => {
+                        ui.setPersona(p.id);
+                        setModeOpen(false);
+                        toast(p.id === 'default' ? 'Default mode' : `${p.name} mode on`);
+                        inp.current?.focus();
+                      }}
+                    >
+                      <b>{p.name}</b>
+                      <span>{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {config?.tokenCheck && (
               <button
                 className="chip"
+                aria-label="Check a token"
                 onClick={() => {
                   fillComposer(input.startsWith(TOKEN_CHECK_PREFIX) ? input : TOKEN_CHECK_PREFIX + input);
                   toast('Paste a contract address on Robinhood Chain');
@@ -746,13 +871,13 @@ export function Chat() {
                   <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" />
                   <path d="M9 12l2 2 4-4" />
                 </svg>
-                Check token
+                <span className="cl">Check token</span>
               </button>
             )}
             {config?.webSearch && (
-              <button className="chip" aria-pressed={ui.webSearch} onClick={() => ui.setWebSearch(!ui.webSearch)}>
+              <button className="chip" aria-label="Web search" aria-pressed={ui.webSearch} onClick={() => ui.setWebSearch(!ui.webSearch)}>
                 <Icon name="globe" />
-                Web search
+                <span className="cl">Web search</span>
               </button>
             )}
             <span className="sp" />
@@ -763,7 +888,7 @@ export function Chat() {
                 </svg>
               </button>
             ) : (
-              <button className="send" aria-label="Send" disabled={!input.trim()} onClick={() => void send()}>
+              <button className="send" aria-label="Send" disabled={(!input.trim() && !attached) || reading} onClick={() => void send()}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
                 </svg>
@@ -782,6 +907,19 @@ export function Chat() {
                   : 'Never logged · not saved'}
             </span>
           </span>
+          <span className="chint-r">
+          {turns.some((t) => t.kind === 'ai' && t.slots.some((x) => x.status === 'done')) && !busy && (
+            <button
+              onClick={() => {
+                const d = toShareDoc(turnsRef.current);
+                if (!d) return toast('Nothing to share yet.', true);
+                ui.setShareDoc(d);
+                ui.openModal('share');
+              }}
+            >
+              Share
+            </button>
+          )}
           <button
             onClick={() => {
               forget({ erase: true });
@@ -790,6 +928,7 @@ export function Chat() {
           >
             Forget this chat
           </button>
+          </span>
         </div>
       </div>
     </div>
@@ -802,5 +941,26 @@ function CopyLink({ text }: { text: string }) {
     <button className="mact" style={{ marginTop: 8 }} onClick={() => copy(text, 'Answer copied')}>
       Copy
     </button>
+  );
+}
+
+function DocChip({ doc, onRemove }: { doc: Pick<DocText, 'name' | 'pages' | 'truncated'>; onRemove?: () => void }) {
+  return (
+    <span className="docchip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+      </svg>
+      <b>{doc.name}</b>
+      <small>
+        {doc.pages ? `${doc.pages} page${doc.pages > 1 ? 's' : ''}` : 'text'}
+        {doc.truncated ? ' · first part' : ''}
+      </small>
+      {onRemove && (
+        <button onClick={onRemove} aria-label={`Remove ${doc.name}`}>
+          ×
+        </button>
+      )}
+    </span>
   );
 }

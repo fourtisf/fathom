@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { brand, CREDITS_PER_USDG, MAX_API_KEYS, MODELS, TIERS, UNSTAKE_COOLDOWN_DAYS, WELCOME_CREDITS } from '@fathom/config';
 import { api, ApiError, post, type ApiKeyRow, type CreditsSummary, type Settings, type TxRow } from '@/lib/api';
 import { useToast } from '../Toast';
@@ -292,6 +292,64 @@ export function StakePage() {
   );
 }
 
+interface ShareRow {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+/** Links to chats this wallet shared. The server can't read them; deleting one breaks the link at once. */
+function SharedLinks() {
+  const toast = useToast();
+  const [rows, setRows] = useState<ShareRow[] | null>(null);
+  const load = useCallback(() => {
+    api<ShareRow[]>('/shares').then(setRows, () => setRows([]));
+  }, []);
+  useEffect(load, [load]);
+  const fmt = (d: string) => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+  async function remove(id?: string) {
+    try {
+      await api(id ? `/shares/${id}` : '/shares', { method: 'DELETE' });
+      toast(id ? 'Link deleted. It no longer opens.' : 'All shared links deleted');
+      load();
+    } catch {
+      toast('Could not delete. Try again.', true);
+    }
+  }
+
+  return (
+    <div className="glass panel">
+      <h3>Shared links</h3>
+      {!rows ? (
+        <p className="muted" style={{ fontSize: 13.5 }}>Loading…</p>
+      ) : rows.length === 0 ? (
+        <p style={{ fontSize: 13.5, color: 'var(--mute)' }}>
+          You haven&apos;t shared any chats. Use <b>Share</b> under a chat to create an encrypted link.
+        </p>
+      ) : (
+        <>
+          {rows.map((r) => (
+            <div className="setrow" key={r.id}>
+              <div>
+                <h4 className="mono" style={{ fontSize: 13.5 }}>/s/{r.id.slice(0, 8)}…</h4>
+                <p>Shared {fmt(r.createdAt)} · expires {fmt(r.expiresAt)}</p>
+              </div>
+              <button className="btn btn-light" onClick={() => void remove(r.id)}>Delete</button>
+            </div>
+          ))}
+          {rows.length > 1 && (
+            <div className="setrow">
+              <div><h4>Delete all links</h4><p>Every shared chat stops opening immediately.</p></div>
+              <button className="btn btn-danger" onClick={() => void remove()}>Delete all</button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { me, config, signOut, refreshMe } = useSession();
   const { openModal, setWebSearch, setBurn } = useUi();
@@ -310,11 +368,12 @@ export function SettingsPage() {
 
   async function exportData() {
     try {
-      const [summary, transactions] = await Promise.all([
+      const [summary, transactions, sharedLinks] = await Promise.all([
         api<CreditsSummary>('/credits/summary'),
         api<TxRow[]>('/credits/transactions'),
+        api<ShareRow[]>('/shares').catch(() => []),
       ]);
-      const data = { wallet: me!.address, exported: new Date().toISOString(), settings: me!.settings, credits: me!.credits, usage: summary, transactions };
+      const data = { wallet: me!.address, exported: new Date().toISOString(), settings: me!.settings, credits: me!.credits, usage: summary, transactions, sharedLinks };
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
       a.download = brand.exportFileName;
@@ -394,6 +453,7 @@ export function SettingsPage() {
           </div>
         )}
       </div>
+      <SharedLinks />
       <div className="glass panel">
         <h3>Your data</h3>
         <div className="setrow">
@@ -401,7 +461,7 @@ export function SettingsPage() {
           <button className="btn btn-light" onClick={exportData}>Export</button>
         </div>
         <div className="setrow">
-          <div><h4>Delete all data</h4><p>Removes encrypted history, API keys and settings immediately. On-chain transactions stay on-chain.</p></div>
+          <div><h4>Delete all data</h4><p>Removes encrypted history, shared links, API keys and settings immediately. On-chain transactions stay on-chain.</p></div>
           <button className="btn btn-danger" onClick={() => openModal('delete')}>Delete all</button>
         </div>
         <div className="setrow">

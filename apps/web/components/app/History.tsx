@@ -27,7 +27,7 @@ export interface ChatRecord {
   createdAt: string;
   burn: Burn;
   turns: (
-    | { kind: 'you'; text: string }
+    | { kind: 'you'; text: string; doc?: { name: string; pages: number | null; text: string; truncated: boolean } }
     | {
         kind: 'ai';
         slots: { model: string; text: string; credits?: number }[];

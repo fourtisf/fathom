@@ -16,6 +16,8 @@ export interface ChatRequest {
   model: string;
   compareWith?: string;
   webSearch?: boolean;
+  /** Chat mode id from PERSONAS; omitted for the default mode. */
+  persona?: string;
   messages: { role: 'user' | 'assistant'; content: string }[];
 }
 

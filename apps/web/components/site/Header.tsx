@@ -9,6 +9,7 @@ import { XIcon } from './XIcon';
 
 const LINKS = [
   { href: '/#features', label: 'Privacy', nav: 'home' },
+  { href: '/#tools', label: 'Tools', nav: 'home' },
   { href: '/#why', label: `Why ${brand.name}`, nav: 'home' },
   { href: '/#pricing', label: 'Pricing', nav: 'home' },
   { href: '/trust', label: 'Trust', nav: 'trust' },

@@ -3,7 +3,7 @@ import { brand } from '@fathom/config';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: '*', allow: '/', disallow: '/app' },
+    rules: { userAgent: '*', allow: '/', disallow: ['/app', '/s/'] },
     sitemap: `${brand.siteUrl}/sitemap.xml`,
   };
 }

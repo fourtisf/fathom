@@ -13,6 +13,7 @@ import { Modal } from './Modal';
 import { hasWalletConnect } from './Providers';
 import { isUserRejection, useSession } from './Session';
 import { useUi } from './Ui';
+import { encryptShare } from '@/lib/share-crypto';
 
 interface WalletRow {
   key: string;
@@ -465,7 +466,7 @@ export function DeleteDataModal() {
   }
   return (
     <Modal id="delete" title="Delete all data?">
-      <p>This removes your encrypted chat history, API keys and settings. It can&apos;t be undone.</p>
+      <p>This removes your encrypted chat history, shared links, API keys and settings. It can&apos;t be undone.</p>
       <label htmlFor="delInp" style={{ fontSize: 13.5, color: 'var(--ink2)' }}>
         Type <b style={{ color: '#fff' }}>DELETE</b> to confirm
       </label>
@@ -473,6 +474,86 @@ export function DeleteDataModal() {
       <button className="btn btn-danger" style={{ width: '100%', marginTop: 14, height: 48 }} disabled={text !== 'DELETE' || busy} onClick={del}>
         Delete everything
       </button>
+    </Modal>
+  );
+}
+
+const SHARE_TTLS = [
+  { id: '1d', label: '1 day' },
+  { id: '7d', label: '7 days' },
+  { id: '30d', label: '30 days' },
+] as const;
+
+export function ShareModal() {
+  const { modal, shareDoc, setShareDoc, closeModal } = useUi();
+  const copy = useCopy();
+  const [ttl, setTtl] = useState<(typeof SHARE_TTLS)[number]['id']>('7d');
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  // A fresh link per opening: never reuse a key for a different chat.
+  useEffect(() => {
+    if (modal === 'share') {
+      setLink(null);
+      setErr(null);
+    } else if (modal === null) setShareDoc(null);
+  }, [modal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function create() {
+    if (!shareDoc) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const { ciphertext, iv, key } = await encryptShare(shareDoc);
+      const r = await post<{ id: string; expiresAt: string }>('/shares', { ciphertext, iv, ttl });
+      setLink({ url: `${window.location.origin}/s/${r.id}#${key}`, expiresAt: r.expiresAt });
+    } catch (e) {
+      setErr(e instanceof ApiError && e.status !== 500 ? e.message : "Couldn't create the link. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const turns = shareDoc?.turns.length ?? 0;
+  return (
+    <Modal id="share" title="Share this chat">
+      <p>
+        Anyone with the link can read this chat ({turns} message{turns === 1 ? '' : 's'}). It&apos;s encrypted in your browser and
+        the key is in the link itself, so {brand.name} can&apos;t read it. Attached documents are not included.
+      </p>
+      {!link ? (
+        <>
+          <div className="seg-row" role="radiogroup" aria-label="Link expires after">
+            <span>Expires after</span>
+            <div className="seg-ttl">
+              {SHARE_TTLS.map((t) => (
+                <button key={t.id} role="radio" aria-checked={ttl === t.id} className={ttl === t.id ? 'on' : undefined} onClick={() => setTtl(t.id)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {err && <div className="mwarn show">{err}</div>}
+          <button className="btn btn-dark" style={{ width: '100%', marginTop: 16, height: 48 }} disabled={busy || !shareDoc} onClick={create}>
+            {busy ? 'Encrypting…' : 'Create encrypted link'}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="keybox">
+            <span>{link.url}</span>
+            <button onClick={() => copy(link.url, 'Link copied')}>Copy</button>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--mute)', marginTop: 10 }}>
+            Expires {new Date(link.expiresAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}. You can delete it
+            any time in Settings.
+          </p>
+          <button className="btn btn-light" style={{ width: '100%', marginTop: 14, height: 46 }} onClick={closeModal}>
+            Done
+          </button>
+        </>
+      )}
     </Modal>
   );
 }
@@ -485,6 +566,7 @@ export function AppModals() {
       <TopUpModal />
       <DeleteDataModal />
       <NewKeyModal />
+      <ShareModal />
     </>
   );
 }

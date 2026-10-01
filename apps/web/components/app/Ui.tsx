@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { DEFAULT_MODEL, FALLBACK_MODEL } from '@fathom/config';
+import { DEFAULT_MODEL, DEFAULT_PERSONA, FALLBACK_MODEL, getPersona } from '@fathom/config';
+import type { ShareDoc } from '@/lib/share-doc';
 import { useSession } from './Session';
 
-export type ModalId = 'wallet' | 'start' | 'topup' | 'delete' | 'newkey' | null;
+export type ModalId = 'wallet' | 'start' | 'topup' | 'delete' | 'newkey' | 'share' | null;
 export type Burn = 'off' | '1h' | '24h';
 export type OnboardKey = 'msg' | 'cmp' | 'top' | 'verify';
 
@@ -33,6 +34,12 @@ interface Ui {
   /** Chat currently shown, for highlighting in the sidebar. */
   activeChatId: string | null;
   setActiveChatId(id: string | null): void;
+  /** Chat mode (persona id), kept in this browser. */
+  persona: string;
+  setPersona(id: string): void;
+  /** Chat prepared for the share modal. */
+  shareDoc: ShareDoc | null;
+  setShareDoc(d: ShareDoc | null): void;
   /** One-time secret shown after creating an API key. */
   newKey: string | null;
   setNewKey(k: string | null): void;
@@ -61,6 +68,22 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [openChatId, openChat] = useState<string | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [shareDoc, setShareDoc] = useState<ShareDoc | null>(null);
+  const [persona, setPersonaState] = useState<string>(DEFAULT_PERSONA);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nx_persona');
+      if (saved && getPersona(saved)) setPersonaState(saved);
+    } catch {}
+  }, []);
+  const setPersona = (id: string) => {
+    if (!getPersona(id)) return;
+    setPersonaState(id);
+    try {
+      localStorage.setItem('nx_persona', id);
+    } catch {}
+  };
 
   // Onboarding progress is a per-wallet UI preference, kept in this browser only.
   useEffect(() => {
@@ -135,6 +158,10 @@ export function UiProvider({ children }: { children: ReactNode }) {
         setActiveChatId,
         newKey,
         setNewKey,
+        persona,
+        setPersona,
+        shareDoc,
+        setShareDoc,
       }}
     >
       {children}
