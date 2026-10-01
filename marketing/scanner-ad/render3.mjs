@@ -32,7 +32,7 @@ await p.evaluate(async ([s, a]) => {
   }));
 }, [scan, app]);
 await p.waitForTimeout(500);
-await p.addScriptTag({ content: read('timeline3.js') });
+await p.addScriptTag({ content: read(process.env.TL ?? 'timeline3.js') });
 const cdp = await p.context().newCDPSession(p);
 const shot = async (t, fmt = 'png') => {
   await p.evaluate((t) => window.render(t), t);
