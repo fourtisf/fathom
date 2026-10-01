@@ -4,65 +4,178 @@ body{max-width:720px;margin:40px auto;padding:0 20px;font:17px/1.65 -apple-syste
 .how{background:#f3f2ff;border:1px solid #d9d5ff;border-radius:12px;padding:14px 18px;font-size:14.5px;margin-bottom:32px}
 .how b{color:#4b3fd1}
 h1{font-size:34px;line-height:1.2;margin:0 0 24px}
-h2{font-size:24px;margin:36px 0 10px}
+h2{font-size:25px;margin:40px 0 10px}
+h3{font-size:19px;margin:26px 0 6px}
+blockquote{margin:16px 0;padding:4px 16px;border-left:3px solid #8B7CFF;color:#333}
+pre{background:#0d1030;color:#e6e8ff;padding:14px 16px;border-radius:10px;font-size:14px;overflow:auto}
 </style></head><body>
-<div class="how"><b>How to use:</b> copy the title into "Add a title" on X. Then select everything from "Every day" to the end (click before "Every day", then Ctrl+Shift+End), copy, and paste into "Start writing". Headings, bold text and lists keep their formatting. This box isn't part of the article.</div>
+<div class="how"><b>How to use:</b> copy the title into "Add a title" on X. Then click just before "Last year" (the first paragraph), press Ctrl+Shift+End, copy, and paste into "Start writing". Headings, bold text, quotes and lists keep their formatting. For the code block, after pasting, select it and choose Insert → Code if X doesn't keep it. This box isn't part of the article.</div>
 
 <h1>Introducing Noxsea: Private AI That Forgets You</h1>
 
-<p>Every day, millions of people ask AI chatbots things they would never post publicly. Which wallet to move their funds to. Whether a token is a rug. How to handle a tax problem. A health worry at 2am.</p>
-<p>Most of those conversations are stored. Many are used to train future models. Some may be read by people.</p>
-<p>We built Noxsea because we think your questions should stay yours.</p>
+<p>Last year a friend asked an AI chatbot whether he should move his savings off an exchange. He pasted his wallet address, listed his holdings, explained his tax situation and asked which tokens looked risky. It was a great answer. It was also, almost certainly, a conversation that now sits on a server somewhere, tied to his email address, his IP address and his payment card.</p>
+<p>He isn't unusual. Every day, millions of people tell AI assistants things they would never post publicly: what they own, what they fear, what they are planning. AI has become the place where we think out loud. And most of that thinking is being recorded.</p>
+<p>We built Noxsea because we believe the questions you ask should belong to you. Not to a training set, not to an ad profile, and not to a database waiting for its first breach.</p>
+<p>This article explains what Noxsea is, how it keeps your conversations private, the tools we built for people who live onchain, what it costs, and, just as importantly, what we haven't finished yet.</p>
+
+<h2>The problem: AI that remembers everything</h2>
+<p>When you use a typical AI chatbot, a lot happens that you never see:</p>
+<ul>
+<li><b>Your prompts are stored.</b> Conversations are usually kept on the provider's servers, often indefinitely, unless you find the right setting and turn it off.</li>
+<li><b>They can be used for training.</b> Many services use conversations to improve future models unless you opt out.</li>
+<li><b>They can be read by people.</b> Some providers review samples of conversations to check quality and safety.</li>
+<li><b>They are tied to your identity.</b> An email address, a phone number, a payment method and an IP address turn "anonymous questions" into a detailed personal profile.</li>
+<li><b>Stored data can leak.</b> Any database can be breached, subpoenaed or sold.</li>
+</ul>
+<p>For most people this is uncomfortable. For crypto users it can be dangerous.</p>
+
+<h2>Why crypto users need private AI even more</h2>
+<p>In crypto, your financial history is public by default. Anyone can look up a wallet and see every balance and every transaction. That is fine as long as nobody knows the wallet is yours.</p>
+<p>Now imagine a chatbot that knows your email and your IP address, and you ask it: "Is it safe to keep 40 ETH in this wallet?" and paste the address. You have just linked your real identity to your on-chain wealth, inside a system you don't control.</p>
+<p>That link is exactly what scammers, phishers and worse are looking for. Private AI isn't a luxury for this community. It's basic operational security.</p>
 
 <h2>What is Noxsea?</h2>
-<p>Noxsea is a private AI assistant built for the onchain world. You chat with leading open-weight models, sign in with your wallet, and stay in control of what is saved, and for how long.</p>
+<p>Noxsea is a private AI assistant built for the onchain world. You chat with leading open-weight models, you sign in with your wallet, and you stay in control of what is saved and for how long.</p>
 <ul>
-<li><b>No email, no password, no KYC.</b> One wallet signature is your account.</li>
-<li><b>Zero prompt logs.</b> What you ask is never written to our logs or database in readable form.</li>
+<li><b>No email, no password, no KYC.</b> Your wallet is your account. You sign one message (Sign-In with Ethereum). It costs no gas and moves no funds.</li>
+<li><b>Zero prompt logs.</b> What you ask is never written to our logs or our database in readable form.</li>
 <li><b>Open-weight models.</b> DeepSeek V3.1, Qwen3 235B, gpt-oss 120B and Llama 3.3 70B.</li>
+<li><b>Built for crypto.</b> Token safety checks, live prices, private document reading and more.</li>
+<li><b>Pay per message.</b> No subscription. You only pay for what you use.</li>
 </ul>
 
 <h2>Private by design, not by promise</h2>
-<p>Privacy is easy to claim and hard to build. Here is what actually happens to a message on Noxsea:</p>
+<p>Every AI company says it cares about privacy. We would rather show you exactly what happens. Here is the life of a single message on Noxsea:</p>
 <ol>
-<li><b>Encrypted in transit.</b> Your browser sends it over HTTPS.</li>
-<li><b>Relayed, never logged.</b> Our server checks your credits and forwards it. The message is never written to logs or the database.</li>
-<li><b>Answered by an open model</b> through inference providers that are required not to store prompts or train on them.</li>
-<li><b>Saved only if you choose.</b> With history on, chats are encrypted in your browser with a key derived from your wallet signature. We store only ciphertext we can't read.</li>
+<li><b>Encrypted in transit.</b> Your browser sends the message to Noxsea over HTTPS. Anyone watching the network sees only ciphertext.</li>
+<li><b>Relayed, never logged.</b> Our server checks that you have enough credits and forwards the message. It is never written to application logs, error trackers, analytics or the database. Our web server's access logs are switched off for the app, so we don't keep IP addresses tied to wallets either.</li>
+<li><b>Answered by an open model.</b> The message goes to inference providers that are required not to store prompts or use them for training.</li>
+<li><b>Charged by the numbers, not the words.</b> When the answer finishes, we record only how many tokens it used and how many credits it cost. Never what was said.</li>
+<li><b>Saved only if you choose.</b> Chat history is optional. When it's on, your chats are encrypted inside your browser before they are saved.</li>
 </ol>
-<p>You can also set any chat to self-destruct after 1 hour or 24 hours, or forget it instantly with one click. We publish where your data goes, step by step, at noxsea.xyz/trust.</p>
+<p>We publish this flow, and the live settings behind it, at noxsea.xyz/trust.</p>
+
+<h3>Encrypted history that only your wallet can unlock</h3>
+<p>If you turn on chat history, Noxsea asks your wallet to sign one message. Your browser turns that signature into an AES-256 encryption key. Chats are encrypted with that key on your device before anything is sent to us.</p>
+<p>Our database only ever receives ciphertext. We cannot read it, and neither could anyone who stole it. To read your history on a new device, you sign again with the same wallet.</p>
+
+<h3>Chats that self-destruct</h3>
+<p>Some conversations shouldn't exist for long. Set a burn timer of 1 hour or 24 hours and the chat is deleted when it runs out, from your device and from our servers. You can set a default timer for every new chat, or forget a chat instantly with one click.</p>
+
+<h3>Your data, your call</h3>
+<p>In Settings you can export your data as JSON at any time, or delete everything (history, shared links, API keys and settings) by typing DELETE. No support ticket, no waiting period.</p>
 
 <h2>Built for crypto</h2>
-<p>General chatbots don't know what happened onchain this morning. Noxsea comes with tools for people who live onchain:</p>
-<ul>
-<li><b>Token Safety Check.</b> Paste a contract address on Robinhood Chain and get the red flags in seconds: whether new tokens can be minted, whether wallets can be blacklisted, whether taxes can be changed, who owns the contract, whether its code can be upgraded, and how concentrated the top holders are. The AI explains what each flag means. It never calls a token "safe", and it isn't financial advice.</li>
-<li><b>Live prices.</b> Ask about BTC, ETH, SOL or any $TICKER and get live market data instead of outdated training data.</li>
-<li><b>Read PDFs privately.</b> Attach a whitepaper or an audit. It's read inside your browser and never uploaded; only the text goes into your question.</li>
-<li><b>Compare mode.</b> Send one question to two models and read both answers side by side.</li>
-<li><b>Expert modes.</b> Switch to Contract auditor, Memecoin researcher, Web3 developer, Crypto writer or Explain simply in one click.</li>
-<li><b>Encrypted share links.</b> Share a chat with a link that carries its own key. We only ever see ciphertext, and links expire after 1 to 30 days.</li>
-</ul>
-<p>Outside lookups for on-chain data and prices leave from our servers, so your IP address is never exposed. Only the address or the coin name is sent, never your message.</p>
+<p>A general chatbot doesn't know what happened onchain this morning, can't read a token contract and has no idea what Robinhood Chain is. Noxsea comes with tools for people who live onchain.</p>
 
-<h2>Pay only for what you use</h2>
-<p>No subscriptions. Each message costs credits based on the tokens it actually uses, and failed requests are never charged. New wallets with on-chain activity get 25 free credits to try every model. Top-ups in USDG on Robinhood Chain are coming soon.</p>
+<h3>Token Safety Check</h3>
+<p>Paste a contract address on Robinhood Chain, or press "Check token", and Noxsea reads the contract and shows a risk card in seconds:</p>
+<ul>
+<li><b>Mint function:</b> can new tokens be created and dumped on holders?</li>
+<li><b>Blacklist or freeze:</b> can your wallet be blocked from selling?</li>
+<li><b>Adjustable taxes:</b> can buy and sell fees be raised after launch?</li>
+<li><b>Trading switch and pause:</b> can a privileged account stop trading?</li>
+<li><b>Owner:</b> is there an active owner, or has ownership been renounced?</li>
+<li><b>Upgradeable proxy:</b> can the code be replaced later?</li>
+<li><b>Holder concentration:</b> how much of the supply sits in the top 10 wallets, and is there a single whale?</li>
+</ul>
+<p>The AI then explains each flag in plain language and tells you what to check next. Two promises: it will never call a token "safe", and it will always remind you that automatic checks can miss things like honeypots and liquidity pulls. This is research, not financial advice.</p>
+
+<h3>Live prices</h3>
+<p>Language models are trained on old data, so they confidently quote prices from months ago. On Noxsea, when you ask "What's the ETH price today?" or "How is $PEPE doing?", the answer is grounded in live market data from CoinGecko, with the 24-hour move and market cap shown above the reply.</p>
+
+<h3>Read PDFs privately</h3>
+<p>Attach a whitepaper, an audit report or a token's terms and ask: "What are the red flags in this tokenomics?" The PDF is read inside your browser and never uploaded. Only the extracted text goes into your question, and it isn't stored anywhere unless you have encrypted history turned on.</p>
+
+<h3>Compare two models side by side</h3>
+<p>Different models are good at different things. Turn on Compare mode and the same question goes to two models at once, with both answers side by side. When two independent models disagree about a smart contract, that disagreement is worth noticing.</p>
+
+<h3>Expert modes</h3>
+<p>One click changes how the assistant thinks:</p>
+<ul>
+<li><b>Contract auditor:</b> reviews code for owner privileges, minting, reentrancy and access-control mistakes, sorted by severity.</li>
+<li><b>Memecoin researcher:</b> focuses on tokenomics, holder concentration, liquidity, dev wallets and hype versus reality.</li>
+<li><b>Web3 developer:</b> writes working Solidity, Foundry, viem and wagmi code with security notes.</li>
+<li><b>Crypto writer:</b> drafts threads and announcements without hype claims or price promises.</li>
+<li><b>Explain simply:</b> plain words and analogies for people new to crypto.</li>
+</ul>
+
+<h3>Encrypted share links</h3>
+<p>Want to show a friend an answer? Press Share. Your browser encrypts the chat with a brand-new key and puts that key after the # in the link. Browsers never send that part of a link to a server, so we store only ciphertext we can't read. Links expire after 1, 7 or 30 days, can be deleted any time in Settings, and never include your attached documents.</p>
+<p>Every outside lookup (on-chain data and prices) leaves from our servers, not from your device, so your IP address is never exposed. Only the contract address or the coin name is sent, never your message.</p>
+
+<h2>Open models you can trust</h2>
+<p>Noxsea runs only open-weight models: models whose weights are published, so anyone can study them and many independent companies can host them.</p>
+<ul>
+<li><b>DeepSeek V3.1:</b> our strongest all-rounder for reasoning, analysis and code.</li>
+<li><b>Qwen3 235B:</b> a large mixture-of-experts model from Alibaba's Qwen team, excellent at structured answers.</li>
+<li><b>gpt-oss 120B:</b> OpenAI's open-weight model, fast and capable.</li>
+<li><b>Llama 3.3 70B:</b> Meta's efficient model, the lowest-cost option for everyday questions.</li>
+</ul>
+<p>Open weights mean no single company controls the model you depend on, and we can move to whichever provider offers the best privacy without changing your experience.</p>
+
+<h2>Simple, honest pricing</h2>
+<p>There is no subscription. You pay with credits, and 1 USDG buys 100 credits. Each message is charged by the tokens it actually uses, at published per-model prices:</p>
+<ul>
+<li>DeepSeek V3.1: 40 credits per million input tokens, 120 per million output tokens</li>
+<li>Qwen3 235B: 35 / 110</li>
+<li>gpt-oss 120B: 20 / 60</li>
+<li>Llama 3.3 70B: 12 / 30</li>
+</ul>
+<p>Failed or unavailable requests are never charged, and neither are answers you stop before they finish. New wallets with on-chain activity on Robinhood Chain get 25 free credits to try every model. Top-ups in USDG on Robinhood Chain are coming soon.</p>
 
 <h2>For builders</h2>
-<p>Noxsea has an OpenAI-compatible API. Point your base URL to noxsea.xyz/api/v1, keep your code and your SDK, and your apps get the same no-logging pipeline. Agents with their own wallet can sign in directly with Sign-In with Ethereum.</p>
+<p>Noxsea has an OpenAI-compatible API, so your existing code works with one change:</p>
+<pre>from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://noxsea.xyz/api/v1",
+    api_key="nox_live_...",
+)
+
+reply = client.chat.completions.create(
+    model="deepseek-v3.1",
+    messages=[{"role": "user", "content": "gm"}],
+)</pre>
+<p>Your apps get the same no-logging pipeline and the same per-token pricing. Create keys in the app; we store only a hash and show the full key once. Agents with their own wallet can sign in directly with Sign-In with Ethereum and get a short-lived key, with no human in the loop.</p>
+
+<h2>What we haven't finished yet</h2>
+<p>We would rather tell you what isn't done than have you find out later.</p>
+<ul>
+<li><b>Hardware-level privacy is planned, not live.</b> Today, your messages are answered by providers that are contractually required not to store or train on them. Our goal is confidential-computing inference, where models run inside hardware enclaves with a public attestation anyone can verify. When it ships, the trust page will show the live attestation.</li>
+<li><b>Top-ups are coming soon.</b> USDG payments on Robinhood Chain are being finished. Until then, new wallets can use their free credits.</li>
+<li><b>Legal documents are drafts.</b> Our Terms and Privacy Policy are marked as drafts until they have been reviewed by a lawyer.</li>
+</ul>
 
 <h2>A note on the token</h2>
-<p>A Noxsea utility token is planned, designed for discounts and early access inside the product. It is not an investment and pays no yield or revenue.</p>
-<p><b>Its contract address (CA) has not been published.</b> It will only ever be announced on noxsea.xyz and @noxseadotai. Any address shared anywhere else is a scam.</p>
+<p>A Noxsea utility token is planned. It is designed for discounts on messages and early access to new models inside the product. It is not an investment, and it does not pay yield, dividends or revenue.</p>
+<blockquote><b>The contract address (CA) has not been published.</b> It will only ever be announced on noxsea.xyz and on @noxseadotai. Any address shared anywhere else, in DMs, groups or replies, is a scam.</blockquote>
 
 <h2>What's next</h2>
 <ul>
 <li>USDG top-ups on Robinhood Chain</li>
 <li>Confidential-computing inference with public hardware attestation</li>
-<li>More tools for onchain research</li>
+<li>Deeper on-chain research tools: liquidity checks, wallet tracing and more</li>
+<li>More open models as they are released</li>
 </ul>
-<p>We'll build in public and share every step here on X.</p>
+<p>We will build in public and share every step here on X.</p>
+
+<h2>Frequently asked questions</h2>
+<h3>Is Noxsea free?</h3>
+<p>New wallets with on-chain activity get 25 free credits. After that you pay per message, with no subscription.</p>
+<h3>Do you store my chats?</h3>
+<p>Not in readable form. If you turn chat history on, chats are encrypted in your browser and we store only ciphertext. If it's off, closing or forgetting a chat erases it.</p>
+<h3>Can Noxsea read my saved history?</h3>
+<p>No. The key comes from your wallet signature and never leaves your device.</p>
+<h3>What happens if I lose my wallet?</h3>
+<p>Your encrypted history can't be recovered without it. That is the price of real privacy: nobody, including us, holds a spare key.</p>
+<h3>Which wallets work?</h3>
+<p>Browser wallets such as MetaMask and Rabby work today. You sign one message to log in, with no gas and no transaction.</p>
+<h3>Is the Token Safety Check financial advice?</h3>
+<p>No. It's an automatic reading of public on-chain data to help you research. It can miss things, and it never tells you to buy or sell.</p>
 
 <h2>Try it</h2>
-<p>Connect your wallet at noxsea.xyz and ask your first private question.</p>
-<p><b>Private AI that forgets you.</b></p>
+<p>Connect your wallet at noxsea.xyz and ask your first private question. Paste a token address and see what the contract is hiding. Then close the tab, knowing the conversation didn't follow you.</p>
+<p><b>Noxsea. Private AI that forgets you.</b></p>
+<p>Follow @noxseadotai for updates.</p>
 </body></html>
