@@ -80,10 +80,6 @@ There is no subscription. You pay with credits, and 1 USDG buys 100 credits. Eac
 Failed or unavailable requests are never charged, and neither are answers you stop before they finish. New wallets with on-chain activity on Robinhood Chain get 25 free credits to try every model. Top-ups in USDG on Robinhood Chain are coming soon.
 For builders
 Noxsea has an OpenAI-compatible API, so your existing code works with one change: set the base URL to https://noxsea.xyz/api/v1, use your Noxsea API key, and pick a model such as deepseek-v3.1.
-reply = client.chat.completions.create(
-    model="deepseek-v3.1",
-    messages=[{"role": "user", "content": "gm"}],
-)
 Your apps get the same no-logging pipeline and the same per-token pricing. Create keys in the app; we store only a hash and show the full key once. Agents with their own wallet can sign in directly with Sign-In with Ethereum and get a short-lived key, with no human in the loop.
 What we haven't finished yet
 We would rather tell you what isn't done than have you find out later.
