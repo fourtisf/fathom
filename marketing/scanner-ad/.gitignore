@@ -1,0 +1,10 @@
+*.mp4
+*.wav
+*.png
+parts.txt
+r*.log
+node_modules
+scan.html
+app.html
+sprite.html
+scan-result.html
