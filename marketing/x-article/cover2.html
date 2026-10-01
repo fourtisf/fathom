@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Geist;src:url(Geist-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:GMono;src:url(GeistMono-Variable.woff2) format('woff2');font-weight:100 900}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1500px;height:600px;overflow:hidden;background:#050817}
+body{font-family:Geist,sans-serif;color:#F1F2FF;-webkit-font-smoothing:antialiased}
+.bg{position:absolute;inset:0;background:
+  radial-gradient(700px 420px at 1180px 120px,rgba(139,124,255,.38),transparent 70%),
+  radial-gradient(620px 380px at 980px 560px,rgba(56,200,232,.22),transparent 70%),
+  radial-gradient(520px 360px at 160px 80px,rgba(91,108,255,.16),transparent 70%),
+  linear-gradient(180deg,#070A22,#050817)}
+.grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.2px);background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(900px 520px at 1080px 300px,#000 20%,transparent 75%);mask-image:radial-gradient(900px 520px at 1080px 300px,#000 20%,transparent 75%)}
+.grain{position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.copy{position:absolute;left:110px;top:112px;width:620px}
+.meta{display:flex;align-items:center;gap:12px;font:500 14px GMono,monospace;letter-spacing:.24em;text-transform:uppercase;color:#9AA0C8}
+.meta .tag{padding:6px 12px;border-radius:999px;color:#fff;letter-spacing:.2em;background:linear-gradient(135deg,rgba(139,124,255,.5),rgba(56,200,232,.35));border:1px solid rgba(179,168,255,.45)}
+h1{font-weight:600;font-size:84px;letter-spacing:-.05em;line-height:.98;margin-top:28px}
+h1 .g{background:linear-gradient(100deg,#C9BFFF 0%,#8A92FF 45%,#5ED7EE 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin-top:24px;font-size:24px;line-height:1.45;color:#B7BCDD;letter-spacing:-.01em;max-width:560px}
+.by{display:flex;align-items:center;gap:12px;margin-top:34px;font-size:16px;color:#8187AE}
+.by b{color:#E6E8FA;font-weight:600}
+.by svg{width:30px;height:30px}
+.stage{position:absolute;left:760px;top:0;width:740px;height:600px;perspective:1800px}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 40px 100px -24px rgba(1,3,15,.95),inset 0 1px 0 rgba(255,255,255,.1);border-radius:22px;backdrop-filter:blur(14px)}
+.win{position:absolute;left:150px;top:62px;width:520px;height:300px;transform:rotateY(-18deg) rotateX(8deg) rotateZ(1deg);transform-origin:50% 50%;overflow:hidden}
+.bar{height:38px;display:flex;align-items:center;gap:7px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.bar i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)}
+.bar span{margin-left:auto;margin-right:auto;font:400 12px GMono;color:#8187AE;display:flex;gap:6px;align-items:center}
+.ub{position:absolute;right:20px;top:58px;max-width:360px;padding:10px 15px;border-radius:15px 15px 5px 15px;background:linear-gradient(135deg,rgba(139,124,255,.38),rgba(91,108,255,.26));border:1px solid rgba(179,168,255,.3);font-size:14.5px}
+.ub .mono{font-family:GMono;font-size:13px;color:#E4DEFF}
+.ai{position:absolute;left:22px;top:120px;right:30px;display:flex;gap:10px;font-size:13.5px;line-height:1.55;color:#C9CDEA}
+.ai .av{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#8B7CFF,#38C8E8)}
+.ai .av svg{width:13px;height:13px}
+.line{height:8px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:9px}
+.tc{position:absolute;left:40px;top:250px;width:430px;padding:18px 20px 16px;transform:rotateY(-10deg) rotateX(4deg);overflow:hidden}
+.tc::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,#FF6B7A,#FFB86B)}
+.tk{font:500 10.5px GMono;letter-spacing:.18em;text-transform:uppercase;color:#8187AE}
+.tt{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.badge{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;color:#FFC2C8;background:rgba(255,107,122,.13);border:1px solid rgba(255,107,122,.42)}
+.fl{list-style:none;margin-top:12px;display:grid;gap:7px}
+.fl li{display:flex;gap:9px;align-items:center;font-size:13px;color:#E6E8FA}
+.fl i{width:7px;height:7px;border-radius:50%;flex:none}
+.fl em{font-style:normal;font-weight:600}
+.h i{background:#FF6B7A;box-shadow:0 0 9px #FF6B7A}.h em{color:#FF9AA5}
+.m i{background:#FFB86B;box-shadow:0 0 9px #FFB86B}.m em{color:#FFCE94}
+.o i{background:#3DDC97;box-shadow:0 0 9px #3DDC97}.o em{color:#8EEBC3}
+.pc{position:absolute;left:520px;top:300px;padding:12px 16px;transform:rotateY(-14deg);display:grid;gap:4px}
+.pc .s{font:600 11px GMono;letter-spacing:.08em;color:#9AA0C8}
+.pc b{font-size:20px;font-weight:600}
+.pc .up{font-size:12.5px;color:#3DDC97}
+.nl{position:absolute;left:470px;top:34px;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;font-size:13px;color:#CFF7E6;background:rgba(8,14,36,.92);border:1px solid rgba(61,220,151,.38);box-shadow:0 14px 40px -8px rgba(0,0,0,.8);transform:rotateY(-12deg)}
+.nl svg{width:13px;height:13px;color:#3DDC97}
+#dust{position:absolute;inset:0;pointer-events:none}
+.p{position:absolute;border-radius:2px;background:#C9BFFF}
+</style></head><body>
+<div class="bg"></div><div class="grid"></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="dg" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#E4DEFF"/><stop offset=".45" stop-color="#8A92FF"/><stop offset="1" stop-color="#4FD6EC"/></linearGradient>
+<symbol id="drop" viewBox="0 0 64 64"><path fill="url(#dg)" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<div class="copy">
+  <div class="meta"><span class="tag">Article</span>9 min read</div>
+  <h1>Introducing<br><span class="g">Noxsea</span></h1>
+  <div class="sub">Private AI that forgets you, built for the onchain world.</div>
+  <div class="by"><svg><use href="#drop"/></svg><span><b>Noxsea</b> · @noxseadotai</span></div>
+</div>
+
+<div class="stage">
+  <div class="win glass">
+    <div class="bar"><i></i><i></i><i></i><span><svg width="11" height="11" style="color:#3DDC97"><use href="#lock"/></svg>noxsea.xyz/app</span></div>
+    <div class="ub">Is this token safe? <span class="mono">0x7a3F…91cE</span></div>
+    <div class="ai"><div class="av"><svg viewBox="0 0 64 64"><path fill="#fff" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></svg></div>
+      <div style="flex:1">Here's what the contract can do, flag by flag…<div class="line" style="width:92%"></div><div class="line" style="width:74%"></div></div></div>
+  </div>
+  <div class="tc glass">
+    <div class="tk">Token Safety Check</div>
+    <div class="tt">Pepe Hood (PHOOD)<span class="badge">2 red flags</span></div>
+    <ul class="fl">
+      <li class="h"><i></i><span><em>High risk</em> Owner can mint new tokens</span></li>
+      <li class="h"><i></i><span><em>High risk</em> One wallet holds 22% of supply</span></li>
+      <li class="m"><i></i><span><em>Caution</em> Sell tax can be changed</span></li>
+      <li class="o"><i></i><span><em>Good sign</em> Source code verified</span></li>
+    </ul>
+  </div>
+  <div class="pc glass"><span class="s">ETH · LIVE</span><b>$3,120.40</b><span class="up">▲ 2.48% 24h</span></div>
+  <div class="nl"><svg><use href="#lock"/></svg>Not logged · Not stored</div>
+</div>
+<div id="dust"></div>
+<div class="grain"></div>
+<script>
+// "Forgets you": the user's message dissolves into particles drifting away to the right.
+const R = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const dust = document.getElementById('dust');
+for (let i = 0; i < 90; i++) {
+  const t = R(i);
+  const x = 1405 + t * 90 + (R(i + 5) - .5) * 16;
+  const y = 128 + (R(i + 9) - .5) * (24 + t * 150);
+  const s = 1.5 + R(i + 3) * 3 * (1 - t * .6);
+  const d = document.createElement('div');
+  d.className = 'p';
+  d.style.cssText = `left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${(1 - t) * .75};background:${R(i + 2) > .5 ? '#C9BFFF' : '#7FD9F0'}`;
+  dust.appendChild(d);
+}
+</script></body></html>
