@@ -1,0 +1,655 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Noxsea ad</title>
+<style>
+@font-face{font-family:Geist;src:url(Geist-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:GMono;src:url(GeistMono-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--bg:#060A1C;--ink:#F1F2FF;--ink2:#B7BCDD;--mute:#8187AE;--faint:#5A6088;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.13);
+  --violet:#8B7CFF;--violet2:#B3A8FF;--indigo:#5B6CFF;--cyan:#5CE1E6;--mint:#3DDC97;--rose:#FF6B7A;--amber:#FFB86B;
+  --grad:linear-gradient(135deg,#B3A8FF 0%,#7B84FF 45%,#4FD6EC 100%);--btn:linear-gradient(135deg,#8B7CFF 0%,#5B6CFF 45%,#38C8E8 100%)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body{font-family:Geist,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01"}
+.mono{font-family:GMono,monospace}
+#stage{position:absolute;inset:0;overflow:hidden;background:linear-gradient(180deg,#070B22,#060A1C 45%,#05081A)}
+.blob{position:absolute;border-radius:50%;will-change:transform}
+.grain{position:absolute;inset:0;z-index:60;opacity:.07;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.vig{position:absolute;inset:0;z-index:59;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 50%,transparent 55%,rgba(2,3,12,.75))}
+#fade{position:absolute;inset:0;z-index:70;background:#000;opacity:0;pointer-events:none}
+.scene{position:absolute;inset:0;display:none}
+.abs{position:absolute}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h{font-weight:600;letter-spacing:-.038em;line-height:1.02}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.028));border:1px solid rgba(255,255,255,.11);
+  box-shadow:0 50px 140px -30px rgba(2,4,18,.95),inset 0 1px 0 rgba(255,255,255,.09);border-radius:26px}
+.tag{font:500 19px GMono,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ink2);display:inline-flex;gap:14px;align-items:center}
+.tag i{width:9px;height:9px;border-radius:50%;background:var(--btn);box-shadow:0 0 18px #7B84FF}
+.cap{position:absolute;width:660px}
+.cap .num{font:500 20px GMono,monospace;letter-spacing:.24em;color:var(--mute);display:flex;align-items:center;gap:16px}
+.cap .num b{font-weight:500;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cap .num s{display:block;width:56px;height:1px;background:linear-gradient(90deg,rgba(179,168,255,.7),transparent);text-decoration:none}
+.cap h2{font-size:78px;font-weight:600;letter-spacing:-.04em;line-height:1.02;margin:26px 0 26px}
+.cap p{font-size:30px;line-height:1.42;color:var(--ink2);letter-spacing:-.01em}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:10px 18px;font-size:19px;color:var(--ink2);
+  background:rgba(255,255,255,.05);border:1px solid var(--line2)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.caret{display:inline-block;width:2px;height:1.05em;background:var(--violet2);vertical-align:-.15em;margin-left:2px}
+
+/* S1 */
+#logs{left:0;right:0;top:0;font:400 23px/1.95 GMono,monospace;color:rgba(129,135,174,.55);white-space:pre;padding-left:160px;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent);mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent)}
+#logs em{font-style:normal;color:rgba(183,188,221,.85)}
+.center{position:absolute;left:0;right:0;text-align:center}
+
+/* app window */
+.win{position:absolute;overflow:hidden;border-radius:24px}
+.chrome{height:52px;display:flex;align-items:center;padding:0 20px;gap:9px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.025)}
+.chrome i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.14)}
+.url{margin:0 auto;transform:translateX(-30px);font:400 16px GMono,monospace;color:var(--mute);display:flex;align-items:center;gap:8px;
+  padding:7px 18px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.side{position:absolute;left:0;top:52px;bottom:0;width:236px;border-right:1px solid var(--line);padding:22px 18px;background:rgba(3,5,18,.25)}
+.brandrow{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:600;letter-spacing:-.02em}
+.newchat{margin:22px 0 26px;padding:11px 14px;border-radius:12px;border:1px solid var(--line2);font-size:16px;color:var(--ink2);background:rgba(255,255,255,.04)}
+.side h6{font:500 13px Geist;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;margin:0 6px 10px}
+.side .it{font-size:16px;color:var(--ink2);padding:9px 10px;border-radius:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side .it.on{background:rgba(255,255,255,.06);color:#fff}
+.main{position:absolute;left:236px;right:0;top:52px;bottom:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:18px 26px}
+.chip{display:inline-flex;align-items:center;gap:9px;padding:8px 14px;border-radius:11px;font-size:16px;background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--ink)}
+.chip.mute{color:var(--ink2)}
+.ubub{margin-left:auto;max-width:480px;padding:14px 20px;border-radius:20px 20px 6px 20px;background:linear-gradient(135deg,rgba(139,124,255,.32),rgba(91,108,255,.22));border:1px solid rgba(179,168,255,.25);font-size:19px;line-height:1.45}
+.arow{display:flex;gap:14px;align-items:flex-start;margin-top:22px}
+.av{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line2)}
+.atext{font-size:19px;line-height:1.6;color:var(--ink);max-width:600px}
+.composer{position:absolute;left:26px;right:26px;bottom:24px;height:110px;border-radius:20px;padding:18px 20px;background:rgba(255,255,255,.045);border:1px solid var(--line2)}
+.composer .txt{font-size:19px;color:var(--ink)}
+.composer .ph{color:var(--mute)}
+.composer .tools{position:absolute;left:18px;bottom:14px;display:flex;gap:8px}
+.composer .tools span{font-size:14px;padding:6px 11px;border-radius:9px;border:1px solid var(--line2);color:var(--ink2)}
+.send{position:absolute;right:16px;bottom:14px;width:42px;height:42px;border-radius:13px;background:var(--btn);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 8px 30px -6px rgba(91,108,255,.8)}
+.typing span{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:var(--violet2)}
+
+/* compare */
+.ccard{position:absolute;top:400px;width:790px;height:470px;padding:30px 34px}
+.ccard .hd{display:flex;align-items:center;gap:12px;font-size:23px;font-weight:600;letter-spacing:-.02em}
+.ccard .hd .meta{margin-left:auto;font:400 17px GMono;color:var(--mute);font-weight:400}
+.ccard .q{margin:22px 0 18px;font-size:17px;color:var(--mute);padding-bottom:18px;border-bottom:1px solid var(--line)}
+.ccard .ans{font-size:21px;line-height:1.6;color:var(--ink)}
+
+/* burn */
+.seg{display:flex;position:relative;padding:5px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid var(--line2)}
+.seg span{position:relative;z-index:1;width:76px;text-align:center;font-size:17px;padding:8px 0;color:var(--ink2)}
+.seg .hl{position:absolute;top:5px;bottom:5px;width:76px;border-radius:9px;background:linear-gradient(135deg,rgba(255,184,107,.32),rgba(255,107,122,.28));border:1px solid rgba(255,184,107,.45)}
+.bline{font-size:19px;line-height:1.5;padding:13px 18px;border-radius:16px;margin-bottom:14px;max-width:560px}
+.bline.u{margin-left:auto;background:rgba(139,124,255,.2);border:1px solid rgba(179,168,255,.22)}
+.bline.a{background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.part{position:absolute;width:6px;height:6px;border-radius:50%;background:#FFB86B;box-shadow:0 0 10px #FF8A6B}
+
+/* crypto */
+.ecard{position:absolute;top:330px;width:420px;height:420px;padding:28px}
+.ecard .lb{font:500 15px GMono;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.ecard .pt{font-size:19px;line-height:1.55;color:var(--ink);padding:12px 16px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid var(--line);margin-bottom:12px}
+.ecard .ct{font:400 18px/1.75 GMono;color:#9AA2D8;word-break:break-all}
+.pkt{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan)}
+
+/* wallet */
+.modal{position:absolute;left:220px;top:285px;width:640px;height:520px;padding:36px 38px}
+.modal h3{font-size:32px;font-weight:600;letter-spacing:-.03em}
+.modal .sub{font-size:18px;color:var(--mute);margin-top:8px}
+.wrow{display:flex;align-items:center;gap:16px;padding:20px 22px;margin-top:16px;border-radius:18px;border:1px solid var(--line2);background:rgba(255,255,255,.035);font-size:21px}
+.wico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:24px}
+.badge{margin-left:auto;font-size:14px;padding:5px 11px;border-radius:999px;color:var(--mint);background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.3)}
+.siwe{margin-top:24px;padding:22px 24px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid var(--line);font:400 18px/1.7 GMono;color:var(--ink2);white-space:pre}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;height:62px;border-radius:16px;background:var(--btn);font-size:21px;font-weight:600;color:#fff;box-shadow:0 18px 50px -12px rgba(91,108,255,.75),inset 0 1px 0 rgba(255,255,255,.3)}
+.cursor{position:absolute;width:30px;height:30px;z-index:5}
+.ring{position:absolute;width:60px;height:60px;border-radius:50%;border:2px solid rgba(179,168,255,.9)}
+
+/* code */
+.code{position:absolute;left:780px;top:250px;width:1000px;height:580px;overflow:hidden}
+.code .bar{height:58px;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--line);font:400 17px GMono;color:var(--ink2)}
+.code pre{padding:30px 34px;font:400 25px/1.62 GMono,monospace;color:#DCDFF5;white-space:pre}
+.k{color:#C3A8FF}.s{color:#7FE3C4}.f{color:#7FB8FF}.c{color:#5A6088}.p{color:#B7BCDD}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="dg" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#C9BFFF"/><stop offset=".45" stop-color="#7B84FF"/><stop offset="1" stop-color="#43D9EF"/></linearGradient>
+    <radialGradient id="dsheen" cx="24" cy="25" r="16" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".45"/><stop offset=".6" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <clipPath id="dclip"><path clip-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></clipPath>
+    <symbol id="drop" viewBox="0 0 64 64">
+      <path fill="url(#dg)" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/>
+      <g clip-path="url(#dclip)"><circle cx="24" cy="25" r="16" fill="url(#dsheen)"/></g>
+    </symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
+    <symbol id="flame" viewBox="0 0 24 24"><path d="M12 3c.6 3.2 5 5.4 5 10.2A5 5 0 0 1 7 13.2c0-2.2 1.1-3.6 2.4-4.6.1 1.8.9 3 2.1 3.4C11 9 11.2 5.8 12 3z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="cols" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="16" rx="2"/><rect x="13" y="4" width="8" height="16" rx="2"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></symbol>
+    <symbol id="wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h1.5"/></symbol>
+    <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+    <symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></symbol>
+    <symbol id="server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="cursor" viewBox="0 0 24 24"><path d="M5 3l14 7.5-6.2 1.7L10 18.5z" fill="#fff" stroke="#0A0E30" stroke-width="1.4"/></symbol>
+  </defs>
+</svg>
+
+<div id="stage">
+  <div class="blob" id="b1" style="width:1260px;height:980px;left:920px;top:-340px;background:radial-gradient(closest-side,rgba(91,108,255,.30),transparent)"></div>
+  <div class="blob" id="b2" style="width:1120px;height:1120px;left:-410px;top:340px;background:radial-gradient(closest-side,rgba(139,124,255,.22),transparent)"></div>
+  <div class="blob" id="b3" style="width:980px;height:700px;left:560px;top:750px;background:radial-gradient(closest-side,rgba(56,200,232,.16),transparent)"></div>
+
+  <!-- S1: cold open -->
+  <section class="scene" id="s1">
+    <div id="logs" class="abs"></div>
+    <div class="abs" id="s1scrim" style="left:360px;top:250px;width:1200px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(6,10,28,.92),rgba(6,10,28,.6) 60%,transparent);filter:blur(10px)"></div>
+    <div class="center h" id="s1a" style="top:395px;font-size:96px">Most AI chats remember<br>everything you type.</div>
+    <div class="center h" id="s1b" style="top:450px;font-size:120px">Noxsea <span class="grad">forgets.</span></div>
+  </section>
+
+  <!-- S2: logo reveal -->
+  <section class="scene" id="s2">
+    <div id="ripples"></div>
+    <div class="abs" id="s2glow" style="left:660px;top:240px;width:600px;height:600px;border-radius:50%;background:radial-gradient(closest-side,rgba(107,120,255,.5),rgba(107,120,255,.18) 55%,transparent)"></div>
+    <div class="center" id="s2tag" style="top:300px"><span class="tag"><i></i>Meet Noxsea</span></div>
+    <div class="abs" id="s2lock" style="left:0;right:0;top:390px;height:220px;display:flex;align-items:center;justify-content:center">
+      <svg id="s2drop" width="210" height="210"><use href="#drop"/></svg>
+      <div id="s2wordwrap" style="overflow:hidden;width:0"><div id="s2word" class="h" style="font-size:168px;padding:0 10px 18px 28px;white-space:nowrap">Noxsea</div></div>
+    </div>
+    <div class="center" id="s2line" style="top:660px;font-size:46px;color:var(--ink2);letter-spacing:-.02em">Private AI that forgets you.</div>
+  </section>
+
+  <!-- S3: chat -->
+  <section class="scene" id="s3">
+    <div class="cap" id="s3cap" style="left:140px;top:300px">
+      <div class="num"><b>01</b><s></s>Private chat</div>
+      <h2>Zero prompt<br><span class="grad">logs.</span></h2>
+      <p>What you ask is never logged or stored in readable form. Not by us, not in analytics.</p>
+    </div>
+    <div style="position:absolute;left:820px;top:150px;width:1000px;height:760px;perspective:2200px">
+      <div class="win glass" id="s3win" style="left:0;top:0;width:1000px;height:760px;transform-origin:30% 50%">
+        <div class="chrome"><i></i><i></i><i></i><div class="url"><svg class="i" style="color:var(--mint)"><use href="#lock"/></svg>noxsea.xyz/app</div></div>
+        <div class="side">
+          <div class="brandrow"><svg width="30" height="30"><use href="#drop"/></svg>Noxsea</div>
+          <div class="newchat">+&nbsp; New chat</div>
+          <h6>Recent</h6>
+          <div class="it on" id="s3hist0">What is Robinhood Chain?</div>
+          <div class="it">Spot a memecoin rug pull</div>
+          <div class="it">Keep my wallet safe</div>
+          <div class="it">Bridge to Robinhood Chain</div>
+        </div>
+        <div class="main">
+          <div class="topbar">
+            <span class="chip"><span class="dot"></span>DeepSeek V3.1 <span style="color:var(--mute)">▾</span></span>
+            <span class="chip mute"><svg class="i"><use href="#flame"/></svg>Burn: off</span>
+            <span class="chip mute" style="margin-left:auto"><span class="dot" style="background:var(--violet);box-shadow:0 0 10px var(--violet)"></span><span id="s3cred">25.00</span>&nbsp;credits</span>
+          </div>
+          <div style="padding:20px 30px 0" id="s3msgs">
+            <div class="ubub" id="s3u">What is Robinhood Chain?</div>
+            <div class="arow" id="s3a"><div class="av"><svg width="22" height="22"><use href="#drop"/></svg></div><div class="atext" id="s3atext"></div></div>
+          </div>
+          <div id="s3empty" class="abs" style="left:0;right:0;top:170px;text-align:center">
+            <svg width="70" height="70"><use href="#drop"/></svg>
+            <div style="font-size:34px;font-weight:600;letter-spacing:-.03em;margin-top:14px">What's on your mind?</div>
+            <div style="font-size:18px;color:var(--mute);margin-top:8px">Your prompts are never logged.</div>
+          </div>
+          <div class="composer"><div class="txt" id="s3type"></div>
+            <div class="tools"><span>Compare</span><span>Web search</span></div>
+            <div class="send"><svg class="i"><use href="#arrow"/></svg></div></div>
+        </div>
+      </div>
+      <div class="pill abs" id="s3badge" style="right:-40px;top:-26px;background:rgba(10,16,40,.9);border-color:rgba(61,220,151,.35);color:#CFF7E6;font-size:20px;padding:13px 22px;box-shadow:0 20px 60px -10px rgba(0,0,0,.8)">
+        <svg class="i" style="color:var(--mint)"><use href="#lock"/></svg>Not logged · Not stored</div>
+    </div>
+  </section>
+
+  <!-- S4: compare -->
+  <section class="scene" id="s4">
+    <div class="center" id="s4cap" style="top:120px">
+      <div class="tag" style="justify-content:center"><i></i>02 · Compare mode</div>
+      <div class="h" style="font-size:84px;margin-top:26px">Two models. <span class="grad">Side by side.</span></div>
+    </div>
+    <div class="ccard glass" id="s4l" style="left:150px">
+      <div class="hd"><span class="dot"></span>DeepSeek V3.1<span class="meta" id="s4lm">streaming…</span></div>
+      <div class="q">Explain a memecoin rug pull in one paragraph.</div>
+      <div class="ans" id="s4la"></div>
+    </div>
+    <div class="ccard glass" id="s4r" style="left:980px">
+      <div class="hd"><span class="dot" style="background:var(--cyan);box-shadow:0 0 12px var(--cyan)"></span>Qwen3 235B<span class="meta" id="s4rm">streaming…</span></div>
+      <div class="q">Explain a memecoin rug pull in one paragraph.</div>
+      <div class="ans" id="s4ra"></div>
+    </div>
+    <div class="center" id="s4chips" style="top:920px;display:flex;justify-content:center;gap:16px">
+      <span class="pill">DeepSeek V3.1</span><span class="pill">Qwen3 235B</span><span class="pill">gpt-oss 120B</span><span class="pill">Llama 3.3 70B</span>
+    </div>
+  </section>
+
+  <!-- S5: burn -->
+  <section class="scene" id="s5">
+    <div class="glass abs" id="s5card" style="left:150px;top:200px;width:820px;height:680px;padding:32px 36px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,184,107,.12);border:1px solid rgba(255,184,107,.35);color:var(--amber);font-size:26px"><svg class="i"><use href="#flame"/></svg></div>
+        <div style="font-size:25px;font-weight:600;letter-spacing:-.02em">Burn timer</div>
+        <div class="seg" style="margin-left:auto"><div class="hl" id="s5hl"></div><span>Off</span><span>1h</span><span>24h</span></div>
+      </div>
+      <div id="s5chat" style="margin-top:34px;position:relative;height:380px">
+        <div class="bline u" id="s5m0" style="max-width:470px">Compare my two job offers honestly.</div>
+        <div class="bline a" id="s5m1">Sure. Paste both offers and tell me what matters most to you: salary, equity or growth.</div>
+        <div class="bline u" id="s5m2" style="max-width:520px">Offer A: $140k, remote. Offer B: $125k plus equity…</div>
+        <div id="s5parts"></div>
+        <div id="s5gone" class="abs" style="left:0;right:0;top:120px;text-align:center">
+          <div style="width:74px;height:74px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.4);color:var(--mint);font-size:36px"><svg class="i"><use href="#check"/></svg></div>
+          <div style="font-size:34px;font-weight:600;letter-spacing:-.03em;margin-top:20px">Chat burned.</div>
+          <div style="font-size:19px;color:var(--mute);margin-top:8px">Deleted on schedule. Nothing to scroll back to.</div>
+        </div>
+      </div>
+      <div style="position:absolute;left:36px;right:36px;bottom:32px">
+        <div style="display:flex;justify-content:space-between;font:400 18px GMono;color:var(--ink2)"><span id="s5lbl">Burns in</span><span id="s5clock">24:00:00</span></div>
+        <div style="height:6px;border-radius:9px;background:rgba(255,255,255,.07);margin-top:12px;overflow:hidden"><div id="s5bar" style="height:100%;width:100%;border-radius:9px;background:linear-gradient(90deg,#FFB86B,#FF6B7A)"></div></div>
+      </div>
+    </div>
+    <div class="cap" id="s5cap" style="left:1090px;top:330px">
+      <div class="num"><b>03</b><s></s>Burn timer</div>
+      <h2>Chats that<br><span class="grad">self-destruct.</span></h2>
+      <p>Set a burn timer of 1 hour or 24 hours. When it runs out, the chat is deleted.</p>
+    </div>
+  </section>
+
+  <!-- S6: encryption -->
+  <section class="scene" id="s6">
+    <div class="cap" id="s6cap" style="left:140px;top:330px;width:560px">
+      <div class="num"><b>04</b><s></s>Encrypted history</div>
+      <h2 style="font-size:72px">Only your wallet<br>can <span class="grad">unlock it.</span></h2>
+      <p>Saved chats are encrypted in your browser. Our server stores ciphertext it can't read.</p>
+    </div>
+    <div class="ecard glass" id="s6a" style="left:760px">
+      <div class="lb"><svg class="i" style="font-size:20px"><use href="#monitor"/></svg>Your browser</div>
+      <div class="pt">Compare my two job offers honestly.</div>
+      <div class="pt">Offer A: $140k, remote. Offer B…</div>
+      <div class="pt" style="color:var(--ink2)">Which one grows faster?</div>
+    </div>
+    <div class="abs" id="s6lock" style="left:1200px;top:430px;width:160px;text-align:center">
+      <div style="width:132px;height:132px;margin:0 auto;border-radius:36px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(179,168,255,.35);box-shadow:0 0 80px -10px rgba(123,132,255,.7)">
+        <svg class="i" style="font-size:58px;color:#C9BFFF;stroke-width:1.7"><use href="#lock"/></svg></div>
+      <div class="mono" style="font-size:16px;color:var(--ink2);margin-top:18px;letter-spacing:.06em">AES-256-GCM</div>
+    </div>
+    <div class="ecard glass" id="s6b" style="left:1380px">
+      <div class="lb"><svg class="i" style="font-size:20px"><use href="#server"/></svg>Our server</div>
+      <div class="ct" id="s6ct"></div>
+      <div class="pill abs" id="s6only" style="left:28px;bottom:26px;color:#CFF7E6;border-color:rgba(61,220,151,.35)"><svg class="i" style="color:var(--mint)"><use href="#lock"/></svg>Ciphertext only</div>
+    </div>
+    <div id="s6pk"></div>
+    <div class="center" id="s6key" style="top:810px;left:760px;right:auto;width:1040px"><span class="pill"><svg class="i" style="color:var(--violet2)"><use href="#key"/></svg>Key derived from your wallet signature. It never leaves your device.</span></div>
+  </section>
+
+  <!-- S7: wallet -->
+  <section class="scene" id="s7">
+    <div class="modal glass" id="s7m">
+      <div id="s7p1">
+        <h3>Connect a wallet</h3>
+        <div class="sub">Sign in with one signature. No email, no password.</div>
+        <div class="wrow" id="s7row"><div class="wico" style="background:rgba(139,124,255,.18);color:var(--violet2)"><svg class="i"><use href="#wallet"/></svg></div>Browser wallet<span class="badge">Detected</span></div>
+        <div class="wrow"><div class="wico" style="background:rgba(92,225,230,.13);color:var(--cyan)"><svg class="i"><use href="#link"/></svg></div>WalletConnect</div>
+        <div style="font-size:17px;color:var(--mute);margin-top:30px">New to crypto? <span style="color:var(--violet2)">Get started in 2 minutes</span></div>
+      </div>
+      <div id="s7p2" class="abs" style="left:38px;right:38px;top:36px">
+        <h3>Signature request</h3>
+        <div class="sub">Sign-In with Ethereum · no gas, no transaction</div>
+        <div class="siwe">noxsea.xyz wants you to sign in
+with your Ethereum account:
+0x7a3F…91cE
+
+URI: https://noxsea.xyz
+Chain ID: 4663</div>
+        <div class="btn" id="s7btn" style="margin-top:24px">Sign</div>
+      </div>
+      <div id="s7p3" class="abs" style="left:38px;right:38px;top:70px;text-align:center">
+        <div id="s7chk" style="width:110px;height:110px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.45);color:var(--mint);font-size:54px;box-shadow:0 0 70px -10px rgba(61,220,151,.6)"><svg class="i" style="stroke-width:2.4"><use href="#check"/></svg></div>
+        <div style="font-size:42px;font-weight:600;letter-spacing:-.03em;margin-top:28px">You're in.</div>
+        <div class="mono" style="font-size:20px;color:var(--ink2);margin-top:12px">0x7a3F…91cE</div>
+        <div class="pill" style="margin-top:30px;font-size:21px"><span class="dot" style="background:var(--violet);box-shadow:0 0 10px var(--violet)"></span>+<span id="s7cred">0.00</span> welcome credits</div>
+      </div>
+      <svg class="cursor" id="s7cur"><use href="#cursor"/></svg>
+      <div class="ring" id="s7ring"></div>
+    </div>
+    <div class="cap" id="s7cap" style="left:1030px;top:320px;width:760px">
+      <div class="num"><b>05</b><s></s>Wallet sign-in</div>
+      <h2>One signature.<br><span class="grad">That's your account.</span></h2>
+      <p>No email. No card. No password.</p>
+      <div style="display:flex;gap:12px;margin-top:34px"><span class="pill"><span class="dot"></span>Built for Robinhood Chain</span></div>
+    </div>
+  </section>
+
+  <!-- S8: API -->
+  <section class="scene" id="s8">
+    <div class="cap" id="s8cap" style="left:140px;top:330px;width:580px">
+      <div class="num"><b>06</b><s></s>For builders</div>
+      <h2>OpenAI-compatible <span class="grad">API.</span></h2>
+      <p>Change one URL. Keep your code, your SDK and your agents.</p>
+    </div>
+    <div class="code glass" id="s8code">
+      <div class="bar"><span style="width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="margin-left:14px">quickstart.py</span><span class="pill" style="margin-left:auto;font-size:15px;padding:6px 14px">OpenAI SDK</span></div>
+      <pre id="s8pre"></pre>
+    </div>
+    <div class="pill abs" id="s8ok" style="left:800px;top:860px;font-size:20px;color:#CFF7E6;border-color:rgba(61,220,151,.35)"><span class="dot"></span>200 OK · streaming · billed per token</div>
+  </section>
+
+  <!-- S9: end card -->
+  <section class="scene" id="s9">
+    <div id="ripples9"></div>
+    <div class="abs" id="s9glow" style="left:660px;top:150px;width:600px;height:600px;border-radius:50%;background:radial-gradient(closest-side,rgba(107,120,255,.45),rgba(107,120,255,.16) 55%,transparent)"></div>
+    <div class="center" id="s9logo" style="top:250px"><svg width="170" height="170"><use href="#drop"/></svg></div>
+    <div class="center h" id="s9t" style="top:450px;font-size:112px">Private AI that<br><span class="grad">forgets you.</span></div>
+    <div class="center" id="s9cta" style="top:745px;display:flex;justify-content:center">
+      <div class="btn" style="width:auto;padding:0 44px;height:76px;font-size:28px;border-radius:20px">Start free at noxsea.xyz</div>
+    </div>
+    <div class="center" id="s9fine" style="top:860px;font-size:19px;color:var(--mute)">25 free credits for wallets with on-chain activity</div>
+  </section>
+
+  <div class="vig"></div><div class="grain"></div><div id="fade"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const P = (t, a, b) => clamp((t - a) / (b - a));
+const E = {
+  out: x => 1 - Math.pow(1 - x, 3),
+  expo: x => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x)),
+  io: x => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  inn: x => x * x * x,
+  back: x => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); },
+};
+const lerp = (a, b, x) => a + (b - a) * x;
+// seeded rand
+const R = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/** Fade/blur/rise an element in at tin and out at tout. */
+function rise(el, t, tin, tout, o = {}) {
+  const { d = 1, dy = 40, bl = 14, sc = 0, dout = .55, dx = 0, base = '' } = o;
+  const a = E.expo(P(t, tin, tin + d));
+  const b = tout == null ? 0 : E.inn(P(t, tout - dout, tout));
+  el.style.opacity = a * (1 - b);
+  el.style.transform = `${base} translate(${dx * (1 - a)}px, ${(1 - a) * dy - b * dy * .5}px) scale(${1 + sc * (1 - a) + b * .03})`;
+  const blur = (1 - a) * bl + b * bl;
+  el.style.filter = blur > .05 ? `blur(${blur.toFixed(2)}px)` : 'none';
+}
+const words = (s, n) => s.split(' ').slice(0, Math.max(0, Math.floor(n))).join(' ');
+const caret = '<span class="caret"></span>';
+
+/* ---------- static content ---------- */
+const LOGS = [];
+const PROMPTS = ['how do I move my savings without my bank noticing', 'is this rash something serious', 'write a resignation letter, my boss is', 'my seed phrase starts with', 'can my ex see where I', 'draft an apology to my sister about', 'what dose of ibuprofen is too much', 'help me hide this from my', 'is my startup idea worth quitting', 'how much debt is too much for'];
+for (let i = 0; i < 26; i++) {
+  const h = String(9 + (i >> 3)).padStart(2, '0'), m = String((i * 7) % 60).padStart(2, '0'), s = String((i * 13) % 60).padStart(2, '0');
+  const uid = 1000 + Math.floor(R(i) * 8999);
+  LOGS.push(`${h}:${m}:${s}  user_${uid}  ip=84.12.${Math.floor(R(i + 9) * 255)}.${Math.floor(R(i + 3) * 255)}  prompt=<em>"${PROMPTS[i % PROMPTS.length]}…"</em>`);
+}
+$('logs').innerHTML = LOGS.join('\n');
+
+const ripHTML = n => Array.from({ length: n }, () => '<div class="abs rip" style="left:960px;top:500px;width:0;height:0"><div style="position:absolute;left:-300px;top:-300px;width:600px;height:600px;border-radius:50%;border:1.5px solid rgba(143,160,255,.6)"></div></div>').join('');
+$('ripples').innerHTML = ripHTML(5);
+$('ripples9').innerHTML = ripHTML(4);
+$('ripples9').querySelectorAll('.rip').forEach(r => { r.style.top = '335px'; });
+
+const A3 = "Robinhood Chain is an Ethereum Layer 2 built on Arbitrum technology. It's designed for tokenized assets and onchain finance, with low fees and fast confirmations, and it settles to Ethereum for security.";
+const A4L = "A rug pull is when a token's creators drain the liquidity or dump their supply after hype pumps the price, leaving buyers with a coin they can't sell. Red flags: unlocked liquidity, a few wallets holding most of the supply, and mint or blacklist functions in the contract.";
+const A4R = "Insiders build hype, wait for buyers to pour in, then pull the liquidity pool or sell their allocation all at once. The price collapses in minutes. Before you buy, check whether liquidity is locked, who holds the top wallets, and whether the owner can mint new tokens.";
+
+const CODE = [
+  ['k', 'from'], ['p', ' openai '], ['k', 'import'], ['p', ' OpenAI\n\n'],
+  ['p', 'client = '], ['f', 'OpenAI'], ['p', '(\n    base_url='], ['s', '"https://noxsea.xyz/api/v1"'], ['p', ',\n    api_key='], ['s', '"nox_live_••••••••"'], ['p', ',\n)\n\n'],
+  ['p', 'reply = client.chat.completions.'], ['f', 'create'], ['p', '(\n    model='], ['s', '"deepseek-v3.1"'], ['p', ',\n    messages=[{'], ['s', '"role"'], ['p', ': '], ['s', '"user"'], ['p', ', '], ['s', '"content"'], ['p', ': '], ['s', '"gm"'], ['p', '}],\n    stream='], ['k', 'True'], ['p', ',\n)'],
+];
+const CODELEN = CODE.reduce((n, [, s]) => n + s.length, 0);
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+function codeUpTo(n) {
+  let out = '', left = n;
+  for (const [c, s] of CODE) { if (left <= 0) break; const part = s.slice(0, left); left -= part.length; out += `<span class="${c}">${esc(part)}</span>`; }
+  return out;
+}
+const HEX = '0123456789abcdef';
+function hexBlock(seed, len) { let s = ''; for (let i = 0; i < len; i++) s += HEX[Math.floor(R(seed * 31 + i) * 16)]; return s; }
+
+// burn particles
+const PARTS = Array.from({ length: 70 }, (_, i) => ({ x: 40 + R(i) * 700, y: 20 + R(i + 100) * 230, vx: (R(i + 200) - .5) * 120, vy: -60 - R(i + 300) * 220, d: R(i + 400) * .5, s: .5 + R(i + 500) }));
+$('s5parts').innerHTML = PARTS.map(() => '<div class="part"></div>').join('');
+// packets
+$('s6pk').innerHTML = Array.from({ length: 4 }, () => '<div class="pkt"></div>').join('');
+
+/* ---------- timeline ---------- */
+const SC = [
+  ['s1', 0, 4.3], ['s2', 4.1, 8.6], ['s3', 8.4, 15.0], ['s4', 14.8, 20.0], ['s5', 19.8, 24.8],
+  ['s6', 24.6, 29.2], ['s7', 29.0, 33.6], ['s8', 33.4, 38.0], ['s9', 37.8, 44.0],
+];
+window.DURATION = 44;
+
+function scenes(T) {
+  for (const [id, a, b] of SC) $(id).style.display = T >= a && T <= b ? 'block' : 'none';
+}
+
+function bg(T) {
+  $('b1').style.transform = `translate(${Math.sin(T * .25) * 120}px, ${Math.cos(T * .2) * 80}px)`;
+  $('b2').style.transform = `translate(${Math.cos(T * .18) * 140}px, ${Math.sin(T * .22) * 90}px)`;
+  $('b3').style.transform = `translate(${Math.sin(T * .3 + 1) * 160}px, ${Math.cos(T * .27) * 60}px)`;
+  $('fade').style.opacity = Math.max(1 - P(T, 0, .6), P(T, 43.2, 44));
+}
+
+function s1(t) {
+  const logs = $('logs');
+  logs.style.transform = `translateY(${-60 - t * 34}px)`;
+  const burn = E.io(P(t, 2.1, 3.0));
+  logs.style.opacity = (.25 + .6 * E.out(P(t, 0, 1.2))) * (1 - burn);
+  $('s1scrim').style.opacity = E.out(P(t, .2, 1)) * (1 - P(t, 2.6, 3.4));
+  logs.style.filter = `blur(${burn * 18}px)`;
+  logs.style.letterSpacing = `${burn * .4}em`;
+  rise($('s1a'), t, .35, 2.35, { dy: 30, d: 1.1, dout: .5 });
+  rise($('s1b'), t, 2.55, 4.3, { dy: 26, sc: .06, d: 1.1, dout: .45, bl: 18 });
+}
+
+function ripples(root, t, t0, every = .55, cx, cy) {
+  root.querySelectorAll('.rip').forEach((r, i) => {
+    const k = P(t, t0 + i * every, t0 + i * every + 3.2);
+    const s = .25 + E.out(k) * 2.1;
+    r.firstElementChild.style.transform = `scale(${s})`;
+    r.firstElementChild.style.opacity = k > 0 && k < 1 ? (1 - k) * .55 : 0;
+  });
+}
+
+function s2(t) {
+  ripples($('ripples'), t, .1, .5);
+  const g = E.out(P(t, 0, 1.4));
+  $('s2glow').style.opacity = g * (1 - P(t, 3.9, 4.5));
+  $('s2glow').style.transform = `scale(${.6 + g * .5 + Math.sin(t * 2) * .03})`;
+  const d = $('s2drop');
+  const a = E.expo(P(t, .15, 1.35));
+  const out = E.inn(P(t, 3.95, 4.5));
+  d.style.opacity = a * (1 - out);
+  d.style.transform = `scale(${.55 + .45 * a + out * .05})`;
+  d.style.filter = `blur(${(1 - a) * 22 + out * 14}px) drop-shadow(0 0 ${30 + 30 * a}px rgba(107,120,255,.55))`;
+  // wordmark wipe
+  const w = E.io(P(t, 1.25, 2.1));
+  $('s2wordwrap').style.width = `${w * 640}px`;
+  const word = $('s2word');
+  word.style.opacity = (1 - out);
+  word.style.filter = `blur(${(1 - w) * 8 + out * 14}px)`;
+  rise($('s2tag'), t, 1.0, 4.5, { dy: 20 });
+  rise($('s2line'), t, 2.0, 4.5, { dy: 24 });
+}
+
+function s3(t) {
+  // window: tilt settles
+  const a = E.expo(P(t, 0, 1.4));
+  const out = E.inn(P(t, 6.0, 6.6));
+  const win = $('s3win');
+  win.style.opacity = a * (1 - out);
+  win.style.transform = `translateY(${(1 - a) * 160 - out * 40}px) rotateY(${lerp(-22, -7, a) + Math.sin(t * .6) * 1.2}deg) rotateX(${lerp(10, 3, a)}deg) scale(${lerp(.9, 1, a)})`;
+  win.style.filter = (1 - a) * 16 + out * 14 > .05 ? `blur(${(1 - a) * 16 + out * 14}px)` : 'none';
+  rise($('s3cap'), t, .35, 6.6, { dy: 30 });
+  const Q = 'What is Robinhood Chain?';
+  const typed = P(t, 1.2, 2.3);
+  const sent = t >= 2.5;
+  $('s3type').innerHTML = sent ? `<span class="ph">Ask anything, privately…</span>` : (typed > 0 ? esc(Q.slice(0, Math.round(typed * Q.length))) + caret : `<span class="ph">Ask anything, privately…</span>`);
+  $('s3empty').style.opacity = 1 - P(t, 2.4, 2.7);
+  const u = $('s3u');
+  const ua = E.back(P(t, 2.5, 2.95));
+  u.style.opacity = P(t, 2.5, 2.7);
+  u.style.transform = `translateY(${(1 - ua) * 20}px) scale(${.96 + .04 * ua})`;
+  const ar = $('s3a');
+  ar.style.opacity = P(t, 2.8, 3.0);
+  const n = (t - 3.15) * 21;
+  const total = A3.split(' ').length;
+  $('s3atext').innerHTML = t < 3.15 ? '<span class="typing"><span></span><span style="opacity:.6"></span><span style="opacity:.3"></span></span>' : esc(words(A3, n)) + (n < total ? caret : '');
+  $('s3cred').textContent = (25 - .41 * P(t, 5.2, 5.6)).toFixed(2);
+  const b = $('s3badge');
+  const ba = E.back(P(t, 3.3, 3.85));
+  b.style.opacity = P(t, 3.3, 3.5) * (1 - out);
+  b.style.transform = `translateY(${(1 - ba) * 26 + Math.sin(t * 1.4) * 5}px) scale(${.85 + .15 * ba})`;
+}
+
+function s4(t) {
+  rise($('s4cap'), t, .1, 5.2, { dy: 30 });
+  rise($('s4l'), t, .35, 5.2, { dy: 70, sc: .03, bl: 16 });
+  rise($('s4r'), t, .5, 5.2, { dy: 70, sc: .03, bl: 16 });
+  const nl = (t - 1.0) * 19, nr = (t - 1.25) * 16.5;
+  const L = A4L.split(' ').length, Rn = A4R.split(' ').length;
+  $('s4la').innerHTML = t < 1 ? '' : esc(words(A4L, nl)) + (nl < L ? caret : '');
+  $('s4ra').innerHTML = t < 1.25 ? '' : esc(words(A4R, nr)) + (nr < Rn ? caret : '');
+  $('s4lm').textContent = nl >= L ? '2.4s · 0.48 credits' : 'streaming…';
+  $('s4rm').textContent = nr >= Rn ? '3.0s · 0.43 credits' : 'streaming…';
+  [...$('s4chips').children].forEach((c, i) => rise(c, t, 1.4 + i * .12, 5.2, { dy: 20, d: .8 }));
+}
+
+function s5(t) {
+  rise($('s5card'), t, 0, 5.0, { dy: 60, sc: .03 });
+  rise($('s5cap'), t, .3, 5.0, { dy: 30 });
+  // segmented: Off -> 1h -> 24h
+  const p1 = E.io(P(t, .8, 1.1)), p2 = E.io(P(t, 1.35, 1.65));
+  $('s5hl').style.left = `${5 + (p1 + p2) * 76}px`;
+  // countdown (fast-forward)
+  const run = P(t, 1.8, 3.0);
+  const secs = Math.max(0, Math.round(24 * 3600 * (1 - E.inn(run))));
+  const hh = String(Math.floor(secs / 3600)).padStart(2, '0'), mm = String(Math.floor(secs % 3600 / 60)).padStart(2, '0'), ss = String(secs % 60).padStart(2, '0');
+  $('s5clock').textContent = t < 1.65 ? '—' : `${hh}:${mm}:${ss}`;
+  $('s5lbl').textContent = t < 1.65 ? 'Burn timer off' : secs === 0 ? 'Burned' : 'Burns in';
+  $('s5bar').style.width = `${t < 1.65 ? 0 : (1 - E.inn(run)) * 100}%`;
+  // dissolve
+  for (let i = 0; i < 3; i++) {
+    const k = E.io(P(t, 3.0 + i * .12, 3.6 + i * .12));
+    const m = $('s5m' + i);
+    m.style.opacity = 1 - k;
+    m.style.filter = k > .01 ? `blur(${k * 14}px)` : 'none';
+    m.style.transform = `translateY(${-k * 24}px) scale(${1 - k * .04})`;
+    m.style.letterSpacing = `${k * .12}em`;
+  }
+  const parts = $('s5parts').children;
+  PARTS.forEach((p, i) => {
+    const k = P(t, 3.0 + p.d, 4.2 + p.d);
+    const el = parts[i];
+    el.style.opacity = k > 0 && k < 1 ? Math.sin(k * Math.PI) * .9 : 0;
+    el.style.left = `${p.x + p.vx * k}px`;
+    el.style.top = `${p.y + p.vy * k}px`;
+    el.style.transform = `scale(${p.s * (1 - k * .6)})`;
+  });
+  const g = E.back(P(t, 3.7, 4.2));
+  $('s5gone').style.opacity = P(t, 3.7, 3.9);
+  $('s5gone').style.transform = `translateY(${(1 - g) * 20}px) scale(${.9 + .1 * g})`;
+}
+
+function s6(t) {
+  rise($('s6cap'), t, .1, 4.6, { dy: 30 });
+  rise($('s6a'), t, .25, 4.6, { dy: 60, sc: .03 });
+  const l = E.back(P(t, .7, 1.25));
+  const lo = E.inn(P(t, 4.1, 4.6));
+  $('s6lock').style.opacity = P(t, .7, .9) * (1 - lo);
+  $('s6lock').style.transform = `scale(${.7 + .3 * l})`;
+  rise($('s6b'), t, .9, 4.6, { dy: 60, sc: .03 });
+  // ciphertext fills progressively, scrambling while it streams
+  const k = P(t, 1.4, 3.0);
+  const lines = 7, per = 20;
+  let html = '';
+  const shown = Math.floor(k * lines * per);
+  const frame = Math.floor(t * 24);
+  for (let i = 0; i < lines; i++) {
+    const n = clamp(shown - i * per, 0, per);
+    if (n <= 0) break;
+    const live = shown < lines * per && n < per;
+    html += hexBlock(live ? i * 97 + frame : i * 97, n) + '\n';
+  }
+  $('s6ct').textContent = html;
+  $('s6only').style.opacity = P(t, 3.0, 3.3) * (1 - lo);
+  // packets travel browser -> lock -> server
+  [...$('s6pk').children].forEach((p, i) => {
+    const kk = P(t, 1.2 + i * .35, 2.0 + i * .35);
+    p.style.opacity = kk > 0 && kk < 1 ? 1 : 0;
+    p.style.left = `${1185 + kk * 190}px`;
+    p.style.top = `${540 + Math.sin(kk * Math.PI) * -18}px`;
+  });
+  rise($('s6key'), t, 2.4, 4.6, { dy: 20 });
+}
+
+function s7(t) {
+  rise($('s7m'), t, 0, 4.6, { dy: 60, sc: .03 });
+  rise($('s7cap'), t, .3, 4.6, { dy: 30 });
+  const ph1 = 1 - P(t, 1.35, 1.55), ph2 = P(t, 1.5, 1.75) * (1 - P(t, 2.55, 2.75)), ph3 = P(t, 2.7, 2.95);
+  $('s7p1').style.opacity = ph1;
+  $('s7p2').style.opacity = ph2;
+  $('s7p2').style.transform = `translateY(${(1 - P(t, 1.5, 1.8)) * 16}px)`;
+  $('s7p3').style.opacity = ph3;
+  const c = E.back(P(t, 2.7, 3.15));
+  $('s7chk').style.transform = `scale(${.5 + .5 * c})`;
+  $('s7cred').textContent = (25 * E.out(P(t, 3.0, 3.7))).toFixed(2);
+  // cursor: travel to wallet row, click; then to Sign, click
+  const cur = $('s7cur'), ring = $('s7ring');
+  let x, y;
+  if (t < 1.5) { const m = E.io(P(t, .45, 1.0)); x = lerp(560, 300, m); y = lerp(520, 190, m); }
+  else { const m = E.io(P(t, 1.6, 2.1)); x = lerp(300, 330, m); y = lerp(190, 470, m); }
+  cur.style.left = `${x}px`; cur.style.top = `${y}px`;
+  cur.style.opacity = P(t, .3, .5) * (1 - P(t, 2.5, 2.7));
+  const click = t < 1.6 ? P(t, 1.05, 1.5) : P(t, 2.2, 2.65);
+  const cx = t < 1.6 ? 300 : 330, cy = t < 1.6 ? 190 : 470;
+  ring.style.left = `${cx - 30 + 6}px`; ring.style.top = `${cy - 30 + 6}px`;
+  ring.style.opacity = click > 0 && click < 1 ? (1 - click) : 0;
+  ring.style.transform = `scale(${.4 + click * 1.1})`;
+  cur.style.transform = `scale(${(t > 1.05 && t < 1.2) || (t > 2.2 && t < 2.35) ? .85 : 1})`;
+  $('s7row').style.background = t > 1.05 && t < 1.6 ? 'rgba(139,124,255,.14)' : '';
+  $('s7row').style.borderColor = t > 1.05 && t < 1.6 ? 'rgba(179,168,255,.5)' : '';
+  $('s7btn').style.transform = `scale(${t > 2.2 && t < 2.4 ? .97 : 1})`;
+}
+
+function s8(t) {
+  rise($('s8cap'), t, .1, 4.6, { dy: 30 });
+  rise($('s8code'), t, .25, 4.6, { dy: 60, sc: .03 });
+  const n = Math.floor(P(t, .8, 3.0) * CODELEN);
+  $('s8pre').innerHTML = codeUpTo(n) + (n < CODELEN && t > .8 ? caret : '');
+  const o = E.back(P(t, 3.15, 3.6));
+  $('s8ok').style.opacity = P(t, 3.15, 3.3) * (1 - P(t, 4.1, 4.6));
+  $('s8ok').style.transform = `translateY(${(1 - o) * 18}px)`;
+}
+
+function s9(t) {
+  ripples($('ripples9'), t, .1, .55);
+  const g = E.out(P(t, 0, 1.4));
+  $('s9glow').style.opacity = g;
+  $('s9glow').style.transform = `translateY(-20px) scale(${.6 + g * .5 + Math.sin(t * 2) * .03})`;
+  const a = E.expo(P(t, 0, 1.2));
+  const l = $('s9logo');
+  l.style.opacity = a;
+  l.style.transform = `scale(${.6 + .4 * a})`;
+  l.style.filter = `blur(${(1 - a) * 20}px) drop-shadow(0 0 40px rgba(107,120,255,.55))`;
+  rise($('s9t'), t, .55, null, { dy: 30, d: 1.2 });
+  rise($('s9cta'), t, 1.2, null, { dy: 24, sc: .04 });
+  rise($('s9fine'), t, 1.6, null, { dy: 16 });
+}
+
+const FN = { s1, s2, s3, s4, s5, s6, s7, s8, s9 };
+window.render = T => {
+  scenes(T); bg(T);
+  for (const [id, a, b] of SC) if (T >= a && T <= b) FN[id](T - a);
+};
+const qs = new URLSearchParams(location.search);
+render(parseFloat(qs.get('t') || '0'));
+if (qs.has('play')) { const t0 = performance.now(); const loop = () => { render(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); }; loop(); }
+</script>
+</body></html>
