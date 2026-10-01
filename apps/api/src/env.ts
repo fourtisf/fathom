@@ -52,8 +52,9 @@ export interface TopupEnv {
 /** Token Safety Check (block explorer) and live prices (CoinGecko). */
 export interface CryptoEnv {
   enabled: boolean;
-  /** Blockscout API v2 base; defaults to EXPLORER_URL + /api/v2. Null disables the token check. */
+  /** Blockscout API v2 base; defaults to EXPLORER_URL + /api/v2. Without it (or when it's blocked) the check reads the chain over RPC. */
   explorerApi: string | null;
+  explorerApiKey: string | null;
   coingeckoKey: string | null;
   coingeckoPlan: 'demo' | 'pro';
   /** Override for the CoinGecko API base (proxy or test server). */
@@ -127,6 +128,7 @@ function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): Crypt
   return {
     enabled,
     explorerApi,
+    explorerApiKey: opt(env, 'EXPLORER_API_KEY'),
     coingeckoKey: opt(env, 'COINGECKO_API_KEY'),
     coingeckoPlan: plan,
     coingeckoUrl: optUrl(env, 'COINGECKO_API_URL', warnings),

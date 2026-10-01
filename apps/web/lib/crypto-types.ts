@@ -20,6 +20,8 @@ export interface TokenReport {
   topHolders: { address: string; pct: number; label: 'burn' | 'contract' | 'wallet'; name?: string | null }[];
   priceUsd: number | null;
   marketCapUsd: number | null;
+  /** 'rpc' when the explorer was unreachable and the chain was read directly. */
+  source?: 'explorer' | 'rpc';
   wallet?: { balance: string; txCount: number | null };
   flags: { level: FlagLevel; code: string; text: string }[];
   fetchedAt: string;

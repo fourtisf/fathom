@@ -112,7 +112,8 @@ export function TokenCard({ report: r }: { report: TokenReport }) {
         ))}
       </ul>
       <div className="tcard-ft">
-        Automatic checks of public data on {r.chain}. They can miss honeypots, liquidity pulls and other tricks. Not financial advice.
+        {r.source === 'rpc' ? 'Read directly from' : 'Automatic checks of public data on'} {r.chain}. They can miss honeypots, liquidity pulls and other
+        tricks. Not financial advice.
       </div>
     </div>
   );

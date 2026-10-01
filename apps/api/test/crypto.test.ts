@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { createPublicClient, custom } from 'viem';
+import { createPublicClient, custom, encodeAbiParameters, toFunctionSelector } from 'viem';
 import { PrismaClient } from '@fathom/db';
 import { createMockProvider, type InferenceProvider } from '../src/inference';
 import {
@@ -10,7 +10,7 @@ import {
   detectPriceQuestion,
   type CryptoTools,
 } from '../src/crypto';
-import { formatAmount } from '../src/crypto/blockscout';
+import { bytecodeRuleCodes, formatAmount } from '../src/crypto/blockscout';
 import { TEST_ENV, buildCapturingApp, nextIp, servicesUp, signIn, sseEvents } from './helpers';
 
 type Ev = Record<string, any>;
@@ -132,6 +132,73 @@ describe('Token Safety Check (Blockscout)', () => {
     const r = await scanner.scan(WALLET, new AbortController().signal);
     expect(r.kind).toBe('wallet');
     expect(r.wallet).toEqual({ balance: '1.5', txCount: 42 });
+  });
+});
+
+describe('Token Safety Check (RPC fallback)', () => {
+  const sel = (sig: string) => toFunctionSelector(sig).slice(2);
+  const IMPL = '0x7777777777777777777777777777777777777777';
+  // Proxy bytecode has nothing; the implementation has mint + setSellTax + transfer.
+  const implCode = `0x6080604052${'63' + sel('mint(address,uint256)')}14${'63' + sel('setSellTax(uint256)')}14${'63' + sel('transfer(address,uint256)')}14`;
+  const proxyCode = '0x6080604052363d3d37';
+
+  /** A chain that answers ERC-20 reads, owner(), the EIP-1967 slot and getCode for a proxied token. */
+  const rpcChain = (calls: string[]) =>
+    createPublicClient({
+      transport: custom({
+        request: async ({ method, params }: { method: string; params: any }) => {
+          calls.push(method);
+          if (method === 'eth_chainId') return '0x1237';
+          if (method === 'eth_getCode') return params[0].toLowerCase() === IMPL ? implCode : params[0].toLowerCase() === TOKEN ? proxyCode : '0x';
+          if (method === 'eth_getStorageAt') return `0x${IMPL.slice(2).padStart(64, '0')}`;
+          if (method === 'eth_getBalance') return '0x0';
+          if (method === 'eth_getTransactionCount') return '0x3';
+          if (method === 'eth_call') {
+            const data: string = params[0].data;
+            const s4 = data.slice(2, 10);
+            if (s4 === sel('name()')) return encodeAbiParameters([{ type: 'string' }], ['Rug Coin']);
+            if (s4 === sel('symbol()')) return encodeAbiParameters([{ type: 'string' }], ['RUG']);
+            if (s4 === sel('decimals()')) return encodeAbiParameters([{ type: 'uint8' }], [18]);
+            if (s4 === sel('totalSupply()')) return encodeAbiParameters([{ type: 'uint256' }], [10n ** 27n]);
+            if (s4 === sel('owner()')) return encodeAbiParameters([{ type: 'address' }], [WALLET]);
+          }
+          throw new Error(`unexpected ${method}`);
+        },
+      }),
+    });
+
+  it('detects privileged functions from bytecode selectors', () => {
+    expect([...bytecodeRuleCodes(implCode)].sort()).toEqual(['fees', 'mint']);
+    expect(bytecodeRuleCodes('0x6080')).toEqual(new Set());
+  });
+
+  it('falls back to RPC when the explorer answers with a Cloudflare page, then skips the explorer for a while', async () => {
+    const urls: string[] = [];
+    const cloudflare = (async (input: string | URL | Request) => {
+      urls.push(String(input));
+      return new Response('<!DOCTYPE html><title>Just a moment...</title>', { status: 403, headers: { 'content-type': 'text/html' } });
+    }) as typeof fetch;
+    const calls: string[] = [];
+    const scanner = createTokenScanner({ apiBase: 'https://ex.test/api/v2', explorerUrl: 'https://ex.test', chainName: 'Robinhood Chain', chain: rpcChain(calls) as any, fetch: cloudflare });
+    const r = await scanner.scan(TOKEN, new AbortController().signal);
+    expect(r).toMatchObject({ source: 'rpc', kind: 'token', name: 'Rug Coin', symbol: 'RUG', totalSupply: '1B', proxy: true, verified: null, top10Pct: null });
+    expect(r.owner).toEqual({ address: WALLET, renounced: false });
+    const codes = r.flags.map((x) => `${x.level}:${x.code}`);
+    expect(codes).toEqual(expect.arrayContaining(['high:mint', 'medium:fees', 'medium:proxy', 'info:owned', 'info:rpc_only']));
+    expect(r.flags[0]!.level).toBe('high');
+
+    // Another address right after: the explorer is skipped (no new fetch), RPC answers.
+    const n = urls.length;
+    const w = await scanner.scan(WHALE, new AbortController().signal);
+    expect(urls.length).toBe(n);
+    expect(w).toMatchObject({ source: 'rpc', kind: 'wallet', wallet: { balance: '0', txCount: 3 } });
+  });
+
+  it('works with no explorer configured at all', async () => {
+    const scanner = createTokenScanner({ apiBase: null, explorerUrl: null, chainName: 'Robinhood Chain', chain: rpcChain([]) as any });
+    const r = await scanner.scan(TOKEN, new AbortController().signal);
+    expect(r.source).toBe('rpc');
+    expect(r.symbol).toBe('RUG');
   });
 });
 

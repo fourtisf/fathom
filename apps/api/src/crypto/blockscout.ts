@@ -1,4 +1,4 @@
-import type { Address } from 'viem';
+import { erc20Abi, toFunctionSelector, type Address } from 'viem';
 import type { ChainClient } from '../chain';
 import { withTimeout } from '../chain';
 
@@ -45,6 +45,8 @@ export interface TokenReport {
   topHolders: HolderShare[];
   priceUsd: number | null;
   marketCapUsd: number | null;
+  /** Where the data came from: the block explorer, or the chain's RPC when the explorer is unreachable. */
+  source: 'explorer' | 'rpc';
   /** Wallets only: native balance (ether units) and transaction count. */
   wallet?: { balance: string; txCount: number | null };
   flags: RiskFlag[];
@@ -109,6 +111,42 @@ const ABI_RULES: { code: string; re: RegExp; level: FlagLevel; text: string; ren
   { code: 'limits', re: /^(set|update)\w*max(tx|wallet|transaction|txn|holding)/i, level: 'info', text: 'Max transaction or max wallet limits can be changed.' },
 ];
 
+/**
+ * The same rules for contracts read straight from the chain (no explorer): common function signatures,
+ * found as PUSH4 <selector> in the deployed bytecode. Misses unusual names, never invents a match.
+ */
+const SELECTOR_RULES: Record<string, string[]> = {
+  mint: ['mint(address,uint256)', 'mint(uint256)', 'mint(address)', 'mintTo(address,uint256)', 'issue(uint256)'],
+  blacklist: [
+    'blacklist(address)', 'addToBlacklist(address)', 'addBlacklist(address)', 'setBlacklist(address,bool)',
+    'blacklistAddress(address,bool)', 'setBlacklisted(address,bool)', 'addToBlackList(address[])', 'setBots(address[],bool)',
+    'addBots(address[])', 'blockBots(address[])', 'setBot(address,bool)', 'freeze(address)', 'freezeAccount(address,bool)',
+  ],
+  fees: [
+    'setFee(uint256)', 'setFees(uint256,uint256)', 'setTax(uint256)', 'setTaxes(uint256,uint256)', 'setBuyFee(uint256)',
+    'setSellFee(uint256)', 'setBuyTax(uint256)', 'setSellTax(uint256)', 'updateFees(uint256,uint256)',
+    'setTaxFeePercent(uint256)', 'updateBuyFees(uint256,uint256,uint256)', 'updateSellFees(uint256,uint256,uint256)',
+    'setFeePercent(uint256)', 'setFees(uint256,uint256,uint256)',
+  ],
+  trading: ['enableTrading()', 'openTrading()', 'startTrading()', 'setTradingEnabled(bool)', 'setTrading(bool)', 'tradingStatus(bool)'],
+  pause: ['pause()', 'unpause()'],
+  limits: ['setMaxTxAmount(uint256)', 'setMaxWalletSize(uint256)', 'setMaxWallet(uint256)', 'updateMaxTxnAmount(uint256)', 'updateMaxWalletAmount(uint256)', 'setMaxTxPercent(uint256)'],
+};
+const SELECTORS = Object.entries(SELECTOR_RULES).map(([code, sigs]) => ({
+  code,
+  push4: sigs.map((sig) => `63${toFunctionSelector(sig).slice(2).toLowerCase()}`),
+}));
+
+/** Rule codes whose function selectors appear in the bytecode. */
+export function bytecodeRuleCodes(code: string): Set<string> {
+  const hex = code.toLowerCase();
+  return new Set(SELECTORS.filter((r) => r.push4.some((p) => hex.includes(p))).map((r) => r.code));
+}
+
+/** EIP-1967 implementation slot: non-zero means an upgradeable proxy. */
+const IMPL_SLOT = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+const EXPLORER_BACKOFF_MS = 5 * 60_000;
+
 function abiFunctionNames(abi: unknown): string[] {
   if (!Array.isArray(abi)) return [];
   return abi
@@ -121,12 +159,14 @@ function abiFunctionNames(abi: unknown): string[] {
 const OWNER_ABI = [{ type: 'function', name: 'owner', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] }] as const;
 
 export interface ScannerOptions {
-  /** Blockscout API v2 base, e.g. https://explorer.example/api/v2 */
-  apiBase: string;
+  /** Blockscout API v2 base, e.g. https://explorer.example/api/v2. Null: read from the chain only. */
+  apiBase: string | null;
   /** Explorer web base for links, e.g. https://explorer.example */
   explorerUrl: string | null;
   chainName: string;
   chain: ChainClient | null;
+  /** Optional explorer API key (sent as ?apikey=). */
+  apiKey?: string | null;
   fetch?: typeof fetch;
   now?: () => number;
 }
@@ -134,21 +174,26 @@ export interface ScannerOptions {
 export function createTokenScanner(opts: ScannerOptions): TokenScanner {
   const doFetch = opts.fetch ?? fetch;
   const now = opts.now ?? Date.now;
-  const base = opts.apiBase.replace(/\/$/, '');
+  const base = opts.apiBase ? opts.apiBase.replace(/\/$/, '') : null;
+  /** After a block (e.g. a Cloudflare challenge on datacenter IPs), go straight to RPC for a while. */
+  let explorerDownUntil = 0;
   const cache = new Map<string, { at: number; report: TokenReport }>();
 
   async function get(path: string, signal: AbortSignal): Promise<Json | null> {
-    const res = await doFetch(`${base}${path}`, {
-      headers: { accept: 'application/json' },
+    const url = `${base}${path}${opts.apiKey ? `${path.includes('?') ? '&' : '?'}apikey=${encodeURIComponent(opts.apiKey)}` : ''}`;
+    const res = await doFetch(url, {
+      headers: { accept: 'application/json', 'user-agent': 'Noxsea/1.0 (+https://noxsea.xyz)' },
       signal: AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]),
     });
     if (res.status === 404) {
       await res.body?.cancel().catch(() => undefined);
       return null;
     }
-    if (!res.ok) {
+    const type = res.headers.get('content-type') ?? '';
+    if (!res.ok || !type.includes('json')) {
+      // A Cloudflare challenge answers 403/503 with an HTML page: treat it as unreachable.
       await res.body?.cancel().catch(() => undefined);
-      throw new Error(`explorer HTTP ${res.status}`);
+      throw new Error(`explorer HTTP ${res.status}${type.includes('json') ? '' : ' (not JSON)'}`);
     }
     return obj(await res.json());
   }
@@ -169,34 +214,112 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
     const hit = cache.get(key);
     if (hit && now() - hit.at < CACHE_MS) return hit.report;
 
-    const info = await get(`/addresses/${address}`, signal);
-    const isContract = info?.is_contract === true;
-    const tokenInfo = obj(info?.token);
-    const explorerLink = opts.explorerUrl ? `${opts.explorerUrl.replace(/\/$/, '')}/address/${address}` : null;
-    const flags: RiskFlag[] = [];
+    let report: TokenReport | null = null;
+    if (base && now() >= explorerDownUntil) {
+      try {
+        report = await explorerScan(address, signal);
+      } catch (err) {
+        if (signal.aborted || !opts.chain) throw err;
+        explorerDownUntil = now() + EXPLORER_BACKOFF_MS;
+      }
+    }
+    if (!report) {
+      if (!opts.chain) throw new Error('no explorer or RPC configured');
+      report = await rpcScan(address);
+    }
+    const order: Record<FlagLevel, number> = { high: 0, medium: 1, info: 2, ok: 3 };
+    report.flags.sort((a, b) => order[a.level] - order[b.level]);
+    cache.set(key, { at: now(), report });
+    if (cache.size > 500) cache.delete(cache.keys().next().value!);
+    return report;
+  }
 
-    const report: TokenReport = {
+  function emptyReport(address: Address, source: TokenReport['source']): TokenReport {
+    return {
       address,
       chain: opts.chainName,
-      explorerUrl: explorerLink,
-      kind: tokenInfo ? 'token' : isContract ? 'contract' : 'wallet',
+      explorerUrl: opts.explorerUrl ? `${opts.explorerUrl.replace(/\/$/, '')}/address/${address}` : null,
+      kind: 'wallet',
       name: null,
       symbol: null,
       tokenType: null,
       decimals: null,
       totalSupply: null,
       holders: null,
-      verified: isContract ? info?.is_verified === true : null,
-      contractName: str(info?.name),
+      verified: null,
+      contractName: null,
       proxy: false,
       owner: null,
       top10Pct: null,
       topHolders: [],
       priceUsd: null,
       marketCapUsd: null,
-      flags,
+      source,
+      flags: [],
       fetchedAt: new Date(now()).toISOString(),
     };
+  }
+
+  /** Straight from the chain: ERC-20 basics, owner, proxy slot and privileged functions in the bytecode. */
+  async function rpcScan(address: Address): Promise<TokenReport> {
+    const chain = opts.chain!;
+    const report = emptyReport(address, 'rpc');
+    const code = await withTimeout(chain.getCode({ address }));
+    if (!code || code === '0x') {
+      const [balance, txCount] = await withTimeout(Promise.all([chain.getBalance({ address }), chain.getTransactionCount({ address })]));
+      report.wallet = { balance: formatAmount(balance.toString(), 18), txCount };
+      report.flags.push(
+        balance === 0n && txCount === 0
+          ? { level: 'info', code: 'unknown', text: `No activity found for this address on ${opts.chainName}. Check you copied the right address and network.` }
+          : { level: 'info', code: 'wallet', text: 'This is a regular wallet, not a token contract.' },
+      );
+      return report;
+    }
+
+    const read = <T>(functionName: 'name' | 'symbol' | 'decimals' | 'totalSupply') =>
+      withTimeout(chain.readContract({ address, abi: erc20Abi, functionName }) as Promise<T>).catch(() => null);
+    const [name, symbol, decimals, supply, owner, slot] = await Promise.all([
+      read<string>('name'),
+      read<string>('symbol'),
+      read<number>('decimals'),
+      read<bigint>('totalSupply'),
+      readOwner(address),
+      withTimeout(chain.getStorageAt({ address, slot: IMPL_SLOT })).catch(() => null),
+    ]);
+    const isToken = decimals !== null && supply !== null;
+    report.kind = isToken ? 'token' : 'contract';
+    report.tokenType = isToken ? 'ERC-20' : null;
+    report.name = typeof name === 'string' ? name : null;
+    report.symbol = typeof symbol === 'string' ? symbol : null;
+    report.decimals = decimals === null ? null : Number(decimals);
+    report.totalSupply = supply !== null && decimals !== null ? formatAmount(supply.toString(), Number(decimals)) : null;
+    report.owner = owner;
+
+    let codes = bytecodeRuleCodes(code);
+    const impl = slot && BigInt(slot) !== 0n ? (`0x${slot.slice(-40)}` as Address) : null;
+    if (impl) {
+      report.proxy = true;
+      const implCode = await withTimeout(chain.getCode({ address: impl })).catch(() => null);
+      if (implCode) codes = new Set([...codes, ...bytecodeRuleCodes(implCode)]);
+    }
+    addFlags(report, codes);
+    report.flags.push({
+      level: 'info',
+      code: 'rpc_only',
+      text: 'Read directly from the chain: holder concentration and source verification need the block explorer, which did not respond. Check them there.',
+    });
+    return report;
+  }
+
+  async function explorerScan(address: Address, signal: AbortSignal): Promise<TokenReport> {
+    const info = await get(`/addresses/${address}`, signal);
+    const isContract = info?.is_contract === true;
+    const tokenInfo = obj(info?.token);
+    const report = emptyReport(address, 'explorer');
+    const flags = report.flags;
+    report.kind = tokenInfo ? 'token' : isContract ? 'contract' : 'wallet';
+    report.verified = isContract ? info?.is_verified === true : null;
+    report.contractName = str(info?.name);
 
     if (!info) {
       report.kind = 'wallet';
@@ -216,7 +339,6 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
         report.wallet = { balance: formatAmount(wei, 18), txCount };
         flags.push({ level: 'info', code: 'wallet', text: 'This is a regular wallet, not a token contract.' });
       }
-      cache.set(key, { at: now(), report });
       return report;
     }
 
@@ -272,64 +394,65 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
     if (!report.contractName) report.contractName = str(contract?.name);
     report.owner = owner;
 
-    // ---- flags ----
-    const renounced = owner?.renounced === true;
-    if (report.verified === false) {
-      flags.push({ level: 'high', code: 'unverified', text: 'Source code is not verified on the explorer, so nobody can check what the contract does.' });
-    }
-    if (report.proxy) {
-      flags.push({ level: 'medium', code: 'proxy', text: 'Upgradeable proxy: the contract code can be replaced later.' });
-    }
     const names = [...abiFunctionNames(contract?.abi), ...abiFunctionNames(implAbi)];
-    for (const rule of ABI_RULES) {
-      if (names.some((n) => rule.re.test(n))) {
-        const level = renounced && rule.renounced ? rule.renounced : rule.level;
-        flags.push({ level, code: rule.code, text: renounced && rule.renounced ? `${rule.text} Ownership is renounced, which limits who can use it.` : rule.text });
-      }
-    }
-    if (owner) {
-      flags.push(
-        renounced
-          ? { level: 'ok', code: 'renounced', text: 'Ownership is renounced: no owner can call owner-only functions.' }
-          : { level: 'info', code: 'owned', text: `Has an active owner (${shortAddr(owner.address)}) who can call owner-only functions.` },
-      );
-    }
-    if (report.top10Pct !== null) {
-      const biggestWallet = report.topHolders.filter((h) => h.label === 'wallet').sort((a, b) => b.pct - a.pct)[0];
-      if (report.top10Pct >= 70) {
-        flags.push({ level: 'high', code: 'concentration', text: `The top 10 holders own ${report.top10Pct}% of supply. A few wallets can crash the price.` });
-      } else if (report.top10Pct >= 40) {
-        flags.push({ level: 'medium', code: 'concentration', text: `The top 10 holders own ${report.top10Pct}% of supply.` });
-      } else {
-        flags.push({ level: 'ok', code: 'concentration', text: `Supply is fairly spread out: the top 10 holders own ${report.top10Pct}%.` });
-      }
-      if (biggestWallet && biggestWallet.pct >= 15) {
-        flags.push({ level: 'high', code: 'whale', text: `One wallet holds ${biggestWallet.pct}% of supply.` });
-      }
-      if (report.topHolders.some((h) => h.label === 'contract')) {
-        flags.push({ level: 'info', code: 'contract_holders', text: 'Some top holders are contracts (often the liquidity pool or a locker). Check which ones on the explorer.' });
-      }
-    }
-    if (report.holders !== null && report.holders < 50 && report.kind === 'token') {
-      flags.push({ level: 'medium', code: 'few_holders', text: `Only ${report.holders} holders so far.` });
-    }
-    if (report.kind === 'contract') {
-      flags.push({ level: 'info', code: 'not_token', text: 'This is a contract, but the explorer does not list it as a token.' });
-    }
-
-    const order: Record<FlagLevel, number> = { high: 0, medium: 1, info: 2, ok: 3 };
-    flags.sort((a, b) => order[a.level] - order[b.level]);
-    cache.set(key, { at: now(), report });
-    if (cache.size > 500) cache.delete(cache.keys().next().value!);
+    addFlags(report, new Set(ABI_RULES.filter((r) => names.some((n) => r.re.test(n))).map((r) => r.code)));
     return report;
   }
 
   return { scan };
 }
 
+/** Risk flags from the report's facts plus the privileged-function rule codes that matched. */
+function addFlags(report: TokenReport, codes: Set<string>): void {
+  const flags = report.flags;
+  const owner = report.owner;
+  const renounced = owner?.renounced === true;
+  if (report.verified === false) {
+    flags.push({ level: 'high', code: 'unverified', text: 'Source code is not verified on the explorer, so nobody can check what the contract does.' });
+  }
+  if (report.proxy) {
+    flags.push({ level: 'medium', code: 'proxy', text: 'Upgradeable proxy: the contract code can be replaced later.' });
+  }
+  for (const rule of ABI_RULES) {
+    if (!codes.has(rule.code)) continue;
+    const level = renounced && rule.renounced ? rule.renounced : rule.level;
+    flags.push({ level, code: rule.code, text: renounced && rule.renounced ? `${rule.text} Ownership is renounced, which limits who can use it.` : rule.text });
+  }
+  if (owner) {
+    flags.push(
+      renounced
+        ? { level: 'ok', code: 'renounced', text: 'Ownership is renounced: no owner can call owner-only functions.' }
+        : { level: 'info', code: 'owned', text: `Has an active owner (${shortAddr(owner.address)}) who can call owner-only functions.` },
+    );
+  }
+  if (report.top10Pct !== null) {
+    const biggestWallet = report.topHolders.filter((h) => h.label === 'wallet').sort((a, b) => b.pct - a.pct)[0];
+    if (report.top10Pct >= 70) {
+      flags.push({ level: 'high', code: 'concentration', text: `The top 10 holders own ${report.top10Pct}% of supply. A few wallets can crash the price.` });
+    } else if (report.top10Pct >= 40) {
+      flags.push({ level: 'medium', code: 'concentration', text: `The top 10 holders own ${report.top10Pct}% of supply.` });
+    } else {
+      flags.push({ level: 'ok', code: 'concentration', text: `Supply is fairly spread out: the top 10 holders own ${report.top10Pct}%.` });
+    }
+    if (biggestWallet && biggestWallet.pct >= 15) {
+      flags.push({ level: 'high', code: 'whale', text: `One wallet holds ${biggestWallet.pct}% of supply.` });
+    }
+    if (report.topHolders.some((h) => h.label === 'contract')) {
+      flags.push({ level: 'info', code: 'contract_holders', text: 'Some top holders are contracts (often the liquidity pool or a locker). Check which ones on the explorer.' });
+    }
+  }
+  if (report.holders !== null && report.holders < 50 && report.kind === 'token') {
+    flags.push({ level: 'medium', code: 'few_holders', text: `Only ${report.holders} holders so far.` });
+  }
+  if (report.kind === 'contract') {
+    flags.push({ level: 'info', code: 'not_token', text: "This is a contract, but it doesn't look like a standard token." });
+  }
+}
+
 /** The report as context for the model: data plus how to talk about it. */
 export function tokenSystemMessage(r: TokenReport): string {
-  const lines: string[] = [`On-chain data for ${r.address} on ${r.chain}, read just now from the public block explorer:`];
+  const from = r.source === 'rpc' ? "the chain's public RPC (the block explorer did not respond)" : 'the public block explorer';
+  const lines: string[] = [`On-chain data for ${r.address} on ${r.chain}, read just now from ${from}:`];
   if (r.kind === 'wallet') {
     lines.push(`- Type: regular wallet (not a token contract)`);
     if (r.wallet) lines.push(`- Native balance: ${r.wallet.balance} ETH`, `- Transactions: ${r.wallet.txCount ?? 'unknown'}`);

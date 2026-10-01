@@ -123,14 +123,17 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
       ? opts.crypto
       : env.crypto.enabled
         ? {
-            scanner: env.crypto.explorerApi
-              ? createTokenScanner({
-                  apiBase: env.crypto.explorerApi,
-                  explorerUrl: env.chain?.explorerUrl ?? null,
-                  chainName: env.chain?.name ?? 'Robinhood Chain',
-                  chain,
-                })
-              : null,
+            // Explorer first; the chain's RPC alone still gives a useful check when the explorer is blocked.
+            scanner:
+              env.crypto.explorerApi || chain
+                ? createTokenScanner({
+                    apiBase: env.crypto.explorerApi,
+                    apiKey: env.crypto.explorerApiKey,
+                    explorerUrl: env.chain?.explorerUrl ?? null,
+                    chainName: env.chain?.name ?? 'Robinhood Chain',
+                    chain,
+                  })
+                : null,
             prices: createCoinGecko({
               apiKey: env.crypto.coingeckoKey,
               plan: env.crypto.coingeckoPlan,
