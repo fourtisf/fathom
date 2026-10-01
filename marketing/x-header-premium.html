@@ -1,0 +1,170 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Geist;src:url(Geist-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:GMono;src:url(GeistMono-Variable.woff2) format('woff2');font-weight:100 900}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1500px;height:500px;overflow:hidden;background:#03050F}
+body{font-family:Geist,sans-serif;color:#F1F2FF;-webkit-font-smoothing:antialiased}
+.st{position:absolute;inset:0;overflow:hidden;display:none}
+svg.full{position:absolute;inset:0}
+.copy{position:absolute;left:120px;top:122px}
+.eb{font:500 13px GMono,monospace;letter-spacing:.34em;text-transform:uppercase;color:#9AA0C8;display:flex;align-items:center;gap:16px}
+.eb s{display:block;width:44px;height:1px;background:linear-gradient(90deg,rgba(179,168,255,.8),rgba(179,168,255,0));text-decoration:none}
+h1{font-weight:500;font-size:74px;letter-spacing:-.052em;line-height:1;margin-top:26px}
+h1 .soft{background:linear-gradient(100deg,#FFFFFF 0%,#D9DCF5 30%,#A9A6FF 70%,#7FD9F0 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot{margin-top:30px;display:flex;align-items:center;gap:14px;font:400 15px GMono,monospace;color:#7F86B3;letter-spacing:.04em}
+.foot i{width:6px;height:6px;border-radius:50%;background:#3DDC97;box-shadow:0 0 10px #3DDC97}
+.grain{position:absolute;inset:0;opacity:.06;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+</style></head><body>
+
+<!-- C: Night Sea -->
+<div class="st" id="c">
+  <svg class="full" viewBox="0 0 1500 500" width="1500" height="500">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#02030B"/><stop offset=".55" stop-color="#070A26"/><stop offset=".66" stop-color="#121852"/><stop offset=".661" stop-color="#05071A"/><stop offset="1" stop-color="#02030A"/></linearGradient>
+      <radialGradient id="glow" cx="1110" cy="300" r="520" gradientUnits="userSpaceOnUse" gradientTransform="translate(1110 300) scale(1 .55) translate(-1110 -300)"><stop stop-color="#7B84FF" stop-opacity=".42"/><stop offset=".45" stop-color="#5B6CFF" stop-opacity=".14"/><stop offset="1" stop-color="#5B6CFF" stop-opacity="0"/></radialGradient>
+      <radialGradient id="halo" cx="1110" cy="190" r="170" gradientUnits="userSpaceOnUse"><stop stop-color="#A89BFF" stop-opacity=".55"/><stop offset=".5" stop-color="#6B78FF" stop-opacity=".16"/><stop offset="1" stop-color="#6B78FF" stop-opacity="0"/></radialGradient>
+      <linearGradient id="hz" x1="0" y1="0" x2="1500" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#8FA0FF" stop-opacity="0"/><stop offset=".45" stop-color="#8FA0FF" stop-opacity=".25"/><stop offset=".74" stop-color="#C9D2FF" stop-opacity=".95"/><stop offset=".92" stop-color="#8FA0FF" stop-opacity=".2"/><stop offset="1" stop-color="#8FA0FF" stop-opacity="0"/></linearGradient>
+      <linearGradient id="streak" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#B3A8FF" stop-opacity="0"/><stop offset=".3" stop-color="#C9BFFF"/><stop offset=".7" stop-color="#7FD9F0"/><stop offset="1" stop-color="#7FD9F0" stop-opacity="0"/></linearGradient>
+      <linearGradient id="dg" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#E4DEFF"/><stop offset=".45" stop-color="#8A92FF"/><stop offset="1" stop-color="#4FD6EC"/></linearGradient>
+      <radialGradient id="ds" cx="24" cy="25" r="16" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".55"/><stop offset=".6" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <clipPath id="dc"><path clip-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></clipPath>
+      <filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="1.1 .5"/></filter>
+      <filter id="hzblur" x="-5%" y="-400%" width="110%" height="900%"><feGaussianBlur stdDeviation="3"/></filter>
+      <filter id="dglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="14"/></filter>
+    </defs>
+    <rect width="1500" height="500" fill="url(#sky)"/>
+    <g id="stars"></g>
+    <rect width="1500" height="500" fill="url(#glow)"/>
+    <circle cx="1110" cy="190" r="170" fill="url(#halo)"/>
+    <!-- horizon -->
+    <rect x="0" y="329.4" width="1500" height="1.4" fill="url(#hz)"/>
+    <rect x="0" y="327" width="1500" height="6" fill="url(#hz)" opacity=".5" filter="url(#hzblur)"/>
+    <g id="water"></g>
+    <g id="refl" filter="url(#soft)"></g>
+    <!-- moon drop -->
+    <g transform="translate(1110 196) scale(3.05) translate(-32 -32.25)">
+      <path fill="#7B84FF" opacity=".7" filter="url(#dglow)" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5z"/>
+      <path fill="url(#dg)" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/>
+      <g clip-path="url(#dc)"><circle cx="24" cy="25" r="16" fill="url(#ds)"/></g>
+      <path d="M29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z" fill="#070A26"/>
+    </g>
+  </svg>
+  <div class="copy">
+    <div class="eb">Noxsea<s></s>Private AI</div>
+    <h1>Private AI that<br><span class="soft">forgets you.</span></h1>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<!-- D: Glass -->
+<div class="st" id="d">
+  <svg class="full" viewBox="0 0 1500 500" width="1500" height="500">
+    <defs>
+      <linearGradient id="bgD" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#04050E"/><stop offset=".78" stop-color="#080B22"/><stop offset=".781" stop-color="#04050E"/><stop offset="1" stop-color="#020309"/></linearGradient>
+      <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C9D2FF" stop-opacity=".22"/><stop offset="1" stop-color="#C9D2FF" stop-opacity="0"/></linearGradient>
+      <filter id="beamblur" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="22"/></filter>
+      <radialGradient id="aura" cx="1120" cy="250" r="430" gradientUnits="userSpaceOnUse"><stop stop-color="#5B6CFF" stop-opacity=".30"/><stop offset=".6" stop-color="#5B6CFF" stop-opacity=".07"/><stop offset="1" stop-color="#5B6CFF" stop-opacity="0"/></radialGradient>
+      <linearGradient id="floorline" x1="0" y1="0" x2="1500" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#8FA0FF" stop-opacity="0"/><stop offset=".55" stop-color="#8FA0FF" stop-opacity=".18"/><stop offset=".75" stop-color="#C9D2FF" stop-opacity=".7"/><stop offset=".95" stop-color="#8FA0FF" stop-opacity=".1"/><stop offset="1" stop-color="#8FA0FF" stop-opacity="0"/></linearGradient>
+      <!-- glass layers (in 64-unit drop space) -->
+      <linearGradient id="gBase" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#3A3F9A" stop-opacity=".55"/><stop offset=".55" stop-color="#151A55" stop-opacity=".7"/><stop offset="1" stop-color="#0C2A4A" stop-opacity=".85"/></linearGradient>
+      <radialGradient id="gPool" cx="34" cy="50" r="20" gradientUnits="userSpaceOnUse"><stop stop-color="#5CE1E6" stop-opacity=".75"/><stop offset=".5" stop-color="#6B78FF" stop-opacity=".35"/><stop offset="1" stop-color="#6B78FF" stop-opacity="0"/></radialGradient>
+      <radialGradient id="gTop" cx="27" cy="22" r="18" gradientUnits="userSpaceOnUse"><stop stop-color="#E4DEFF" stop-opacity=".55"/><stop offset="1" stop-color="#A89BFF" stop-opacity="0"/></radialGradient>
+      <linearGradient id="gRim" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".95"/><stop offset=".35" stop-color="#fff" stop-opacity=".18"/><stop offset=".7" stop-color="#9FF3FF" stop-opacity=".25"/><stop offset="1" stop-color="#9FF3FF" stop-opacity=".9"/></linearGradient>
+      <linearGradient id="gSpec" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="gKey" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#02030C"/><stop offset="1" stop-color="#0A1238"/></linearGradient>
+      <linearGradient id="reflFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".5"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <mask id="reflMask" maskUnits="userSpaceOnUse" x="0" y="390" width="1500" height="110"><rect x="0" y="390" width="1500" height="110" fill="url(#reflFade)"/></mask>
+      <clipPath id="gc"><path d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5z"/></clipPath>
+      <filter id="cblur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="1.1 .5"/></filter>
+      <filter id="rblur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.5"/></filter>
+      <g id="glassDrop">
+        <path d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5z" fill="url(#gBase)"/>
+        <g clip-path="url(#gc)">
+          <circle cx="34" cy="50" r="20" fill="url(#gPool)"/>
+          <circle cx="27" cy="22" r="18" fill="url(#gTop)"/>
+          <!-- left specular crescent -->
+          <path d="M20.2 33.5C22.5 26 28 18.5 31.2 13.8C28.7 19.5 25.4 26.5 23.6 33.8C22.4 38.6 22.6 43 24.3 46.8C21.2 44.4 19.1 39.2 20.2 33.5z" fill="url(#gSpec)" opacity=".75"/>
+          <!-- inner bottom rim light -->
+          <path d="M18 44.5C21 51 26.5 54.2 32 54.2S43 51 46 44.5" fill="none" stroke="#9FF3FF" stroke-opacity=".14" stroke-width=".4"/>
+        </g>
+        <path d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5z" fill="none" stroke="url(#gRim)" stroke-width=".45"/>
+        <path d="M29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z" fill="url(#gKey)"/>
+        <path d="M29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z" fill="none" stroke="#C9BFFF" stroke-opacity=".55" stroke-width=".3"/>
+        <ellipse cx="25.5" cy="24" rx="1.3" ry="2.2" fill="#fff" opacity=".85" transform="rotate(28 25.5 24)"/>
+      </g>
+    </defs>
+    <rect width="1500" height="500" fill="url(#bgD)"/>
+    <rect width="1500" height="500" fill="url(#aura)"/>
+    <!-- light beam from above -->
+    <path d="M1060 -20 L1180 -20 L1300 420 L940 420 Z" fill="url(#beam)" filter="url(#beamblur)"/>
+    <g id="dust"></g>
+    <!-- floor -->
+    <rect x="0" y="389.6" width="1500" height="1" fill="url(#floorline)"/>
+    <ellipse cx="1120" cy="392" rx="190" ry="14" fill="#5CE1E6" opacity=".35" filter="url(#cblur)"/>
+    <ellipse cx="1120" cy="391" rx="120" ry="5" fill="#A89BFF" opacity=".35" filter="url(#cblur)"/>
+    <!-- reflection -->
+    <g mask="url(#reflMask)" filter="url(#rblur)">
+      <use href="#glassDrop" transform="translate(1120 390) scale(5.6 -5.6) translate(-32 -56)"/>
+    </g>
+    <!-- drop -->
+    <use href="#glassDrop" transform="translate(1120 390) scale(5.6) translate(-32 -56)"/>
+  </svg>
+  <div class="copy">
+    <div class="eb">Noxsea<s></s>Private AI</div>
+    <h1>Your questions<br><span class="soft">stay yours.</span></h1>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<script>
+const v = new URLSearchParams(location.search).get('v') || 'c';
+document.getElementById(v).style.display = 'block';
+const R = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+if (v === 'c') {
+  const stars = document.getElementById('stars');
+  for (let i = 0; i < 170; i++) {
+    const x = R(i) * 1500, y = Math.pow(R(i + 50), 1.3) * 315;
+    const near = Math.hypot(x - 1110, (y - 190) * 1.6) < 230;
+    if (near) continue;
+    const big = R(i + 7) > .93;
+    stars.appendChild(el('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (big ? 1.1 : .45 + R(i + 9) * .5).toFixed(2), fill: '#E4E8FF', opacity: (.15 + R(i + 3) * (big ? .7 : .45)).toFixed(2) }));
+  }
+  // faint water texture across the whole sea
+  const water = document.getElementById('water');
+  for (let i = 0; i < 70; i++) {
+    const t = Math.pow(R(i + 900), 1.3);
+    const y = 334 + t * 166;
+    const w = 40 + R(i + 901) * 260 * (0.4 + t);
+    const x = R(i + 902) * 1500;
+    water.appendChild(el('rect', { x: x.toFixed(1), y: y.toFixed(1), width: w.toFixed(1), height: (.8 + t * 1.2).toFixed(2), rx: 1, fill: '#8FA0FF', opacity: (.03 + R(i + 903) * .06).toFixed(3) }));
+  }
+  // moonlight reflection: shimmering streaks under the drop, widening with distance
+  const refl = document.getElementById('refl');
+  const rows = 46;
+  for (let i = 0; i < rows; i++) {
+    const t = i / (rows - 1);
+    const y = 334 + Math.pow(t, 1.45) * 166;
+    const span = 70 + t * 330;
+    const segs = 1 + Math.floor(R(i + 40) * 3);
+    let x = 1110 - span / 2 + (R(i + 41) - .5) * 30 * t;
+    for (let s = 0; s < segs; s++) {
+      const w = span / segs * (.45 + R(i * 7 + s) * .5);
+      const op = Math.pow(1 - t, 1.1) * (.45 + R(i * 3 + s + 70) * .55);
+      refl.appendChild(el('rect', { x: x.toFixed(1), y: y.toFixed(1), width: w.toFixed(1), height: (1 + t * 1.8).toFixed(2), rx: 1, fill: 'url(#streak)', opacity: op.toFixed(3) }));
+      x += span / segs;
+    }
+  }
+}
+if (v === 'd') {
+  const dust = document.getElementById('dust');
+  for (let i = 0; i < 60; i++) {
+    const t = R(i + 300);
+    const y = t * 380;
+    const half = 60 + t * 150;
+    const x = 1120 + (R(i + 301) - .5) * 2 * half;
+    dust.appendChild(el('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (.4 + R(i + 302) * .9).toFixed(2), fill: '#E4E8FF', opacity: (.1 + R(i + 303) * .45).toFixed(2) }));
+  }
+}
+</script></body></html>
