@@ -242,15 +242,23 @@ export function Chat() {
     clearLastSignIn();
   }, [lastSignIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Prefill from links like /app?q=… (the public Token Scanner). Never auto-sends.
+  // Prefill from links like /app?q=… (the public Token Scanner). Never auto-sends. The composer only
+  // exists once the session has loaded, so wait for it before filling (and sizing) the box.
+  const prefill = useRef<string | null>(null);
   useEffect(() => {
     const url = new URL(window.location.href);
     const q = url.searchParams.get('q');
     if (!q) return;
     url.searchParams.delete('q');
     window.history.replaceState(null, '', url.pathname + url.search + url.hash);
-    fillComposer(q.slice(0, 2000));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    prefill.current = q.slice(0, 2000);
+    setInput(prefill.current);
+  }, []);
+  useEffect(() => {
+    if (!me || prefill.current === null) return;
+    fillComposer(prefill.current);
+    prefill.current = null;
+  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the newest message in view while streaming, unless the user scrolled up.
   useEffect(() => {

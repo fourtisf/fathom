@@ -67,7 +67,7 @@ export function Scanner() {
 
   const report = st.s === 'done' ? st.report : null;
   const askHref = report
-    ? `/app?q=${encodeURIComponent(`Check this token on ${report.chain} for red flags: ${report.address}. Explain each flag and what I should check before buying.`)}`
+    ? `/app?q=${encodeURIComponent(`Check this token on ${report.chain} for red flags: ${report.address}`)}`
     : '/app';
 
   return (
