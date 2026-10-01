@@ -20,6 +20,7 @@ import { accountRoutes } from './routes/account';
 import { chatRoutes } from './routes/chat';
 import { keyRoutes } from './routes/keys';
 import { chatHistoryRoutes } from './routes/chats';
+import { purgeExpiredShares, shareRoutes } from './routes/shares';
 import { statusRoutes } from './routes/status';
 import { v1ChatRoutes } from './routes/v1-chat';
 import { v1AuthRoutes } from './routes/v1-auth';
@@ -53,13 +54,14 @@ const MINUTE_MS = 60_000;
 /** Expired agent-session keys are deleted this long after expiry. */
 const EXPIRED_KEY_GRACE_MS = 24 * 3_600_000;
 
-/** One pass of the minute cron: burn chats past burnAt, drop long-expired agent keys. */
-export async function runBurnCron(ctx: AppContext, now: Date = new Date()): Promise<{ chats: number; keys: number }> {
+/** One pass of the minute cron: burn chats past burnAt, drop expired share links and long-expired agent keys. */
+export async function runBurnCron(ctx: AppContext, now: Date = new Date()): Promise<{ chats: number; keys: number; shares: number }> {
   const chats = await purgeBurnedChats(ctx.prisma, now);
+  const shares = await purgeExpiredShares(ctx.prisma, now);
   const { count: keys } = await ctx.prisma.apiKey.deleteMany({
     where: { expiresAt: { lt: new Date(now.getTime() - EXPIRED_KEY_GRACE_MS) } },
   });
-  return { chats, keys };
+  return { chats, keys, shares };
 }
 
 export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInstance> {
@@ -204,6 +206,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(chatRoutes);
   await app.register(keyRoutes);
   await app.register(chatHistoryRoutes);
+  await app.register(shareRoutes);
   await app.register(statusRoutes);
   await app.register(modelRoutes, { prefix: '/v1' });
   await app.register(v1ChatRoutes, { prefix: '/v1' });

@@ -33,4 +33,17 @@ describe('system prompt', () => {
     expect(on).toContain(brand.apiBaseUrl);
     expect(on).toMatch(/Staking is planned/);
   });
+
+  it('adds the chosen chat mode, ignores unknown ones, and states crypto tools only when on', () => {
+    const base = buildSystemPrompt({ preset: 'openrouter', webSearch: false });
+    const auditor = buildSystemPrompt({ preset: 'openrouter', webSearch: false, persona: 'auditor' });
+    expect(auditor).toContain('Chat mode chosen by the user: Contract auditor.');
+    expect(auditor).toMatch(/Never declare a contract safe/);
+    expect(buildSystemPrompt({ preset: 'openrouter', webSearch: false, persona: 'default' })).toBe(base);
+    expect(buildSystemPrompt({ preset: 'openrouter', webSearch: false, persona: 'nope' })).toBe(base);
+    expect(base).not.toMatch(/Token Safety Check/);
+    const tools = buildSystemPrompt({ preset: 'openrouter', webSearch: false, tokenCheck: true, livePrices: true });
+    expect(tools).toMatch(/Token Safety Check/);
+    expect(tools).toMatch(/live prices from CoinGecko/);
+  });
 });

@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { tokenAddress } from '@fathom/config';
+import { getPersona, tokenAddress } from '@fathom/config';
 import { errorBody } from '../errors';
 import { requireAuth } from '../session';
 import { fixedWindow } from '../ratelimit';
@@ -23,6 +23,7 @@ interface ChatBody {
   model: string;
   compareWith?: string;
   webSearch: boolean;
+  persona: string | null;
   messages: { role: Role; content: string }[];
 }
 
@@ -35,6 +36,9 @@ function parseBody(raw: unknown): ChatBody | string {
   }
   if (b.compareWith === b.model) return 'compareWith must be a different model';
   if (b.webSearch !== undefined && typeof b.webSearch !== 'boolean') return 'webSearch must be a boolean';
+  if (b.persona !== undefined && b.persona !== null && (typeof b.persona !== 'string' || !getPersona(b.persona))) {
+    return 'persona must be a known chat mode';
+  }
   if (!Array.isArray(b.messages) || b.messages.length < 1 || b.messages.length > MAX_MESSAGES) {
     return `messages must have 1 to ${MAX_MESSAGES} entries`;
   }
@@ -55,6 +59,7 @@ function parseBody(raw: unknown): ChatBody | string {
     model: b.model,
     compareWith: typeof b.compareWith === 'string' ? b.compareWith : undefined,
     webSearch: b.webSearch === true,
+    persona: typeof b.persona === 'string' ? b.persona : null,
     messages,
   };
 }
@@ -62,8 +67,9 @@ function parseBody(raw: unknown): ChatBody | string {
 export const chatRoutes: FastifyPluginAsync = async (app) => {
   const { redis, activeStreams } = app.ctx;
   // Built per request: top-ups become live once the USDG decimals have been read.
-  const systemPrompt = () =>
+  const systemPrompt = (persona: string | null) =>
     buildSystemPrompt({
+      persona,
       preset: app.ctx.env.inference?.preset ?? null,
       webSearch: !!app.ctx.search,
       topups: !!app.ctx.topup?.ready,
@@ -92,7 +98,7 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
         userId,
         models: [body.model, ...(body.compareWith ? [body.compareWith] : [])],
         messages: body.messages,
-        systemPrompt: systemPrompt(),
+        systemPrompt: systemPrompt(body.persona),
         webSearch: body.webSearch,
         cryptoTools: true,
       },

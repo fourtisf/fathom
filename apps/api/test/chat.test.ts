@@ -142,6 +142,8 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
       { model: 'deepseek-v3.1', messages: [{ role: 'assistant', content: 'hi' }] },
       { model: 'deepseek-v3.1', messages: [{ role: 'system', content: 'hi' }] },
       { model: 'deepseek-v3.1', compareWith: 'deepseek-v3.1', messages: msgs },
+      { model: 'deepseek-v3.1', persona: 'hacker', messages: msgs },
+      { model: 'deepseek-v3.1', persona: 7, messages: msgs },
       { model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'x'.repeat(100_001) }] },
       { model: 'deepseek-v3.1', messages: Array.from({ length: 51 }, () => ({ role: 'user', content: 'x' })) },
     ];

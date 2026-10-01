@@ -33,6 +33,7 @@ model User {
   txs          Transaction[]
   usage        UsageDaily[]
   chats        EncryptedChat[]
+  shares       SharedChat[]
 }
 
 model ApiKey {
@@ -92,4 +93,19 @@ model EncryptedChat {
 
   @@index([userId])
   @@index([burnAt])
+}
+
+// A chat the user chose to share. Encrypted in the browser with a random key that lives only in the
+// link's #fragment (never sent to the server), so the server stores ciphertext it cannot read.
+model SharedChat {
+  id         String   @id // 22-char random, URL-safe
+  userId     String
+  ciphertext Bytes
+  iv         Bytes
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime // cron deletes rows past expiresAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }

@@ -1,4 +1,4 @@
-import { brand, CREDITS_PER_USDG, MODELS, WELCOME_CREDITS } from '@fathom/config';
+import { brand, CREDITS_PER_USDG, getPersona, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { INFERENCE_PRESETS } from './inference/presets';
 
 const PRIVACY_LINE = {
@@ -20,6 +20,8 @@ export function buildSystemPrompt(opts: {
   topups?: boolean;
   /** The OpenAI-compatible developer API is available. */
   developerApi?: boolean;
+  /** Chat mode chosen in the composer (personas in @fathom/config). */
+  persona?: string | null;
   /** Token Safety Check is on: pasted contract addresses are checked on the block explorer. */
   tokenCheck?: boolean;
   /** Live prices are on: price questions get CoinGecko data. */
@@ -28,6 +30,7 @@ export function buildSystemPrompt(opts: {
   tokenAddress?: string | null;
 }): string {
   const privacy = (opts.preset && INFERENCE_PRESETS[opts.preset]?.privacy) || 'none';
+  const mode = getPersona(opts.persona);
   const facts = [
     `${brand.name} (${brand.domain}) is a private AI chat app on open-weight models: ${MODELS.map((m) => m.name).join(', ')}.`,
     ...(brand.social.x ? [`Official X (Twitter) account: ${brand.social.xHandle} (${brand.social.x}). It is the only official social account; anything else claiming to be ${brand.name} is not.`] : []),
@@ -55,5 +58,6 @@ export function buildSystemPrompt(opts: {
     `You are the assistant inside ${brand.name}. Be helpful, accurate and concise. Use Markdown when it helps. If you are not sure about something, say so.`,
     `Facts about ${brand.name}, for when the user asks about it. Do not claim anything about ${brand.name} beyond these; if asked something not covered, say you don't know and point to ${brand.domain}.`,
     ...facts.map((f) => `- ${f}`),
+    ...(mode?.prompt ? ['', `Chat mode chosen by the user: ${mode.name}. ${mode.prompt}`] : []),
   ].join('\n');
 }
