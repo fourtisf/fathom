@@ -93,6 +93,9 @@ export default function DocsPage() {
         <h6>Getting started</h6>
         <a href="#quickstart">Quickstart</a>
         <a href="#auth">Authentication</a>
+        <h6>In the app</h6>
+        <a href="#app-tools">Chat tools</a>
+        <a href="#share">Share links</a>
         <h6>API</h6>
         <a href="#chat">Chat completions</a>
         <a href="#models-api">Models</a>
@@ -129,6 +132,49 @@ export default function DocsPage() {
           are shown once when you create them; we store only a hash, so a lost key can&apos;t be recovered, only replaced.
           Keys created in the app don&apos;t expire. You can hold up to {MAX_API_KEYS} active keys per wallet and revoke any
           of them instantly.
+        </p>
+
+        <h2 id="app-tools">Chat tools</h2>
+        <p>
+          These tools live in the chat at <Link href="/app" style={link}>noxsea.xyz/app</Link>, in the bar under the message
+          box (icons on phones). They are part of the app; the API stays a plain OpenAI-compatible model API.
+        </p>
+        <ul>
+          <li>
+            <b>Check token.</b> Paste a contract address on Robinhood Chain. {brand.name} reads public on-chain data and shows a
+            risk card: mint and blacklist functions, adjustable taxes, trading switches, pause, owner and renounce status,
+            upgradeable proxies and, when the block explorer responds, top-holder concentration and source verification. The
+            AI explains each flag. Automatic checks can miss honeypots and liquidity pulls; this is not financial advice.
+          </li>
+          <li>
+            <b>Live prices.</b> Ask a price question (&ldquo;ETH price today?&rdquo;, &ldquo;$PEPE price?&rdquo;) and the answer
+            uses live CoinGecko data, shown above the reply. No button needed.
+          </li>
+          <li>
+            <b>Attach.</b> Add a PDF or a text file (.txt, .md, .csv, .json, .sol) up to 20 MB. It is read inside your browser
+            and never uploaded; only the extracted text is sent with your question. Scanned PDFs without selectable text
+            can&apos;t be read.
+          </li>
+          <li>
+            <b>Mode.</b> Contract auditor, Memecoin researcher, Explain simply, Web3 developer or Crypto writer. The mode
+            changes how the assistant answers; pricing stays the same.
+          </li>
+          <li>
+            <b>Compare.</b> Sends one question to two models and shows both answers side by side. Each answer is charged
+            separately.
+          </li>
+        </ul>
+        <p>
+          On-chain and price lookups are made from our servers, so your IP address isn&apos;t exposed. Only the address or
+          coin name is sent, never your message.
+        </p>
+
+        <h2 id="share">Share links</h2>
+        <p>
+          Under a chat, <b>Share</b> creates a link to a read-only copy. Your browser encrypts the chat with a new key and puts
+          the key after the <code>#</code> in the link, which browsers never send to servers, so {brand.name} stores only
+          ciphertext. Links expire after 1, 7 or 30 days and can be deleted any time in{' '}
+          <Link href="/app/settings" style={link}>Settings</Link>. Attached documents are never included.
         </p>
 
         <h2 id="chat">Chat completions</h2>
