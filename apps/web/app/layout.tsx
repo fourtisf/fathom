@@ -6,6 +6,7 @@ import { IconSprite } from '@/components/Icon';
 import { ToastProvider } from '@/components/Toast';
 import './globals.css';
 import './styles/premium.css';
+import './styles/tools.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),

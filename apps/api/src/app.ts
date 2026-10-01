@@ -129,7 +129,11 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
                   chain,
                 })
               : null,
-            prices: createCoinGecko({ apiKey: env.crypto.coingeckoKey, plan: env.crypto.coingeckoPlan }),
+            prices: createCoinGecko({
+              apiKey: env.crypto.coingeckoKey,
+              plan: env.crypto.coingeckoPlan,
+              baseUrl: env.crypto.coingeckoUrl,
+            }),
           }
         : null;
 

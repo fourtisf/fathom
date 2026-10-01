@@ -110,6 +110,12 @@ export default async function TrustPage() {
             <p>With history on, chats are encrypted in your browser with a key from your wallet signature. We store only ciphertext.</p>
           </div>
         </div>
+        <p className="note">
+          <b>Crypto tools.</b> When a message contains a contract address, our server looks up that address on the public
+          Robinhood Chain block explorer (Blockscout). When you ask for a price, it fetches the coin&apos;s price from
+          CoinGecko. Only the address or the coin name is sent, never your message, and the request comes from our server,
+          so your IP address stays hidden.
+        </p>
       </div>
 
       <div className="tsec" id="contracts">

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import type { CoinPrice, TokenReport } from '@/lib/crypto-types';
 import { useConnection, useSignMessage } from 'wagmi';
 import { api, type ChatBlob } from '@/lib/api';
 import {
@@ -27,7 +28,13 @@ export interface ChatRecord {
   burn: Burn;
   turns: (
     | { kind: 'you'; text: string }
-    | { kind: 'ai'; slots: { model: string; text: string; credits?: number }[] }
+    | {
+        kind: 'ai';
+        slots: { model: string; text: string; credits?: number }[];
+        /** Public on-chain report / live prices shown above the answer (encrypted like the rest). */
+        token?: TokenReport;
+        prices?: CoinPrice[];
+      }
   )[];
 }
 

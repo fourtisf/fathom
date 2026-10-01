@@ -1,0 +1,47 @@
+/* Chat crypto tools: Token Safety Check card and live price strip */
+.tcard{position:relative;margin:2px 0 14px;padding:18px 18px 14px;border-radius:16px;border:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;max-width:640px}
+.tcard::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,var(--violet),var(--cyan));opacity:.7}
+.tcard.v-high::before{background:linear-gradient(90deg,#FF6B7A,#FFB86B)}
+.tcard.v-medium::before{background:linear-gradient(90deg,#FFB86B,#FFD27A)}
+.tcard.v-low::before{background:linear-gradient(90deg,#3DDC97,var(--cyan))}
+.tcard-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.tcard-k{font:500 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.tcard-t{margin-top:6px;font-size:18px;font-weight:600;letter-spacing:-.02em;color:#fff}
+.tcard-a{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:12.5px;color:var(--ink2)}
+.tcard-a .mono{font-family:var(--mono)}
+.tcard-a .mact{font-size:12px}
+.tbadge{flex:none;font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;white-space:nowrap}
+.tbadge.b-high{color:#FFC2C8;background:rgba(255,107,122,.12);border:1px solid rgba(255,107,122,.4)}
+.tbadge.b-medium{color:#FFE2B3;background:rgba(255,184,107,.1);border:1px solid rgba(255,184,107,.38)}
+.tbadge.b-low{color:#BFF5DC;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.35)}
+.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.tstats>div{padding:9px 11px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
+.tstats span{display:block;font-size:11px;color:var(--mute)}
+.tstats b{display:block;margin-top:2px;font-size:14px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tflags{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.tflags li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.tflags li i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.tflags li em{font-style:normal;font-weight:600;margin-right:2px}
+.tflags .f-high i{background:#FF6B7A;box-shadow:0 0 10px rgba(255,107,122,.7)}
+.tflags .f-high em{color:#FF9AA5}
+.tflags .f-medium i{background:#FFB86B;box-shadow:0 0 10px rgba(255,184,107,.6)}
+.tflags .f-medium em{color:#FFCE94}
+.tflags .f-info i{background:#8B93C9}
+.tflags .f-info em{color:var(--ink2)}
+.tflags .f-ok i{background:#3DDC97;box-shadow:0 0 10px rgba(61,220,151,.6)}
+.tflags .f-ok em{color:#8EEBC3}
+.tcard-ft{margin-top:14px;padding-top:11px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mute)}
+.pstrip{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.pchip{display:inline-flex;align-items:baseline;gap:8px;padding:9px 13px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.035)}
+.pchip .psym{font:600 11.5px var(--mono);letter-spacing:.06em;color:var(--ink2)}
+.pchip b{font-size:15px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+.pchip .up{font-size:12.5px;color:#3DDC97;font-variant-numeric:tabular-nums}
+.pchip .down{font-size:12.5px;color:#FF8A96;font-variant-numeric:tabular-nums}
+.pchip small{font-size:11.5px;color:var(--mute)}
+.cbar .chip svg{width:14px;height:14px}
+@media (max-width:600px){
+  .tstats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tcard{padding:16px 14px 12px}
+  .tcard-hd{flex-direction:column}
+}

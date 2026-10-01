@@ -96,6 +96,8 @@ export interface PriceFeedOptions {
   apiKey?: string | null;
   /** 'demo' (free key, api.coingecko.com) or 'pro'. Without a key the public API is used. */
   plan?: 'demo' | 'pro';
+  /** Override the API base (a proxy or a test server). */
+  baseUrl?: string | null;
   fetch?: typeof fetch;
   now?: () => number;
 }
@@ -108,7 +110,7 @@ export function createCoinGecko(opts: PriceFeedOptions = {}): PriceFeed {
   const doFetch = opts.fetch ?? fetch;
   const now = opts.now ?? Date.now;
   const pro = opts.plan === 'pro' && !!opts.apiKey;
-  const base = pro ? 'https://pro-api.coingecko.com/api/v3' : 'https://api.coingecko.com/api/v3';
+  const base = (opts.baseUrl ?? (pro ? 'https://pro-api.coingecko.com/api/v3' : 'https://api.coingecko.com/api/v3')).replace(/\/$/, '');
   const headers: Record<string, string> = { accept: 'application/json' };
   if (opts.apiKey) headers[pro ? 'x-cg-pro-api-key' : 'x-cg-demo-api-key'] = opts.apiKey;
 

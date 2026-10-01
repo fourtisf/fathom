@@ -55,6 +55,7 @@ export interface TokenScanner {
   scan(address: Address, signal: AbortSignal): Promise<TokenReport>;
 }
 
+const shortAddr = (a: string | null) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : 'unknown');
 const BURN = new Set(['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead']);
 const TIMEOUT_MS = 8_000;
 const CACHE_MS = 5 * 60_000;
@@ -290,7 +291,7 @@ export function createTokenScanner(opts: ScannerOptions): TokenScanner {
       flags.push(
         renounced
           ? { level: 'ok', code: 'renounced', text: 'Ownership is renounced: no owner can call owner-only functions.' }
-          : { level: 'info', code: 'owned', text: `Has an active owner (${owner.address}) who can call owner-only functions.` },
+          : { level: 'info', code: 'owned', text: `Has an active owner (${shortAddr(owner.address)}) who can call owner-only functions.` },
       );
     }
     if (report.top10Pct !== null) {

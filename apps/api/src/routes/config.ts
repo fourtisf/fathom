@@ -11,6 +11,8 @@ export const configRoutes: FastifyPluginAsync = async (app) => {
         : null,
       models: health.all(),
       webSearch: search !== null,
+      tokenCheck: !!app.ctx.crypto?.scanner,
+      livePrices: !!app.ctx.crypto?.prices,
       inference: provider !== null,
       // Only when the server enforces it: a widget without server verification would be theater.
       turnstileSiteKey: env.turnstile.secretKey ? env.turnstile.siteKey : null,

@@ -14,6 +14,9 @@ export interface AppConfig {
   chain: { id: number; name: string; rpcUrl: string; explorerUrl: string | null } | null;
   models: { id: string; name: string; status: ModelStatus }[];
   webSearch: boolean;
+  /** Token Safety Check: a pasted 0x address is checked on the explorer. */
+  tokenCheck?: boolean;
+  livePrices?: boolean;
   inference: boolean;
   turnstileSiteKey?: string | null;
   topup?: TopupConfig | null;

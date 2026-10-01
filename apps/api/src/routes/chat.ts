@@ -69,6 +69,8 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
       topups: !!app.ctx.topup?.ready,
       developerApi: true,
       tokenAddress: tokenAddress(),
+      tokenCheck: !!app.ctx.crypto?.scanner,
+      livePrices: !!app.ctx.crypto?.prices,
     });
 
   app.post('/chat', { preHandler: requireAuth }, async (request, reply) => {

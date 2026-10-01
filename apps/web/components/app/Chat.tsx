@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { brand, FALLBACK_MODEL, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
+import type { ToolState } from '@/lib/crypto-types';
+import { PriceStrip, TokenCard, ToolLine } from './CryptoCards';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
 import { useCopy, useToast } from '../Toast';
@@ -23,7 +25,14 @@ type SlotState = {
 };
 type Turn =
   | { id: number; kind: 'you'; text: string }
-  | { id: number; kind: 'ai'; slots: SlotState[]; search?: 'running' | 'done' | 'unavailable'; sources?: number }
+  | {
+      id: number;
+      kind: 'ai';
+      slots: SlotState[];
+      search?: 'running' | 'done' | 'unavailable';
+      sources?: number;
+      tools?: { token?: ToolState; price?: ToolState };
+    }
   | { id: number; kind: 'note'; text: string }
   | {
       id: number;
@@ -43,11 +52,24 @@ export const WELCOME_DENIED_TEXT: Record<WelcomeDenied | 'already_claimed', stri
   already_claimed: 'This wallet already received its free credits.',
 };
 
-const SUGGESTIONS = [
+const TOKEN_CHECK_PREFIX = 'Check this token for red flags: ';
+
+const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean }[] = [
   {
     title: `What is ${brand.name}?`,
     sub: 'Privacy, credits and how it works',
     prompt: `What is ${brand.name}, how does it keep my chats private, and how do credits work?`,
+  },
+  {
+    title: 'Check a token for red flags',
+    sub: 'Paste a contract address on Robinhood Chain',
+    prompt: TOKEN_CHECK_PREFIX,
+    fill: true,
+  },
+  {
+    title: 'Crypto market today',
+    sub: 'Live BTC, ETH and SOL prices',
+    prompt: 'How does the crypto market look today? Give me the live BTC, ETH and SOL prices and the 24h moves.',
   },
   {
     title: 'Spot a memecoin rug pull',
@@ -62,22 +84,10 @@ const SUGGESTIONS = [
       'Explain what Robinhood Chain is, how it relates to Ethereum and Arbitrum, and what USDG and tokenized stocks are. Say clearly which details you are unsure about or may be out of date.',
   },
   {
-    title: 'How memecoin launches work',
-    sub: 'Bonding curves, snipers and bots',
-    prompt:
-      'Explain how memecoin launches work: bonding-curve launchpads, when liquidity migrates to a DEX, and how sniper bots and bundled wallets affect early buyers.',
-  },
-  {
     title: 'Bridge to Robinhood Chain safely',
     sub: 'The steps and the mistakes that cost money',
     prompt:
       'How do I safely bridge ETH or stablecoins from Ethereum to a layer 2 like Robinhood Chain? List the steps, how to verify the official bridge, and the common mistakes that lose funds.',
-  },
-  {
-    title: 'Keep my wallet safe',
-    sub: 'Seed phrase, token approvals and phishing',
-    prompt:
-      'How do I keep my crypto wallet safe? Cover storing the seed phrase, revoking old token approvals and spotting phishing sites and fake airdrops.',
   },
 ];
 
@@ -136,7 +146,9 @@ function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): C
       const slots = t.slots
         .filter((s) => (s.status === 'done' || s.status === 'stopped') && s.text)
         .map((s) => ({ model: s.model, text: s.text, credits: s.credits }));
-      if (slots.length) kept.push({ kind: 'ai', slots });
+      const token = t.tools?.token?.status === 'done' ? t.tools.token.report : undefined;
+      const prices = t.tools?.price?.status === 'done' ? t.tools.price.prices : undefined;
+      if (slots.length) kept.push({ kind: 'ai', slots, ...(token ? { token } : {}), ...(prices?.length ? { prices } : {}) });
     }
   }
   const first = kept.find((t) => t.kind === 'you');
@@ -149,7 +161,15 @@ function fromRecord(r: ChatRecord): Turn[] {
   return r.turns.map((t) =>
     t.kind === 'you'
       ? { id: nextId++, kind: 'you' as const, text: t.text }
-      : { id: nextId++, kind: 'ai' as const, slots: t.slots.map((s) => ({ ...s, status: 'done' as const })) },
+      : {
+          id: nextId++,
+          kind: 'ai' as const,
+          slots: t.slots.map((s) => ({ ...s, status: 'done' as const })),
+          tools: {
+            ...(t.token ? { token: { status: 'done' as const, report: t.token } } : {}),
+            ...(t.prices ? { price: { status: 'done' as const, prices: t.prices } } : {}),
+          },
+        },
   );
 }
 
@@ -336,6 +356,11 @@ export function Chat() {
 
     if (!retry && !regenerate) {
       add({ kind: 'you', text: q });
+      // A new question always brings the thread to the bottom, even after a tall card.
+      setTimeout(() => {
+        const el = thread.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      }, 0);
       if (opts.text === undefined) {
         setInput('');
         if (inp.current) inp.current.style.height = 'auto';
@@ -357,6 +382,11 @@ export function Chat() {
 
     const onEvent = (e: ChatEvent) => {
       if (e.type === 'search') return patchAi(aiId, (t) => ({ ...t, search: e.status, sources: e.sources }));
+      if (e.type === 'tool') {
+        const state: ToolState =
+          e.status === 'done' ? (e.tool === 'token' ? { status: 'done', report: e.report } : { status: 'done', prices: e.prices }) : { status: e.status };
+        return patchAi(aiId, (t) => ({ ...t, tools: { ...t.tools, [e.tool]: state } }));
+      }
       if (e.type === 'end') return setCredits(e.balance);
       patchAi(aiId, (t) => ({
         ...t,
@@ -433,6 +463,18 @@ export function Chat() {
       const el = inp.current;
       if (!el) return;
       el.focus();
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+    }, 0);
+  }
+
+  function fillComposer(text: string) {
+    setInput(text);
+    setTimeout(() => {
+      const el = inp.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(text.length, text.length);
       el.style.height = 'auto';
       el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
     }, 0);
@@ -587,6 +629,21 @@ export function Chat() {
                 )}
               </div>
             );
+            const tk = t.tools?.token;
+            const pr = t.tools?.price;
+            const tools = (tk || pr) && (
+              <>
+                {tk && (tk.status !== 'done' || !tk.report) && <ToolLine tool="token" state={tk} chain={config?.chain?.name} />}
+                {tk?.status === 'done' && tk.report && <TokenCard report={tk.report} />}
+                {pr && (pr.status !== 'done' || !pr.prices?.length) && <ToolLine tool="price" state={pr} />}
+                {pr?.status === 'done' && pr.prices && pr.prices.length > 0 && (
+                  <>
+                    <ToolLine tool="price" state={pr} />
+                    <PriceStrip prices={pr.prices} />
+                  </>
+                )}
+              </>
+            );
             const finished = t.slots.every((s) => s.status !== 'waiting' && s.status !== 'streaming');
             const regen = finished && !busy && t.id === lastAiId ? () => void send({ regenerate: true }) : undefined;
             if (t.slots.length === 2)
@@ -595,6 +652,7 @@ export function Chat() {
                   <AiIcon />
                   <div>
                     {search}
+                    {tools}
                     <div className="cmp">
                       {t.slots.map((s, i) => (
                         <div key={i}>
@@ -625,6 +683,7 @@ export function Chat() {
                 <AiIcon />
                 <div className="b">
                   {search}
+                  {tools}
                   <SlotBody slot={s} big />
                   {(s.status === 'done' || s.status === 'stopped') && <Actions slot={s} onRegenerate={regen} />}
                 </div>
@@ -633,8 +692,8 @@ export function Chat() {
           })}
           {!turns.some((t) => t.kind === 'you') && !busy && (
             <div className="suggest" aria-label="Suggested questions">
-              {SUGGESTIONS.map((x) => (
-                <button key={x.title} onClick={() => void send({ text: x.prompt })}>
+              {SUGGESTIONS.filter((x) => !x.fill || config?.tokenCheck).map((x) => (
+                <button key={x.title} onClick={() => (x.fill ? fillComposer(x.prompt) : void send({ text: x.prompt }))}>
                   <b>{x.title}</b>
                   <span>{x.sub}</span>
                 </button>
@@ -675,6 +734,21 @@ export function Chat() {
               <Icon name="columns" />
               Compare
             </button>
+            {config?.tokenCheck && (
+              <button
+                className="chip"
+                onClick={() => {
+                  fillComposer(input.startsWith(TOKEN_CHECK_PREFIX) ? input : TOKEN_CHECK_PREFIX + input);
+                  toast('Paste a contract address on Robinhood Chain');
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+                Check token
+              </button>
+            )}
             {config?.webSearch && (
               <button className="chip" aria-pressed={ui.webSearch} onClick={() => ui.setWebSearch(!ui.webSearch)}>
                 <Icon name="globe" />

@@ -56,6 +56,8 @@ export interface CryptoEnv {
   explorerApi: string | null;
   coingeckoKey: string | null;
   coingeckoPlan: 'demo' | 'pro';
+  /** Override for the CoinGecko API base (proxy or test server). */
+  coingeckoUrl: string | null;
 }
 
 export interface ApiEnv {
@@ -122,7 +124,13 @@ function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): Crypt
   const explicit = optUrl(env, 'EXPLORER_API_URL', warnings);
   const explorerApi = explicit ?? (chain?.explorerUrl ? `${chain.explorerUrl.replace(/\/$/, '')}/api/v2` : null);
   const plan = opt(env, 'COINGECKO_PLAN')?.toLowerCase() === 'pro' ? 'pro' : 'demo';
-  return { enabled, explorerApi, coingeckoKey: opt(env, 'COINGECKO_API_KEY'), coingeckoPlan: plan };
+  return {
+    enabled,
+    explorerApi,
+    coingeckoKey: opt(env, 'COINGECKO_API_KEY'),
+    coingeckoPlan: plan,
+    coingeckoUrl: optUrl(env, 'COINGECKO_API_URL', warnings),
+  };
 }
 
 function loadInference(env: Env, warnings: string[]): InferenceEnv | null {

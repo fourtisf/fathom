@@ -1,10 +1,15 @@
 import { ApiError } from './api';
+import type { CoinPrice, TokenReport } from './crypto-types';
 
 export type ChatEvent =
   | { type: 'search'; status: 'running' | 'done' | 'unavailable'; sources?: number }
   | { type: 'delta'; slot: 0 | 1; text: string }
   | { type: 'done'; slot: 0 | 1; model: string; credits: number; tokens: { input: number; output: number } }
   | { type: 'error'; slot: 0 | 1; code: string; message: string }
+  | { type: 'tool'; tool: 'token'; status: 'running' | 'unavailable' }
+  | { type: 'tool'; tool: 'token'; status: 'done'; report: TokenReport }
+  | { type: 'tool'; tool: 'price'; status: 'running' | 'unavailable' }
+  | { type: 'tool'; tool: 'price'; status: 'done'; prices: CoinPrice[] }
   | { type: 'end'; balance: number };
 
 export interface ChatRequest {

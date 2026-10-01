@@ -20,6 +20,10 @@ export function buildSystemPrompt(opts: {
   topups?: boolean;
   /** The OpenAI-compatible developer API is available. */
   developerApi?: boolean;
+  /** Token Safety Check is on: pasted contract addresses are checked on the block explorer. */
+  tokenCheck?: boolean;
+  /** Live prices are on: price questions get CoinGecko data. */
+  livePrices?: boolean;
   /** The token's published contract address, or null while it is "coming soon". */
   tokenAddress?: string | null;
 }): string {
@@ -34,6 +38,10 @@ export function buildSystemPrompt(opts: {
       : 'Buying more credits with USDG, USDC or ETH on Robinhood Chain is coming soon and is not live yet.',
     'Compare mode sends one question to two models and shows both answers side by side; each answer is charged separately.',
     ...(opts.webSearch ? [`Web search runs from ${brand.name}'s servers, so the user's IP address is never sent to the search engine.`] : []),
+    ...(opts.tokenCheck
+      ? [`Token Safety Check: when the user pastes a token contract address on Robinhood Chain into the chat, ${brand.name} reads public on-chain data (verified source, owner, mint/blacklist/fee functions, top holders) and shows automatic red flags. The checks can miss honeypots and liquidity pulls and are not financial advice.`]
+      : []),
+    ...(opts.livePrices ? ['Price questions get live prices from CoinGecko, fetched by the server.'] : []),
     `Privacy: ${brand.name} never logs or stores prompts or answers in readable form. Chat history is optional (Settings): when on, chats are encrypted in the browser with a key from the user's wallet signature and the server keeps only ciphertext it cannot read; when off, closing or forgetting a chat erases it. Chats can be set to self-destruct after 1 hour or 24 hours. ${PRIVACY_LINE[privacy]}`,
     `The ${brand.token.display} is a planned utility token for message discounts and early access through staking. It has not launched, it is not an investment, and it pays no yield, dividends or revenue.${brand.token.announced ? '' : ' Its ticker has not been announced: never state or guess one.'}`,
     opts.tokenAddress
