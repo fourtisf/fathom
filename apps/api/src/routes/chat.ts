@@ -92,6 +92,7 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
         messages: body.messages,
         systemPrompt: systemPrompt(),
         webSearch: body.webSearch,
+        cryptoTools: true,
       },
       request.log,
     );

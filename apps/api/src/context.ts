@@ -8,6 +8,7 @@ import type { ChainClient } from './chain';
 import type { TopupService } from './topup';
 import type { SearchHealth } from './status';
 import type { CaptchaVerifier } from './turnstile';
+import type { CryptoTools } from './crypto';
 
 export interface AppContext {
   env: ApiEnv;
@@ -21,6 +22,8 @@ export interface AppContext {
   chain: ChainClient | null;
   /** USDG top-ups; null unless chain, USDG_ADDRESS and TREASURY_ADDRESS are configured. */
   topup: TopupService | null;
+  /** Token Safety Check and live prices for the app chat; null when CRYPTO_TOOLS=off. */
+  crypto: CryptoTools | null;
   /** Turnstile verifier; null when TURNSTILE_SECRET_KEY is not set. */
   verifyCaptcha: CaptchaVerifier | null;
   /** In-flight chat streams, aborted on shutdown (unfinished answers are never charged). */

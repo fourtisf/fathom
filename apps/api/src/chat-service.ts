@@ -5,6 +5,7 @@ import { errorBody } from './errors';
 import { chargeUsage, toCredits } from './billing';
 import { estimateTokens, ProviderError, type ChatMessage, type GenerationParams } from './inference';
 import { searchSystemMessage } from './search';
+import { runCryptoTools, type ToolEvent } from './crypto';
 
 /**
  * The one chat pipeline shared by the app (POST /chat) and the public API
@@ -26,6 +27,7 @@ export type ChatEvent =
   | { type: 'delta'; slot: number; text: string }
   | { type: 'done'; slot: number; model: string; credits: number; tokens: { input: number; output: number } }
   | { type: 'error'; slot: number; code: ChatErrorCode; message: string }
+  | ToolEvent
   | { type: 'end'; balance: number };
 
 export interface ChatJob {
@@ -37,6 +39,8 @@ export interface ChatJob {
   /** Prepended as the first system message when set (the app's product prompt). */
   systemPrompt?: string | null;
   webSearch: boolean;
+  /** Token Safety Check and live prices (the app's chat only; the public API stays a plain model API). */
+  cryptoTools?: boolean;
   params?: GenerationParams;
 }
 
@@ -162,6 +166,18 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
             send({ type: 'search', status: 'unavailable' });
           }
         }
+      }
+    }
+
+    if (job.cryptoTools && ctx.crypto) {
+      const lastUser = [...job.messages].reverse().find((m) => m.role === 'user');
+      const extra = await runCryptoTools(ctx.crypto, lastUser?.content ?? '', signal, send, (tool, err) =>
+        log.warn({ err, tool }, 'crypto tool failed'),
+      );
+      if (extra.length) {
+        // After the product prompt (and search results), before the conversation.
+        const firstConv = messages.findIndex((m) => m.role !== 'system');
+        messages = [...messages.slice(0, firstConv), ...extra, ...messages.slice(firstConv)];
       }
     }
 

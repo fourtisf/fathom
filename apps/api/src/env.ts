@@ -49,6 +49,15 @@ export interface TopupEnv {
   startBlock: bigint | null;
 }
 
+/** Token Safety Check (block explorer) and live prices (CoinGecko). */
+export interface CryptoEnv {
+  enabled: boolean;
+  /** Blockscout API v2 base; defaults to EXPLORER_URL + /api/v2. Null disables the token check. */
+  explorerApi: string | null;
+  coingeckoKey: string | null;
+  coingeckoPlan: 'demo' | 'pro';
+}
+
 export interface ApiEnv {
   port: number;
   host: string;
@@ -65,6 +74,7 @@ export interface ApiEnv {
   /** Null when no inference provider is configured: chat reports every model unavailable. */
   inference: InferenceEnv | null;
   braveSearchApiKey: string | null;
+  crypto: CryptoEnv;
   welcome: WelcomeEnv;
   turnstile: TurnstileEnv;
   topup: TopupEnv | null;
@@ -105,6 +115,14 @@ function loadChain(env: Env, warnings: string[]): ChainEnv | null {
     rpcUrl,
     explorerUrl: optUrl(env, 'EXPLORER_URL', warnings),
   };
+}
+
+function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): CryptoEnv {
+  const enabled = (opt(env, 'CRYPTO_TOOLS') ?? 'on').toLowerCase() !== 'off';
+  const explicit = optUrl(env, 'EXPLORER_API_URL', warnings);
+  const explorerApi = explicit ?? (chain?.explorerUrl ? `${chain.explorerUrl.replace(/\/$/, '')}/api/v2` : null);
+  const plan = opt(env, 'COINGECKO_PLAN')?.toLowerCase() === 'pro' ? 'pro' : 'demo';
+  return { enabled, explorerApi, coingeckoKey: opt(env, 'COINGECKO_API_KEY'), coingeckoPlan: plan };
 }
 
 function loadInference(env: Env, warnings: string[]): InferenceEnv | null {
@@ -258,6 +276,7 @@ export function loadEnv(env: Env = process.env): ApiEnv {
     chain,
     inference: loadInference(env, warnings),
     braveSearchApiKey: opt(env, 'BRAVE_SEARCH_API_KEY'),
+    crypto: loadCrypto(env, chain, warnings),
     welcome: loadWelcome(env, warnings),
     turnstile: { siteKey: opt(env, 'TURNSTILE_SITE_KEY'), secretKey: opt(env, 'TURNSTILE_SECRET_KEY') },
     topup: loadTopup(env, chain, warnings),

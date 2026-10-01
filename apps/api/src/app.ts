@@ -27,6 +27,7 @@ import { createChainClient, type ChainClient } from './chain';
 import { TopupService } from './topup';
 import { SearchHealth, runStatusProbe } from './status';
 import { createTurnstileVerifier, type CaptchaVerifier } from './turnstile';
+import { createCoinGecko, createTokenScanner, type CryptoTools } from './crypto';
 
 export interface BuildAppOptions {
   env?: ApiEnv;
@@ -39,6 +40,8 @@ export interface BuildAppOptions {
   /** Chain client override (tests pass one backed by a fake transport). Null disables chain calls. */
   chainClient?: ChainClient | null;
   verifyCaptcha?: CaptchaVerifier | null;
+  /** Crypto tools override for tests. Null disables them. */
+  crypto?: CryptoTools | null;
   /**
    * Timers: burn cron (60s), status probe (60s), top-up indexer (15s).
    * Default: on, except under NODE_ENV=test (tests run the jobs explicitly).
@@ -113,6 +116,23 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     app.log.warn('TURNSTILE_SECRET_KEY is set without TURNSTILE_SITE_KEY; the web app cannot render the challenge');
   }
 
+  const crypto: CryptoTools | null =
+    opts.crypto !== undefined
+      ? opts.crypto
+      : env.crypto.enabled
+        ? {
+            scanner: env.crypto.explorerApi
+              ? createTokenScanner({
+                  apiBase: env.crypto.explorerApi,
+                  explorerUrl: env.chain?.explorerUrl ?? null,
+                  chainName: env.chain?.name ?? 'Robinhood Chain',
+                  chain,
+                })
+              : null,
+            prices: createCoinGecko({ apiKey: env.crypto.coingeckoKey, plan: env.crypto.coingeckoPlan }),
+          }
+        : null;
+
   const ctx: AppContext = {
     env,
     redis,
@@ -123,6 +143,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     chain,
     topup,
     verifyCaptcha: env.turnstile.secretKey ? verifyCaptcha : null,
+    crypto,
     health: new ModelHealth(provider, redis, app.log),
     activeStreams: new Set(),
   };

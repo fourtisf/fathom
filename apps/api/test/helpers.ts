@@ -40,6 +40,7 @@ export async function buildCapturingApp(
     env: loadEnv(env),
     logger: { level, stream: { write: (msg: string) => void lines.push(msg) } },
     chainClient: offlineChain,
+    crypto: null, // never reach Blockscout or CoinGecko from tests; crypto tests pass fakes
     ...opts,
   });
   return { app, lines };
