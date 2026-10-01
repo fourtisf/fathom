@@ -130,7 +130,7 @@ export default async function TrustPage() {
                       {c.address ? (
                         href ? <a href={href} target="_blank" rel="noopener noreferrer">{shortAddress(c.address)}</a> : shortAddress(c.address)
                       ) : (
-                        'Not set'
+                        c.pending ?? 'Not set'
                       )}
                     </td>
                     <td>{c.purpose}</td>
@@ -142,8 +142,9 @@ export default async function TrustPage() {
           </table>
         </div>
         <p className="note">
-          The {brand.token.display} and staking contracts are not deployed. The {brand.token.display} is a planned utility
-          token with no launch date.
+          The {brand.token.display} and staking contracts are not deployed yet. The {brand.token.display} is a planned utility
+          token. Its contract address (CA) will only ever be published here and on {brand.social.xHandle}; treat any other
+          address as fake.
         </p>
       </div>
 

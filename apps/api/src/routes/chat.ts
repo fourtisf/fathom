@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
+import { tokenAddress } from '@fathom/config';
 import { errorBody } from '../errors';
 import { requireAuth } from '../session';
 import { fixedWindow } from '../ratelimit';
@@ -67,6 +68,7 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
       webSearch: !!app.ctx.search,
       topups: !!app.ctx.topup?.ready,
       developerApi: true,
+      tokenAddress: tokenAddress(),
     });
 
   app.post('/chat', { preHandler: requireAuth }, async (request, reply) => {

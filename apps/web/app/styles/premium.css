@@ -77,3 +77,17 @@ main section+section::before{content:"";position:absolute;top:56px;left:50%;widt
 .nav-x:hover{color:#fff;background:rgba(255,255,255,.07);border-color:var(--line2)}
 .foot-follow{display:inline-flex;white-space:nowrap;align-items:center;gap:9px;margin-top:18px;padding:9px 15px;border-radius:999px;font-size:14px;color:var(--ink2);border:1px solid var(--line2);background:rgba(255,255,255,.04);transition:color .2s,background .2s}
 .foot-follow:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+/* Token contract address ("CA"): "Coming soon" until TOKEN_ADDRESS is set */
+.ca{display:inline-flex;align-items:center;gap:10px;padding:6px 6px 6px 7px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.035);font-size:14px;color:var(--ink2);max-width:100%}
+.ca-k{font:600 11px var(--mono);letter-spacing:.14em;color:#fff;padding:5px 9px;border-radius:999px;background:linear-gradient(135deg,rgba(139,124,255,.45),rgba(56,200,232,.35));border:1px solid rgba(179,168,255,.35)}
+.ca-v{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+.ca-v.mono{font-family:var(--mono);font-size:13px}
+a.ca-v:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.ca-v.ca-soon{display:inline-flex;align-items:center;gap:8px;color:var(--ink2)}
+.ca-v.ca-soon i{width:7px;height:7px;border-radius:50%;background:var(--amber,#FFB86B);box-shadow:0 0 10px rgba(255,184,107,.8);animation:ca-pulse 2s ease-in-out infinite}
+.ca .copybtn{margin-right:2px}
+.ca-hero{margin-top:22px}
+.ca-token{margin-top:22px}
+@keyframes ca-pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.ca-v.ca-soon i{animation:none}}

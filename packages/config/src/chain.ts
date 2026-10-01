@@ -71,6 +71,18 @@ export function loadContractAddresses(env: Env = process.env): ContractAddresses
   };
 }
 
+/**
+ * The token's contract address (CA) once it is deployed, else null ("coming soon" in the UI).
+ * Never throws: a malformed value is treated as unset so a typo can't publish a wrong CA.
+ */
+export function tokenAddress(env: Env = process.env): Address | null {
+  for (const key of ['TOKEN_ADDRESS', 'FTHM_ADDRESS']) {
+    const v = env[key]?.trim();
+    if (v && ADDRESS_RE.test(v)) return v as Address;
+  }
+  return null;
+}
+
 export function shortAddress(a: string): string {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }

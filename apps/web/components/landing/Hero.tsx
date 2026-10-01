@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getModel, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { Icon } from '../Icon';
+import { ContractAddress } from '../site/ContractAddress';
 
 const ds = getModel('deepseek-v3.1')!;
 const qw = getModel('qwen3-235b')!;
@@ -32,6 +33,9 @@ export function Hero() {
           <span><Icon name="chk" />No email, no KYC</span>
           <span><Icon name="chk" />Zero prompt logs</span>
           <span><Icon name="chk" />Pay per message in USDG</span>
+        </div>
+        <div className="up" style={{ transitionDelay: '.34s' }}>
+          <ContractAddress className="ca-hero" />
         </div>
       </div>
 

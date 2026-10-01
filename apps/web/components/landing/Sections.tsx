@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ContractAddress } from '../site/ContractAddress';
 import {
   brand,
   CREDITS_PER_USDG,
@@ -374,6 +375,7 @@ export function Token() {
               unlock up to {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue,
               no yield. Details may change before launch.
             </p>
+            <ContractAddress full className="ca-token" />
             <div className="ctas">
               <Link className="btn btn-dark" href="/docs#token">Read the plan</Link>
               <Link className="btn btn-light" href="/app/stake">Planned tiers</Link>

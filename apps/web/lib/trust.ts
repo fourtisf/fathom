@@ -1,4 +1,4 @@
-import type { Address } from '@fathom/config';
+import { tokenAddress, type Address } from '@fathom/config';
 
 /** Server-only helpers for /trust. Everything is read from the environment at request time. */
 
@@ -116,6 +116,8 @@ export interface AddressRow {
   name: string;
   purpose: string;
   address: Address | null;
+  /** Shown instead of "Not set" while the address is pending. */
+  pending?: string;
 }
 
 function envAddress(key: string): Address | null {
@@ -123,11 +125,12 @@ function envAddress(key: string): Address | null {
   return v && ADDRESS_RE.test(v) ? (v as Address) : null;
 }
 
-/** On-chain addresses that matter today. Token and staking contracts are not deployed. */
+/** On-chain addresses that matter today. The token contract shows "Coming soon" until it is deployed. */
 export function getAddresses(): AddressRow[] {
   return [
     { name: 'USDG', purpose: 'Stablecoin for top-ups (coming soon)', address: envAddress('USDG_ADDRESS') },
     { name: 'Treasury', purpose: 'Will receive USDG top-ups (coming soon)', address: envAddress('TREASURY_ADDRESS') },
+    { name: 'Token (CA)', purpose: 'Planned utility token contract', address: tokenAddress(), pending: 'Coming soon' },
   ];
 }
 

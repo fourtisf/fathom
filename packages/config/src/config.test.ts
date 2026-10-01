@@ -4,6 +4,7 @@ import {
   getModel,
   loadChainConfig,
   loadContractAddresses,
+  tokenAddress,
   nextTier,
   tierForStake,
   tokenCostMicro,
@@ -77,5 +78,15 @@ describe('chain config', () => {
 
   it('treats undeployed contracts as null', () => {
     expect(loadContractAddresses({}).creditVault).toBeNull();
+  });
+});
+
+describe('tokenAddress', () => {
+  it('is null until a valid address is set', () => {
+    expect(tokenAddress({})).toBeNull();
+    expect(tokenAddress({ TOKEN_ADDRESS: '0x123' })).toBeNull();
+    const a = '0x' + 'ab'.repeat(20);
+    expect(tokenAddress({ TOKEN_ADDRESS: a })).toBe(a);
+    expect(tokenAddress({ FTHM_ADDRESS: a })).toBe(a);
   });
 });
