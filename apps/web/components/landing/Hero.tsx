@@ -15,8 +15,8 @@ export function Hero() {
       <div className="beam" aria-hidden="true" />
       <div className="stars" aria-hidden="true" />
       <div className="wrap">
-        <Link href="/trust" className="pill up">
-          <b>New</b>Live on Robinhood Chain · see where your data goes<Icon name="arrow" />
+        <Link href="/scan" className="pill up">
+          <b>New</b>Free Token Scanner · no wallet needed<Icon name="arrow" />
         </Link>
         <h1 className="up" style={{ transitionDelay: '.08s' }}>
           The AI that <span className="grad">forgets you</span> on purpose

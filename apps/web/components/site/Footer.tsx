@@ -30,6 +30,7 @@ export function Footer() {
               <li><Link href="/app">Launch app</Link></li>
               <li><Link href="/#why">Why {brand.name}</Link></li>
               <li><Link href="/#pricing">Pricing</Link></li>
+              <li><Link href="/scan">Token Scanner</Link></li>
               <li><Link href="/docs#token">Token (planned)</Link></li>
             </ul>
           </div>

@@ -22,6 +22,7 @@ import { keyRoutes } from './routes/keys';
 import { chatHistoryRoutes } from './routes/chats';
 import { purgeExpiredShares, shareRoutes } from './routes/shares';
 import { statusRoutes } from './routes/status';
+import { scanRoutes } from './routes/scan';
 import { v1ChatRoutes } from './routes/v1-chat';
 import { v1AuthRoutes } from './routes/v1-auth';
 import { createChainClient, type ChainClient } from './chain';
@@ -211,6 +212,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(chatHistoryRoutes);
   await app.register(shareRoutes);
   await app.register(statusRoutes);
+  await app.register(scanRoutes);
   await app.register(modelRoutes, { prefix: '/v1' });
   await app.register(v1ChatRoutes, { prefix: '/v1' });
   await app.register(v1AuthRoutes, { prefix: '/v1' });

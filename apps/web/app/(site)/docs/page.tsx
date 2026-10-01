@@ -144,7 +144,9 @@ export default function DocsPage() {
             <b>Check token.</b> Paste a contract address on Robinhood Chain. {brand.name} reads public on-chain data and shows a
             risk card: mint and blacklist functions, adjustable taxes, trading switches, pause, owner and renounce status,
             upgradeable proxies and, when the block explorer responds, top-holder concentration and source verification. The
-            AI explains each flag. Automatic checks can miss honeypots and liquidity pulls; this is not financial advice.
+            AI explains each flag. Automatic checks can miss honeypots and liquidity pulls; this is not financial advice. The
+            same check is free at <Link href="/scan" style={link}>noxsea.xyz/scan</Link>, with no wallet and no credits (10 scans
+            a minute, 150 a day). We don&apos;t keep a record of who scanned what, and a link like <code>/scan?address=0x…</code> opens a scan directly.
           </li>
           <li>
             <b>Live prices.</b> Ask a price question (&ldquo;ETH price today?&rdquo;, &ldquo;$PEPE price?&rdquo;) and the answer

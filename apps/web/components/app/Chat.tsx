@@ -242,6 +242,16 @@ export function Chat() {
     clearLastSignIn();
   }, [lastSignIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Prefill from links like /app?q=… (the public Token Scanner). Never auto-sends.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const q = url.searchParams.get('q');
+    if (!q) return;
+    url.searchParams.delete('q');
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    fillComposer(q.slice(0, 2000));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Keep the newest message in view while streaming, unless the user scrolled up.
   useEffect(() => {
     const el = thread.current;
