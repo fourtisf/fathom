@@ -71,3 +71,9 @@ main section+section::before{content:"";position:absolute;top:56px;left:50%;widt
 .prose pre{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 
 @media (prefers-reduced-motion:reduce){.btn-dark::after{display:none}.cell:hover,.step:hover,.pcard.calc:hover{transform:none}}
+
+/* Official X account: icon in the nav, follow pill in the footer */
+.nav-x{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;color:var(--ink2);border:1px solid var(--line);background:rgba(255,255,255,.03);transition:color .2s,background .2s,border-color .2s}
+.nav-x:hover{color:#fff;background:rgba(255,255,255,.07);border-color:var(--line2)}
+.foot-follow{display:inline-flex;white-space:nowrap;align-items:center;gap:9px;margin-top:18px;padding:9px 15px;border-radius:999px;font-size:14px;color:var(--ink2);border:1px solid var(--line2);background:rgba(255,255,255,.04);transition:color .2s,background .2s}
+.foot-follow:hover{color:#fff;background:rgba(255,255,255,.08)}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { brand } from '@fathom/config';
 import { Logo } from './Logo';
+import { XIcon } from './XIcon';
 
 // Empty URLs are hidden so nothing points to '#'. Fill them in packages/config/src/brand.ts.
 const SOCIAL = [
@@ -16,6 +17,12 @@ export function Footer() {
           <div>
             <Logo />
             <p>{brand.footerBlurb}</p>
+            {brand.social.x && (
+              <a className="foot-follow" href={brand.social.x} target="_blank" rel="noopener noreferrer">
+                <XIcon size={14} />
+                Follow {brand.social.xHandle}
+              </a>
+            )}
           </div>
           <div>
             <h5>Product</h5>

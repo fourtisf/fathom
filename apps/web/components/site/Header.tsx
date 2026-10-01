@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { brand } from '@fathom/config';
 import { Logo } from './Logo';
+import { XIcon } from './XIcon';
 
 const LINKS = [
   { href: '/#features', label: 'Privacy', nav: 'home' },
@@ -46,6 +47,11 @@ export function Header() {
           ))}
         </div>
         <div className="nav-right">
+          {brand.social.x && (
+            <a className="nav-x" href={brand.social.x} target="_blank" rel="noopener noreferrer" aria-label={`${brand.name} on X`} title={brand.social.xHandle}>
+              <XIcon size={15} />
+            </a>
+          )}
           <Link href="/app" className="btn btn-dark btn-sm">
             Launch app
           </Link>

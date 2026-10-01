@@ -37,7 +37,8 @@ export const brand = {
   footerBlurb: 'Private AI on open models, paid in USDG on Robinhood Chain.',
   /** Public profile URLs. Leave empty to hide the link in the footer. */
   social: {
-    x: '' as string,
+    x: 'https://x.com/noxseadotai' as string,
+    xHandle: '@noxseadotai' as string,
     telegram: '' as string,
   },
 } as const;

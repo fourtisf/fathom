@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    ...(brand.social.xHandle ? { site: brand.social.xHandle, creator: brand.social.xHandle } : {}),
     title: brand.title,
     description: brand.socialDescription,
   },
@@ -41,6 +42,7 @@ const jsonLd = {
   operatingSystem: 'Web',
   description: 'Private AI on open models with wallet login and pay-per-message pricing.',
   offers: { '@type': 'Offer', price: '1', priceCurrency: 'USD', description: '100 credits' },
+  sameAs: [brand.social.x, brand.social.telegram].filter(Boolean),
 };
 
 // Runs before paint: enables JS-only entrance animations, then starts them on the next frames.
