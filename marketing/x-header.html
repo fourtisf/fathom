@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Geist;src:url(Geist-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:GMono;src:url(GeistMono-Variable.woff2) format('woff2');font-weight:100 900}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1500px;height:500px;overflow:hidden;background:#060A1C}
+body{font-family:Geist,sans-serif;color:#F1F2FF;-webkit-font-smoothing:antialiased}
+.st{position:absolute;inset:0;overflow:hidden;background:linear-gradient(180deg,#080C26,#060A1C 55%,#04071A)}
+.b{position:absolute;border-radius:50%}
+.grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.grad{background:linear-gradient(135deg,#C9BFFF 0%,#7B84FF 45%,#4FD6EC 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{font:500 15px GMono,monospace;letter-spacing:.26em;text-transform:uppercase;color:#B7BCDD;display:inline-flex;gap:12px;align-items:center}
+.tag i{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#8B7CFF,#38C8E8);box-shadow:0 0 14px #7B84FF}
+h1{font-weight:600;letter-spacing:-.045em;line-height:.98}
+.pills{display:flex;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;font-size:16px;color:#C9CDEA;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.dot{width:7px;height:7px;border-radius:50%;background:#3DDC97;box-shadow:0 0 10px #3DDC97}
+.ring{position:absolute;border-radius:50%;border:1.5px solid rgba(143,160,255,.5)}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);box-shadow:0 40px 100px -20px rgba(2,4,18,.95),inset 0 1px 0 rgba(255,255,255,.09);border-radius:22px}
+.v{display:none}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="dg" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#C9BFFF"/><stop offset=".45" stop-color="#7B84FF"/><stop offset="1" stop-color="#43D9EF"/></linearGradient>
+<radialGradient id="ds" cx="24" cy="25" r="16" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".45"/><stop offset=".6" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<clipPath id="dc"><path clip-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/></clipPath>
+<symbol id="drop" viewBox="0 0 64 64"><path fill="url(#dg)" fill-rule="evenodd" d="M32 8.5S14.5 27.2 14.5 39.2C14.5 48.6 22.3 56 32 56s17.5-7.4 17.5-16.8C49.5 27.2 32 8.5 32 8.5zM29.4 40.03A4.8 4.8 0 1 1 34.6 40.03L36.1 47.5H27.9Z"/><g clip-path="url(#dc)"><circle cx="24" cy="25" r="16" fill="url(#ds)"/></g></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<!-- A: Tagline + ripple mark -->
+<div class="st v" id="a">
+  <div class="b" style="width:900px;height:900px;left:900px;top:-300px;background:radial-gradient(closest-side,rgba(91,108,255,.38),transparent)"></div>
+  <div class="b" style="width:800px;height:600px;left:150px;top:-260px;background:radial-gradient(closest-side,rgba(139,124,255,.18),transparent)"></div>
+  <div class="b" style="width:700px;height:500px;left:1050px;top:250px;background:radial-gradient(closest-side,rgba(56,200,232,.2),transparent)"></div>
+  <div id="ringsA"></div>
+  <svg style="position:absolute;left:1120px;top:95px;filter:drop-shadow(0 0 50px rgba(107,120,255,.6))" width="300" height="300"><use href="#drop"/></svg>
+  <div style="position:absolute;left:420px;top:108px">
+    <div class="tag"><i></i>noxsea.xyz</div>
+    <h1 style="font-size:78px;margin-top:22px">Private AI that<br><span class="grad">forgets you.</span></h1>
+    <div class="pills" style="margin-top:30px">
+      <span class="pill"><span class="dot"></span>Zero prompt logs</span><span class="pill">Open-weight models</span><span class="pill">Wallet sign-in</span>
+    </div>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<!-- B: Statement + app glimpse -->
+<div class="st v" id="b">
+  <div class="b" style="width:1000px;height:800px;left:-200px;top:-300px;background:radial-gradient(closest-side,rgba(91,108,255,.32),transparent)"></div>
+  <div class="b" style="width:900px;height:700px;left:900px;top:-150px;background:radial-gradient(closest-side,rgba(139,124,255,.26),transparent)"></div>
+  <div class="b" style="width:700px;height:500px;left:500px;top:300px;background:radial-gradient(closest-side,rgba(56,200,232,.14),transparent)"></div>
+  <div style="position:absolute;left:905px;top:78px;width:560px;height:400px;perspective:1600px">
+    <div class="glass" style="position:absolute;inset:0;transform:rotateY(-16deg) rotateX(6deg);transform-origin:0 50%;overflow:hidden">
+      <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.08)"><i style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15)"></i><i style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15)"></i><i style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15)"></i>
+        <span style="margin-left:90px;font:400 14px GMono;color:#8187AE;display:flex;align-items:center;gap:6px"><svg width="13" height="13" style="color:#3DDC97"><use href="#lock"/></svg>noxsea.xyz/app</span></div>
+      <div style="padding:24px 28px">
+        <div style="display:flex;gap:10px"><span class="pill" style="font-size:14px;padding:7px 12px"><span class="dot"></span>DeepSeek V3.1</span><span class="pill" style="font-size:14px;padding:7px 12px">Burn in 24h</span></div>
+        <div style="margin:22px 0 0 auto;width:fit-content;max-width:300px;padding:12px 18px;border-radius:18px 18px 6px 18px;background:linear-gradient(135deg,rgba(139,124,255,.32),rgba(91,108,255,.22));border:1px solid rgba(179,168,255,.25);font-size:17px">What is Robinhood Chain?</div>
+        <div style="display:flex;gap:12px;margin-top:18px"><div style="flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)"><svg width="20" height="20"><use href="#drop"/></svg></div>
+          <div style="font-size:17px;line-height:1.6;color:#E6E8FA;max-width:420px">Robinhood Chain is an Ethereum Layer 2 built on Arbitrum technology, designed for tokenized assets and onchain finance.</div></div>
+      </div>
+    </div>
+    <div class="pill" style="position:absolute;left:300px;top:-16px;background:rgba(10,16,40,.92);border-color:rgba(61,220,151,.35);color:#CFF7E6;font-size:15px;box-shadow:0 14px 40px -8px rgba(0,0,0,.8)"><svg width="14" height="14" style="color:#3DDC97"><use href="#lock"/></svg>Not logged · Not stored</div>
+  </div>
+  <div style="position:absolute;left:420px;top:112px;width:460px">
+    <div class="tag"><i></i>Private AI</div>
+    <h1 style="font-size:66px;margin-top:22px">Your questions<br><span class="grad">stay yours.</span></h1>
+    <div style="font-size:19px;color:#B7BCDD;margin-top:22px;line-height:1.5">Open models. Zero prompt logs.<br>Sign in with your wallet.</div>
+  </div>
+  <div class="grain"></div>
+</div>
+<script>
+const v = new URLSearchParams(location.search).get('v') || 'a';
+document.getElementById(v).style.display = 'block';
+const R = document.getElementById('ringsA');
+R.innerHTML = [190, 270, 360, 460, 570, 690].map((r, i) => `<div class="ring" style="left:${1270 - r}px;top:${262 - r}px;width:${2 * r}px;height:${2 * r}px;opacity:${(0.55 - i * 0.08).toFixed(2)}"></div>`).join('');
+</script></body></html>
