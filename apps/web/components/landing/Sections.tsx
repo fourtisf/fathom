@@ -102,10 +102,15 @@ const TOOLS: { title: string; text: string; icon: string; tag?: string; link?: [
     link: ['/scan', 'Scan a token free, no wallet →'],
   },
   {
+    title: 'Talk to it, privately',
+    text: "Speak instead of typing. Whisper runs inside your browser to turn your voice into text, so audio never leaves your device, and answers can be read aloud by your device's own voice.",
+    icon: 'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M5 11a7 7 0 0 0 14 0 M12 18v3',
+    tag: 'New',
+  },
+  {
     title: 'Live prices',
     text: 'Ask about BTC, ETH, SOL or any $TICKER and the answer uses live CoinGecko data instead of old training data.',
     icon: 'M3 17l6-6 4 4 8-8 M15 7h6v6',
-    tag: 'New',
   },
   {
     title: 'Read PDFs privately',

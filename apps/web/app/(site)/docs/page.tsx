@@ -152,6 +152,12 @@ export default function DocsPage() {
             a minute, 150 a day). We don&apos;t keep a record of who scanned what, and a link like <code>/scan?address=0x…</code> opens a scan directly.
           </li>
           <li>
+            <b>Voice.</b> Tap the microphone to speak instead of typing. Your speech is turned into text by Whisper running
+            inside your browser (a one-time download from {brand.name}; after that it loads from your browser cache),
+            so audio never leaves your device. Check the text, then send it. After a spoken question the answer is read aloud
+            by your device&apos;s own voice; turn that off under Settings → Voice, or press Listen on any answer.
+          </li>
+          <li>
             <b>Live prices.</b> Ask a price question (&ldquo;ETH price today?&rdquo;, &ldquo;$PEPE price?&rdquo;) and the answer
             uses live CoinGecko data, shown above the reply. No button needed.
           </li>

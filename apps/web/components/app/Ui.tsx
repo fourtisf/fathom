@@ -36,6 +36,12 @@ interface Ui {
   setActiveChatId(id: string | null): void;
   /** Chat mode (persona id), kept in this browser. */
   persona: string;
+  /** Read answers aloud after a voice message (on-device voice), kept in this browser. */
+  voiceRead: boolean;
+  setVoiceRead: (on: boolean) => void;
+  /** Spoken language for voice input: 'auto' (browser language) or a Whisper code. Kept in this browser. */
+  voiceLang: string;
+  setVoiceLang: (code: string) => void;
   setPersona(id: string): void;
   /** Chat prepared for the share modal. */
   shareDoc: ShareDoc | null;
@@ -70,13 +76,29 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [shareDoc, setShareDoc] = useState<ShareDoc | null>(null);
   const [persona, setPersonaState] = useState<string>(DEFAULT_PERSONA);
+  const [voiceRead, setVoiceReadState] = useState(true);
+  const [voiceLang, setVoiceLangState] = useState('auto');
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('nx_persona');
       if (saved && getPersona(saved)) setPersonaState(saved);
+      if (localStorage.getItem('nx_voice_read') === 'off') setVoiceReadState(false);
+      setVoiceLangState(localStorage.getItem('nx_voice_lang') ?? 'auto');
     } catch {}
   }, []);
+  const setVoiceLang = (code: string) => {
+    setVoiceLangState(code);
+    try {
+      localStorage.setItem('nx_voice_lang', code);
+    } catch {}
+  };
+  const setVoiceRead = (on: boolean) => {
+    setVoiceReadState(on);
+    try {
+      localStorage.setItem('nx_voice_read', on ? 'on' : 'off');
+    } catch {}
+  };
   const setPersona = (id: string) => {
     if (!getPersona(id)) return;
     setPersonaState(id);
@@ -159,6 +181,10 @@ export function UiProvider({ children }: { children: ReactNode }) {
         newKey,
         setNewKey,
         persona,
+        voiceRead,
+        setVoiceRead,
+        voiceLang,
+        setVoiceLang,
         setPersona,
         shareDoc,
         setShareDoc,

@@ -29,6 +29,8 @@ load_env() {
 
 pnpm --filter @fathom/db exec prisma generate
 pnpm --filter @fathom/db exec prisma migrate deploy
+# On-device voice input: fetch the Whisper model once (skipped when already there; never fails the deploy).
+node apps/web/scripts/fetch-voice-model.mjs
 pnpm build
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save

@@ -10,6 +10,7 @@ import { fmt2, fmtCost } from './Shell';
 import { useSession } from './Session';
 import { useHistory } from './History';
 import { useUi, type Burn } from './Ui';
+import { VOICE_LANGS, resolveVoiceLang } from '@/lib/voice/languages';
 
 const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
@@ -352,7 +353,7 @@ function SharedLinks() {
 
 export function SettingsPage() {
   const { me, config, signOut, refreshMe } = useSession();
-  const { openModal, setWebSearch, setBurn } = useUi();
+  const { openModal, setWebSearch, setBurn, voiceRead, setVoiceRead, voiceLang, setVoiceLang } = useUi();
   const history = useHistory();
   const toast = useToast();
   if (!me) return <NeedWallet title="Settings" sub="Control what's kept, and for how long." />;
@@ -452,6 +453,42 @@ export function SettingsPage() {
             />
           </div>
         )}
+      </div>
+      <div className="glass panel">
+        <h3>Voice</h3>
+        <div className="setrow">
+          <div>
+            <h4>Spoken language</h4>
+            <p>The language you speak in. Voice is turned into text on your device by Whisper, so audio never leaves your browser.</p>
+          </div>
+          <select className="sel" value={voiceLang} onChange={(e) => setVoiceLang(e.target.value)} aria-label="Spoken language">
+            <option value="auto">Same as browser ({VOICE_LANGS.find((l) => l.code === resolveVoiceLang('auto'))?.name ?? 'English'})</option>
+            {VOICE_LANGS.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="setrow">
+          <div>
+            <h4>Read answers aloud</h4>
+            <p>
+              After you speak a question, the answer is read aloud. Speech is turned into text on your device and the
+              answer is read by your device&apos;s own voice: no audio or text goes to a speech service. Kept in this browser.
+            </p>
+          </div>
+          <button
+            className="tog"
+            role="switch"
+            aria-checked={voiceRead}
+            aria-label="Read answers aloud"
+            onClick={() => {
+              setVoiceRead(!voiceRead);
+              toast(voiceRead ? 'Answers to voice messages stay silent' : 'Answers to voice messages are read aloud');
+            }}
+          />
+        </div>
       </div>
       <SharedLinks />
       <div className="glass panel">

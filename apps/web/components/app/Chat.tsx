@@ -17,6 +17,8 @@ import { Markdown } from './Markdown';
 import { fmt2, fmtCost } from './Shell';
 import { short, useSession } from './Session';
 import { useUi } from './Ui';
+import { ListenButton, MicButton, VoiceBar, readAloud, stopReading, useVoiceInput } from './Voice';
+import { resolveVoiceLang } from '@/lib/voice/languages';
 
 type SlotState = {
   model: string;
@@ -106,8 +108,9 @@ function AiIcon() {
   );
 }
 
-function Actions({ slot, onRegenerate }: { slot: SlotState; onRegenerate?: () => void }) {
+function Actions({ slot, onRegenerate, listenKey }: { slot: SlotState; onRegenerate?: () => void; listenKey?: string }) {
   const copy = useCopy();
+  const toast = useToast();
   return (
     <div className="meta">
       <span>{modelName(slot.model)}</span>
@@ -123,6 +126,9 @@ function Actions({ slot, onRegenerate }: { slot: SlotState; onRegenerate?: () =>
         <button className="mact" onClick={onRegenerate} aria-label="Regenerate answer">
           Regenerate
         </button>
+      )}
+      {listenKey && slot.status === 'done' && (
+        <ListenButton id={listenKey} text={slot.text} onUnavailable={() => toast('No on-device voice on this device, so nothing is read aloud.', true)} />
       )}
     </div>
   );
@@ -426,6 +432,9 @@ export function Chat() {
       slots: models.map((m) => ({ model: m, text: '', status: 'waiting' as const })),
       search: web ? 'running' : undefined,
     });
+    voiceTurn.current = voiceDraft.current && !retry && !regenerate && opts.text === undefined ? aiId : null;
+    voiceDraft.current = false;
+    stopReading();
     setBusy(true);
     const ctrl = new AbortController();
     abort.current = ctrl;
@@ -540,6 +549,43 @@ export function Chat() {
       if (fileInp.current) fileInp.current.value = '';
     }
   }
+
+  // Voice input: transcribed on this device, then placed in the composer for the user to check and send.
+  const voiceDraft = useRef(false);
+  const voiceTurn = useRef<number | null>(null);
+  const onVoiceText = useCallback((text: string) => {
+    voiceDraft.current = true;
+    setInput((prev) => {
+      const next = prev.trim() ? `${prev.trimEnd()} ${text}` : text;
+      setTimeout(() => {
+        inp.current?.focus();
+        inp.current?.setSelectionRange(next.length, next.length);
+      }, 0);
+      return next;
+    });
+  }, []);
+  // The message box grows with its text, however the text got there (typing, voice, prefill).
+  useEffect(() => {
+    const el = inp.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [input, me]);
+  const onVoiceError = useCallback((msg: string) => toast(msg, true), [toast]);
+  const voice = useVoiceInput(onVoiceText, onVoiceError, resolveVoiceLang(ui.voiceLang));
+
+  // After a voice message, read the answer aloud (Settings: on by default; on-device voices only).
+  useEffect(() => {
+    const id = voiceTurn.current;
+    if (id === null) return;
+    const t = turns.find((x) => x.id === id);
+    if (!t || t.kind !== 'ai') return;
+    const s = t.slots[0];
+    if (!s || s.status === 'waiting' || s.status === 'streaming') return;
+    voiceTurn.current = null;
+    if (s.status === 'done' && ui.voiceRead) void readAloud(`${id}:0`, s.text);
+  }, [turns]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => stopReading(), []);
 
   function fillComposer(text: string) {
     setInput(text);
@@ -759,7 +805,7 @@ export function Chat() {
                   {search}
                   {tools}
                   <SlotBody slot={s} big />
-                  {(s.status === 'done' || s.status === 'stopped') && <Actions slot={s} onRegenerate={regen} />}
+                  {(s.status === 'done' || s.status === 'stopped') && <Actions slot={s} onRegenerate={regen} listenKey={`${t.id}:0`} />}
                 </div>
               </div>
             );
@@ -778,6 +824,13 @@ export function Chat() {
       </div>
       <div className="composer-wrap">
         <div className="composer">
+          <VoiceBar
+            state={voice.state}
+            level={voice.level}
+            lang={resolveVoiceLang(ui.voiceLang)}
+            onStop={() => void voice.stop()}
+            onCancel={voice.cancel}
+          />
           {(attached || reading) && (
             <div className="attach-row">
               {reading ? (
@@ -810,6 +863,7 @@ export function Chat() {
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
+              if (!e.target.value.trim()) voiceDraft.current = false;
               e.target.style.height = 'auto';
               e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
             }}
@@ -899,6 +953,9 @@ export function Chat() {
               </button>
             )}
             <span className="sp" />
+            {voice.available && !busy && voice.state.s !== 'recording' && (
+              <MicButton onClick={() => void voice.start()} disabled={voice.state.s === 'working'} />
+            )}
             {busy ? (
               <button className="send" aria-label="Stop answering" onClick={() => abort.current?.abort()}>
                 <svg viewBox="0 0 24 24" fill="currentColor">
