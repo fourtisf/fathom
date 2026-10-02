@@ -1,6 +1,6 @@
 /**
- * Image generation through any OpenAI-compatible /images/generations endpoint (open-weight models such
- * as FLUX, configured by env). Prompts and images are user content: never logged or stored. When the
+ * Image generation through any OpenAI-compatible /images/generations endpoint, or OpenRouter's /images
+ * API (open-weight models such as FLUX.2 Klein, configured by env). Prompts and images are user content: never logged or stored. When the
  * provider answers with a URL, our server downloads the image, so the user's IP never reaches its CDN.
  */
 
@@ -10,6 +10,8 @@ export const IMAGE_SIZES: Record<ImageSize, { w: number; h: number }> = {
   landscape: { w: 1344, h: 768 },
   portrait: { w: 768, h: 1344 },
 };
+/** OpenRouter's /images takes an aspect ratio instead of pixels. */
+const ASPECT: Record<ImageSize, string> = { square: '1:1', landscape: '16:9', portrait: '9:16' };
 const TIMEOUT_MS = 90_000;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
@@ -50,6 +52,9 @@ export interface ImageGeneratorOptions {
   /** 'size' sends size:"WxH" (OpenAI style); 'wh' sends width/height (Together style). */
   sizeStyle?: 'size' | 'wh';
   extraBody?: Record<string, unknown>;
+  /** 'openrouter': POST /images with aspect_ratio (OpenRouter's image API). Default: /images/generations. */
+  api?: 'openai' | 'openrouter';
+  headers?: Record<string, string>;
   fetch?: typeof fetch;
 }
 
@@ -64,17 +69,26 @@ export function createImageGenerator(opts: ImageGeneratorOptions): ImageGenerato
       const sig = AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]);
       let res: Response;
       try {
-        res = await doFetch(`${base}/images/generations`, {
+        const openrouter = opts.api === 'openrouter';
+        res = await doFetch(`${base}/${openrouter ? 'images' : 'images/generations'}`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...(opts.apiKey ? { authorization: `Bearer ${opts.apiKey}` } : {}) },
-          body: JSON.stringify({
-            ...opts.extraBody,
-            model: opts.model,
-            prompt,
-            n: 1,
-            response_format: 'b64_json',
-            ...(opts.sizeStyle === 'wh' ? { width: w, height: h } : { size: `${w}x${h}` }),
-          }),
+          headers: {
+            'content-type': 'application/json',
+            ...opts.headers,
+            ...(opts.apiKey ? { authorization: `Bearer ${opts.apiKey}` } : {}),
+          },
+          body: JSON.stringify(
+            openrouter
+              ? { ...opts.extraBody, model: opts.model, prompt, n: 1, aspect_ratio: ASPECT[size] }
+              : {
+                  ...opts.extraBody,
+                  model: opts.model,
+                  prompt,
+                  n: 1,
+                  response_format: 'b64_json',
+                  ...(opts.sizeStyle === 'wh' ? { width: w, height: h } : { size: `${w}x${h}` }),
+                },
+          ),
           signal: sig,
         });
       } catch {

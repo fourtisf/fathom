@@ -10,6 +10,7 @@ import {
   parseQueries,
   planMessages,
   researchSystemMessage,
+  RESEARCH_MAX_QUERIES,
   RESEARCH_PLAN_MAX_TOKENS,
   RESEARCH_REPORT_MAX_TOKENS,
   RESEARCH_RESULTS_PER_QUERY,
@@ -124,10 +125,11 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
     : (job.params?.max_tokens ?? DEFAULT_OUTPUT_RESERVE_TOKENS);
   // Research reads the conversation twice (plan + report) plus about 4k tokens of sources.
   const estInput = (estimateTokens(chars(baseMessages)) + images * IMAGE_TOKENS) * (job.research ? 2 : 1) + (job.research ? 4000 : 0);
-  const needed = running.reduce(
-    (sum, s) => sum + tokenCostMicro(s.info!, estInput, reserve, { webSearch: !!search, discountBps }),
-    0n,
-  );
+  // A fixed fee per search (paid search backends), charged once per request, never per compared model.
+  const searchFee = search?.feeMicro ?? 0n;
+  const needed =
+    running.reduce((sum, s) => sum + tokenCostMicro(s.info!, estInput, reserve, { webSearch: !!search, discountBps }), 0n) +
+    searchFee * (job.research ? BigInt(RESEARCH_MAX_QUERIES) : 1n);
   const user = await prisma.user.findUnique({ where: { id: job.userId }, select: { creditsMicro: true } });
   if (!user || user.creditsMicro < needed) {
     const e = errorBody(402, 'Not enough credits. Top up to continue. You were not charged.', 'insufficient_credits');
@@ -140,6 +142,8 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
       if (!signal.aborted) emit(ev);
     };
 
+    // The search fee rides on the first answer that finishes; if every model fails, nothing is charged.
+    let feeDue = 0n;
     const runSlot = async (slot: number, info: Priced, messages: ChatMessage[], searched: boolean) => {
       const model = info.id;
       let outChars = 0;
@@ -176,7 +180,9 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
       // Finished: charge by actual tokens. If the provider sent no usage, estimate from characters.
       const tokens = usage ?? { input: estimateTokens(chars(messages)) + imageCount(messages) * IMAGE_TOKENS, output: estimateTokens(outChars) };
       if (!usage) log.info({ model }, 'provider reported no usage; charged a character estimate');
-      const cost = tokenCostMicro(info, tokens.input, tokens.output, { webSearch: searched, discountBps });
+      const fee = feeDue;
+      feeDue = 0n;
+      const cost = tokenCostMicro(info, tokens.input, tokens.output, { webSearch: searched, discountBps }) + fee;
       let charged = 0n;
       try {
         charged = await chargeUsage(prisma, job.userId, model, cost);
@@ -205,6 +211,7 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
       const lastUser = [...job.messages].reverse().find((m) => m.role === 'user')?.content ?? '';
       const now = new Date();
       let tokens = { input: 0, output: 0 };
+      let searches = 0;
       try {
         send({ type: 'research', stage: 'planning' });
         const plan = await collect(model, planMessages(lastUser, now), RESEARCH_PLAN_MAX_TOKENS);
@@ -214,7 +221,10 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
 
         const perQuery = await Promise.all(
           queries.map((q) =>
-            search!.search(q, signal, RESEARCH_RESULTS_PER_QUERY).catch((err: unknown): SearchResult[] => {
+            search!.search(q, signal, RESEARCH_RESULTS_PER_QUERY).then((r) => {
+              if (r.length) searches++;
+              return r;
+            }).catch((err: unknown): SearchResult[] => {
               if (!signal.aborted) log.warn({ err }, 'research search failed');
               return [];
             }),
@@ -243,8 +253,9 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
         return;
       }
       health.reportSuccess(model);
-      // Only a finished report is charged: planning + writing tokens, at the web search rate.
-      const cost = tokenCostMicro(info, tokens.input, tokens.output, { webSearch: true, discountBps });
+      // Only a finished report is charged: planning + writing tokens at the web search rate, plus the
+      // fee for each search that returned results.
+      const cost = tokenCostMicro(info, tokens.input, tokens.output, { webSearch: true, discountBps }) + searchFee * BigInt(searches);
       let charged = 0n;
       try {
         charged = await chargeUsage(prisma, job.userId, model, cost);
@@ -274,6 +285,7 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
           const results = await search.search(query, signal);
           if (results.length > 0) {
             searched = true;
+            feeDue = searchFee;
             const sys: ChatMessage = { role: 'system', content: searchSystemMessage(results) };
             messages = job.systemPrompt ? [baseMessages[0]!, sys, ...job.messages] : [sys, ...job.messages];
           }

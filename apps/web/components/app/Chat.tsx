@@ -1285,7 +1285,10 @@ export function Chat() {
                         }}
                       >
                         <b>Web search</b>
-                        <span>Answers with fresh results, searched from our servers</span>
+                        <span>
+                          Fresh results, searched from our servers
+                          {config.searchCredits ? ` · +${config.searchCredits} cr per search` : ''}
+                        </span>
                       </button>
                     )}
                     {config?.research && (
@@ -1301,7 +1304,10 @@ export function Chat() {
                         }}
                       >
                         <b>Deep Research</b>
-                        <span>Several searches and a report with sources</span>
+                        <span>
+                          A report with sources
+                          {config.searchCredits ? ` · +${config.searchCredits} cr per search (up to 4)` : ''}
+                        </span>
                       </button>
                     )}
                     {config?.imageGen && (

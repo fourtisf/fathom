@@ -64,8 +64,9 @@ export default function PrivacyPage() {
             server, not from your device.
           </li>
           <li>
-            <b>Brave Search</b> receives web search queries when you use web search. Queries are sent from our server, so
-            your IP address is never shared.
+            <b>Web search and image providers</b> receive only what those tools need: web search queries go through
+            OpenRouter&apos;s web search (Exa) or Brave Search, and image prompts go through OpenRouter to the image model.
+            They are sent from our server, so your IP address is never shared.
           </li>
           <li>
             <b>Cloudflare Turnstile</b>, if enabled, checks that sign-ins come from a person. It runs in your browser and

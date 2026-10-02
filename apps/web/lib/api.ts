@@ -21,6 +21,8 @@ export interface AppConfig {
   vision?: boolean;
   /** Deep Research (needs web search on the server). */
   research?: boolean;
+  /** Fixed credits per web search on top of tokens. */
+  searchCredits?: number;
   /** Contract audits from verified source code. */
   audit?: boolean;
   /** Image generation is configured; credits per image. */

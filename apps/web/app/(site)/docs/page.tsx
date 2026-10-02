@@ -229,7 +229,8 @@ export default function DocsPage() {
           </li>
           <li>
             <code>web_search</code>: <code>true</code> lets the model search the web. Searches are sent from our server, so
-            your IP is never shared with the search engine. It costs ×1.6.
+            your IP is never shared with the search engine. It costs ×1.6, plus a small fixed fee per search when the
+            search provider charges per search (shown in the app&apos;s Tools menu).
           </li>
         </ul>
         <pre><code>{EXTRAS}</code></pre>

@@ -11,7 +11,7 @@ import { fastifyLoggingOptions, type LoggerOptions } from './logger';
 import { registerErrorHandlers } from './errors';
 import { createProvider, type InferenceProvider } from './inference';
 import { ModelHealth } from './inference/health';
-import { createBraveSearch, type WebSearch } from './search';
+import { createBraveSearch, createOpenRouterSearch, type WebSearch } from './search';
 import type { AppContext } from './context';
 import { healthRoutes } from './routes/health';
 import { modelRoutes } from './routes/models';
@@ -106,10 +106,25 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   const prisma =
     opts.prisma ?? (env.databaseUrl ? new PrismaClient({ datasourceUrl: env.databaseUrl }) : new PrismaClient());
   const provider = opts.provider !== undefined ? opts.provider : createProvider(env.inference);
-  const rawSearch =
-    opts.search !== undefined ? opts.search : env.braveSearchApiKey ? createBraveSearch(env.braveSearchApiKey, fetch, env.braveSearchUrl ?? undefined) : null;
+  const ws = env.webSearch;
+  const rawSearch: WebSearch | null =
+    opts.search !== undefined
+      ? opts.search
+      : ws?.kind === 'brave' && env.braveSearchApiKey
+        ? { ...createBraveSearch(env.braveSearchApiKey, fetch, env.braveSearchUrl ?? undefined), feeMicro: ws.feeMicro }
+        : ws?.kind === 'openrouter'
+          ? createOpenRouterSearch({
+              baseUrl: ws.baseUrl,
+              apiKey: ws.apiKey,
+              model: ws.model,
+              feeMicro: ws.feeMicro,
+              extraBody: ws.extraBody,
+              headers: ws.headers,
+            })
+          : null;
   const searchHealth = new SearchHealth();
   const search: WebSearch | null = rawSearch && {
+    feeMicro: rawSearch.feeMicro ?? 0n,
     async search(query, signal, count) {
       try {
         const r = await rawSearch.search(query, signal, count);
@@ -169,6 +184,8 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
               costMicro: env.images.costMicro,
               sizeStyle: env.images.sizeStyle,
               extraBody: env.images.extraBody,
+              api: env.images.kind === 'openrouter' ? 'openrouter' : 'openai',
+              headers: env.images.kind === 'openrouter' ? (env.inference?.headers ?? {}) : {},
             });
 
   const ctx: AppContext = {

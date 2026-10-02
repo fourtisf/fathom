@@ -71,8 +71,13 @@ export interface CryptoEnv {
   etherscanKey: string | null;
 }
 
+export type WebSearchEnv =
+  | { kind: 'brave'; feeMicro: bigint }
+  | { kind: 'openrouter'; baseUrl: string; apiKey: string; model: string; feeMicro: bigint; extraBody: Record<string, unknown>; headers: Record<string, string> };
+
 export interface ImagesEnv {
-  kind: 'mock' | 'openai-compatible';
+  /** openrouter: OpenRouter's /images API with the inference key (no IMAGE_* needed). */
+  kind: 'mock' | 'openai-compatible' | 'openrouter';
   baseUrl: string | null;
   apiKey: string | null;
   model: string;
@@ -100,6 +105,8 @@ export interface ApiEnv {
   braveSearchApiKey: string | null;
   /** Override for the Brave Search API base (proxy or test server). */
   braveSearchUrl: string | null;
+  /** Which web search runs (Brave key first, else OpenRouter's web plugin with the inference key). */
+  webSearch: WebSearchEnv | null;
   crypto: CryptoEnv;
   welcome: WelcomeEnv;
   turnstile: TurnstileEnv;
@@ -170,11 +177,57 @@ function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): Crypt
   };
 }
 
+function parseImageExtra(env: Env, warnings: string[]): Record<string, unknown> {
+  const raw = opt(env, 'IMAGE_EXTRA_BODY');
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+    return parsed as Record<string, unknown>;
+  } catch {
+    warnings.push('IMAGE_EXTRA_BODY is not a JSON object; ignored');
+    return {};
+  }
+}
+
+/** OpenRouter with a key: search and images can use it without any other account. */
+const openRouterOf = (inf: InferenceEnv | null) => (inf?.preset === 'openrouter' && inf.apiKey && inf.baseUrl ? inf : null);
+
+/** Default OpenRouter image model: open weights (Apache 2.0), about $0.014 per image. */
+export const OPENROUTER_IMAGE_MODEL = 'black-forest-labs/flux.2-klein-4b';
+/** OpenRouter web search costs about $0.004 per result; 5 results ≈ 2 credits. */
+const OPENROUTER_SEARCH_CREDITS = 2;
+
 /**
- * Image generation: IMAGE_PROVIDER=mock for local dev, or IMAGE_API_URL + IMAGE_MODEL (+ IMAGE_API_KEY)
- * for any OpenAI-compatible /images/generations endpoint. IMAGE_CREDITS sets the price per image.
+ * Web search: BRAVE_SEARCH_API_KEY if set, else OpenRouter's web plugin when INFERENCE_PROVIDER=openrouter.
+ * WEB_SEARCH=off turns it off. SEARCH_CREDITS sets a fixed fee per search (default 0 Brave, 2 OpenRouter).
  */
-function loadImages(env: Env, warnings: string[]): ImagesEnv | null {
+function loadWebSearch(env: Env, inference: InferenceEnv | null, warnings: string[]): WebSearchEnv | null {
+  if (opt(env, 'WEB_SEARCH') === 'off') return null;
+  const fee = (dflt: number): bigint => {
+    const raw = opt(env, 'SEARCH_CREDITS');
+    const n = raw === null ? dflt : Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 100) {
+      warnings.push('SEARCH_CREDITS must be a number between 0 and 100; using the default');
+      return BigInt(Math.round(dflt * 1_000_000));
+    }
+    return BigInt(Math.round(n * 1_000_000));
+  };
+  if (opt(env, 'BRAVE_SEARCH_API_KEY')) return { kind: 'brave', feeMicro: fee(0) };
+  const or = openRouterOf(inference);
+  if (!or) return null;
+  const model = opt(env, 'SEARCH_MODEL') ?? or.modelMap['deepseek-v4-flash'] ?? Object.values(or.modelMap)[0];
+  if (!model) return null;
+  return { kind: 'openrouter', baseUrl: or.baseUrl!, apiKey: or.apiKey!, model, feeMicro: fee(OPENROUTER_SEARCH_CREDITS), extraBody: or.extraBody, headers: or.headers };
+}
+
+/**
+ * Image generation: IMAGE_PROVIDER=mock for local dev, IMAGE_API_URL + IMAGE_MODEL (+ IMAGE_API_KEY)
+ * for any OpenAI-compatible /images/generations endpoint, or (with neither) OpenRouter's image API when
+ * INFERENCE_PROVIDER=openrouter. IMAGE_PROVIDER=off turns it off. IMAGE_CREDITS sets the price per image.
+ */
+function loadImages(env: Env, inference: InferenceEnv | null, warnings: string[]): ImagesEnv | null {
+  if (opt(env, 'IMAGE_PROVIDER') === 'off') return null;
   const credits = Number(opt(env, 'IMAGE_CREDITS') ?? '3');
   if (!Number.isFinite(credits) || credits <= 0 || credits > 1000) {
     warnings.push('IMAGE_CREDITS must be a number between 0 and 1000; image generation disabled');
@@ -186,22 +239,24 @@ function loadImages(env: Env, warnings: string[]): ImagesEnv | null {
   }
   const baseUrl = optUrl(env, 'IMAGE_API_URL', warnings);
   const model = opt(env, 'IMAGE_MODEL');
+  const or = openRouterOf(inference);
+  if (!baseUrl && or) {
+    return {
+      kind: 'openrouter',
+      baseUrl: or.baseUrl,
+      apiKey: or.apiKey,
+      model: model ?? OPENROUTER_IMAGE_MODEL,
+      costMicro,
+      sizeStyle: 'size',
+      extraBody: parseImageExtra(env, warnings),
+    };
+  }
   if (!baseUrl && !model) return null;
   if (!baseUrl || !model) {
     warnings.push('Image generation needs both IMAGE_API_URL and IMAGE_MODEL; disabled');
     return null;
   }
-  let extraBody: Record<string, unknown> = {};
-  const raw = opt(env, 'IMAGE_EXTRA_BODY');
-  if (raw) {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
-      extraBody = parsed as Record<string, unknown>;
-    } catch {
-      warnings.push('IMAGE_EXTRA_BODY is not a JSON object; ignored');
-    }
-  }
+  const extraBody = parseImageExtra(env, warnings);
   return {
     kind: 'openai-compatible',
     baseUrl,
@@ -357,6 +412,7 @@ export function loadEnv(env: Env = process.env): ApiEnv {
   if (!databaseUrl) warnings.push('DATABASE_URL not set; sign-in, credits and chat are unavailable');
 
   const chain = loadChain(env, warnings);
+  const inference = loadInference(env, warnings);
   return {
     port,
     host: env.API_HOST?.trim() || '127.0.0.1',
@@ -368,13 +424,14 @@ export function loadEnv(env: Env = process.env): ApiEnv {
     siweDomain,
     cookieSecure,
     chain,
-    inference: loadInference(env, warnings),
+    inference,
     braveSearchApiKey: opt(env, 'BRAVE_SEARCH_API_KEY'),
     braveSearchUrl: optUrl(env, 'BRAVE_SEARCH_API_URL', warnings),
+    webSearch: loadWebSearch(env, inference, warnings),
     crypto: loadCrypto(env, chain, warnings),
     welcome: loadWelcome(env, warnings),
     turnstile: { siteKey: opt(env, 'TURNSTILE_SITE_KEY'), secretKey: opt(env, 'TURNSTILE_SECRET_KEY') },
-    images: loadImages(env, warnings),
+    images: loadImages(env, inference, warnings),
     topup: loadTopup(env, chain, warnings),
     warnings,
   };
