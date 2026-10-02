@@ -2,6 +2,9 @@
 const API_URL = process.env.API_INTERNAL_URL ?? 'http://127.0.0.1:4200';
 
 const nextConfig = {
+  // Deploys build into a separate folder and swap it in at the end, so the running site never serves
+  // pages whose CSS/JS were deleted mid-build (see deploy/deploy.sh).
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   poweredByHeader: false,
   // Streaming chat (SSE) is proxied through the /api rewrite; compression would buffer it. Nginx can gzip instead.

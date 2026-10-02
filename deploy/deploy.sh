@@ -31,7 +31,16 @@ pnpm --filter @fathom/db exec prisma generate
 pnpm --filter @fathom/db exec prisma migrate deploy
 # On-device voice input: fetch the Whisper model once (skipped when already there; never fails the deploy).
 node apps/web/scripts/fetch-voice-model.mjs
-pnpm build
+# Everything except the web app builds in place (the running API keeps its loaded bundle).
+pnpm --filter './packages/*' --filter './apps/api' build
+# The web app builds into a separate folder while the live site keeps serving the old build, then the
+# two are swapped right before the reload. Building over .next in place deletes the CSS/JS the live
+# pages point to, and anyone visiting mid-deploy gets an unstyled page.
+rm -rf apps/web/.next-new
+NEXT_DIST_DIR=.next-new pnpm --filter @fathom/web build
+rm -rf apps/web/.next-prev
+if [ -d apps/web/.next ]; then mv apps/web/.next apps/web/.next-prev; fi
+mv apps/web/.next-new apps/web/.next
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 
