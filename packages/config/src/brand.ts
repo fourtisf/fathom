@@ -32,7 +32,7 @@ export const brand = {
   exportFileName: 'noxsea-export.json',
   title: 'Noxsea · Private AI that forgets you',
   description:
-    'Private AI on open models. Compare models side by side, set chats to self-destruct, sign in with your wallet and pay per message with USDG on Robinhood Chain. Prompts are never logged.',
+    'Private AI on the best open models, plus Claude Opus 5.5. Compare models side by side, set chats to self-destruct, sign in with your wallet and pay per message with USDG on Robinhood Chain. Prompts are never logged.',
   socialDescription: 'Open models, zero prompt logs. Wallet login, pay per message in USDG.',
   footerBlurb: 'Private AI on open models, paid in USDG on Robinhood Chain.',
   /** Public profile URLs. Leave empty to hide the link in the footer. */

@@ -130,6 +130,7 @@ describe('presets and model health', () => {
       'deepseek-v4-pro': 'unavailable', // listed by the provider but not mapped: never silently served
       'qwen3.5-397b': 'unavailable',
       'kimi-k3': 'ok',
+      'claude-opus-5.5': 'unavailable',
       'deepseek-v4-flash': 'unavailable', // mapped but not listed
     });
 
@@ -138,12 +139,13 @@ describe('presets and model health', () => {
     expect(extended.warnings.some((w) => w.includes('bogus'))).toBe(true);
   });
 
-  it('openrouter maps all four chat models plus vision and sends the no-retention provider policy', async () => {
+  it('openrouter maps every chat model (incl. the premium closed one) plus vision and sends the no-retention provider policy', async () => {
     const env = loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_API_KEY: 'k' });
     const inf = env.inference!;
     expect(inf.baseUrl).toBe('https://openrouter.ai/api/v1');
-    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v4-flash', 'deepseek-v4-pro', 'kimi-k3', 'qwen3.5-397b', 'qwen3.5-vision']);
+    expect(Object.keys(inf.modelMap).sort()).toEqual(['claude-opus-5.5', 'deepseek-v4-flash', 'deepseek-v4-pro', 'kimi-k3', 'qwen3.5-397b', 'qwen3.5-vision']);
     expect(inf.modelMap['qwen3.5-vision']).toBe('qwen/qwen3.5-397b-a17b');
+    expect(inf.modelMap['claude-opus-5.5']).toBe('anthropic/claude-opus-5.5');
     // VISION_MODEL swaps the provider's vision model; empty turns vision off.
     expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: 'google/gemma-4-31b-it' }).inference!.modelMap['qwen3.5-vision']).toBe('google/gemma-4-31b-it');
     expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: '' }).inference!.modelMap['qwen3.5-vision']).toBeUndefined();

@@ -55,6 +55,7 @@ export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
       'kimi-k3': 'moonshotai/kimi-k3',
       'qwen3.5-397b': 'qwen/qwen3.5-397b-a17b',
       'deepseek-v4-flash': 'deepseek/deepseek-v4-flash',
+      'claude-opus-5.5': 'anthropic/claude-opus-5.5',
       // Vision (images in chat): Qwen3.5 reads images natively. Override with VISION_MODEL.
       'qwen3.5-vision': 'qwen/qwen3.5-397b-a17b',
     },

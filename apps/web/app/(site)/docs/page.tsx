@@ -12,7 +12,7 @@ import {
 
 export const metadata: Metadata = {
   title: 'API docs',
-  description: `${brand.name} API: an OpenAI-compatible API for open models, with no prompt logging and pay-per-token credits.`,
+  description: `${brand.name} API: an OpenAI-compatible API for open models and Claude Opus 5.5, with no prompt logging and pay-per-token credits.`,
   alternates: { canonical: '/docs' },
 };
 
@@ -110,7 +110,7 @@ export default function DocsPage() {
       <article className="prose">
         <h1>{brand.name} API</h1>
         <p className="lead">
-          An OpenAI-compatible API for open-weight models. {brand.name} never logs or stores your prompts or completions,
+          An OpenAI-compatible API for the latest open-weight models, plus Claude Opus 5.5 as a premium closed model. {brand.name} never logs or stores your prompts or completions,
           and you pay per token from the same credit balance as the app.
         </p>
 

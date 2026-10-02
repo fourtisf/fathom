@@ -1,4 +1,4 @@
-export type ModelId = 'deepseek-v4-pro' | 'kimi-k3' | 'qwen3.5-397b' | 'deepseek-v4-flash';
+export type ModelId = 'deepseek-v4-pro' | 'kimi-k3' | 'qwen3.5-397b' | 'deepseek-v4-flash' | 'claude-opus-5.5';
 
 export interface ModelInfo {
   id: ModelId;
@@ -20,14 +20,17 @@ export interface ModelInfo {
   avgMessageCredits: number;
   /** Small label in the model menu and Models table. */
   badge?: string;
-  /** Month the open weights were released (for "latest model" copy). */
+  /** Month the model was released (for "latest model" copy). */
   released: string;
+  /** Weights published (open-weight). False for the premium closed model, so copy never calls it open. */
+  openWeights: boolean;
   /** Fallback letter tile, and the lab whose logo the web app shows. */
-  logo: { letter: string; color: string; brand?: 'deepseek' | 'kimi' | 'qwen' };
+  logo: { letter: string; color: string; brand?: 'deepseek' | 'kimi' | 'qwen' | 'claude' };
 }
 
 /**
- * Open-weight models, all served through the inference provider's zero-retention routing.
+ * Open-weight models plus one premium closed model (Claude Opus 5.5), all served through the
+ * inference provider's zero-retention routing.
  * Prices are credits per 1M tokens (1 credit = $0.01), about 2× the provider's list price so
  * failed and unbilled requests are covered. Re-check provider prices when changing models.
  */
@@ -45,6 +48,7 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 0.64,
     badge: 'Default',
     released: '2026-04',
+    openWeights: true,
     logo: { letter: 'D', color: '#4D6BFE', brand: 'deepseek' },
   },
   {
@@ -60,6 +64,7 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 1.6,
     badge: 'New',
     released: '2026-07',
+    openWeights: true,
     logo: { letter: 'K', color: '#16181F', brand: 'kimi' },
   },
   {
@@ -74,6 +79,7 @@ export const MODELS: readonly ModelInfo[] = [
     outputPerM: 470,
     avgMessageCredits: 0.57,
     released: '2026-02',
+    openWeights: true,
     logo: { letter: 'Q', color: '#7C3AED', brand: 'qwen' },
   },
   {
@@ -89,9 +95,30 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 0.12,
     badge: 'Fast',
     released: '2026-04',
+    openWeights: true,
     logo: { letter: 'F', color: '#0EA5E9', brand: 'deepseek' },
   },
+  {
+    // Premium and closed (not open-weight): listed last and labeled as such everywhere.
+    id: 'claude-opus-5.5',
+    name: 'Claude Opus 5.5',
+    short: 'Opus 5.5',
+    menuBlurb: 'Hardest tasks · by Anthropic',
+    tableBlurb: 'Premium closed model',
+    bestFor: ['Hardest tasks', 'Writing'],
+    contextK: 1024,
+    inputPerM: 800,
+    outputPerM: 4000,
+    avgMessageCredits: 5.2,
+    badge: 'Premium',
+    released: '2026-09',
+    openWeights: false,
+    logo: { letter: 'C', color: '#D97757', brand: 'claude' },
+  },
 ] as const;
+
+/** The open-weight models (copy that says "open" counts only these). */
+export const OPEN_MODELS = MODELS.filter((m) => m.openWeights);
 
 export const DEFAULT_MODEL: ModelId = 'deepseek-v4-pro';
 /** Model offered by the "Switch to … and retry" action when the default is degraded. */

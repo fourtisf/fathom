@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OPEN_MODELS,
   MODELS,
   LEGACY_MODELS,
   VISION_MODEL,
@@ -34,6 +35,13 @@ describe('model catalog', () => {
       // The UI estimate matches the stated average message (3k tokens in, 700 out).
       expect(Math.abs(m.avgMessageCredits - (3000 * m.inputPerM + 700 * m.outputPerM) / 1e6)).toBeLessThan(0.03);
     }
+  });
+  it('labels the premium closed model and never counts it as open-weight', () => {
+    const closed = MODELS.filter((m) => !m.openWeights);
+    expect(closed.map((m) => m.id)).toEqual(['claude-opus-5.5']);
+    expect(closed[0]!.badge).toBe('Premium');
+    expect(OPEN_MODELS.every((m) => m.openWeights)).toBe(true);
+    expect(OPEN_MODELS.length + closed.length).toBe(MODELS.length);
   });
 });
 

@@ -18,7 +18,7 @@ export default function TermsPage() {
 
         <h2>1. The service</h2>
         <p>
-          {brand.name} gives you access to open-weight AI models through a web app and an OpenAI-compatible API. Models are
+          {brand.name} gives you access to AI models (open-weight models and a premium closed model) through a web app and an OpenAI-compatible API. Models are
           run by third-party inference providers that we select. You pay with prepaid credits bought in USDG on Robinhood
           Chain.
         </p>

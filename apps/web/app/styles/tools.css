@@ -249,6 +249,7 @@
 .mm-badge{font-style:normal;font:600 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:999px;color:#D6D0FF;background:rgba(139,124,255,.16);border:1px solid rgba(179,168,255,.35)}
 .mm-badge.b-new{color:#BFF5DC;background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.35)}
 .mm-badge.b-fast{color:#B9F1FA;background:rgba(56,200,232,.12);border-color:rgba(56,200,232,.35)}
+.mm-badge.b-premium{color:#FFD9C7;background:linear-gradient(90deg,rgba(217,119,87,.22),rgba(240,180,120,.14));border-color:rgba(217,119,87,.5)}
 .models .mn b{display:flex;align-items:center;gap:8px}
 @media (max-width:600px){.modelmenu{width:min(330px,calc(100vw - 32px))}}
 

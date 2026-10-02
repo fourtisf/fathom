@@ -347,8 +347,8 @@ export function Models() {
       <div className="wrap">
         <SectionHead
           tag="Models"
-          title="The best open models, in one place"
-          sub="The newest open-weight models of 2026, not one company's black box. Prices in credits per million tokens."
+          title="The best models, in one place"
+          sub="The newest open-weight models of 2026, plus Claude Opus 5.5 as a premium closed option. Prices in credits per million tokens."
         />
         <div className="models rv">
           <div className="mh"><span>Model</span><span>Best for</span><span>Context</span><span>Input</span><span>Output</span></div>

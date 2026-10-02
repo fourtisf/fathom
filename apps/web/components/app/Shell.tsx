@@ -62,7 +62,7 @@ function ModelMenu() {
         <Icon name="down" />
       </button>
       <div className={`menu modelmenu${open ? ' open' : ''}`} role="menu" style={{ top: 44, left: 0 }}>
-        <div className="mm-hd">Latest open models · zero logs</div>
+        <div className="mm-hd">Latest models · zero logs</div>
         {MODELS.map((m) => (
           <button
             key={m.id}
@@ -82,7 +82,7 @@ function ModelMenu() {
               </b>
               <small>{m.menuBlurb}</small>
               <small className="mm-meta">
-                {contextLabel(m.contextK)} context · open weights
+                {contextLabel(m.contextK)} context · {m.openWeights ? 'open weights' : 'closed model'}
               </small>
             </span>
             <em>{estimateMessageCredits(m).toFixed(2)} cr</em>

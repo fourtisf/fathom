@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getModel, MODELS, WELCOME_CREDITS } from '@fathom/config';
+import { getModel, OPEN_MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { Icon } from '../Icon';
 import { ContractAddress } from '../site/ContractAddress';
 import { ModelLogo } from '../ModelLogo';
@@ -23,7 +23,7 @@ export function Hero() {
           The AI that <span className="grad">forgets you</span> on purpose
         </h1>
         <p className="lede up" style={{ transitionDelay: '.16s' }}>
-          Compare the best open models side by side, with zero prompt logs. Sign in with your wallet, pay per message in
+          Compare the best open models (plus Claude Opus 5.5) side by side, with zero prompt logs. Sign in with your wallet, pay per message in
           USDG, and set chats to self-destruct.
         </p>
         <div className="ctas up" style={{ transitionDelay: '.24s' }}>
@@ -121,7 +121,7 @@ export function Logos() {
       <div className="wrap">
         <div className="stats-strip" aria-label="Noxsea at a glance">
           <div><b>0</b><span>prompts logged or stored</span></div>
-          <div><b>{MODELS.length}</b><span>open-weight models</span></div>
+          <div><b>{OPEN_MODELS.length}</b><span>open-weight models + Opus 5.5</span></div>
           <div><b>{WELCOME_CREDITS}</b><span>free credits to start</span></div>
           <div><b>1</b><span>signature to sign in</span></div>
         </div>

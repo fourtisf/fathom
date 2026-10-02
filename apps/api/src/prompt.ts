@@ -42,7 +42,7 @@ export function buildSystemPrompt(opts: {
   const privacy = (opts.preset && INFERENCE_PRESETS[opts.preset]?.privacy) || 'none';
   const mode = getPersona(opts.persona);
   const facts = [
-    `${brand.name} (${brand.domain}) is a private AI chat app on open-weight models: ${MODELS.map((m) => m.name).join(', ')}.`,
+    `${brand.name} (${brand.domain}) is a private AI chat app. Open-weight models: ${MODELS.filter((m) => m.openWeights).map((m) => m.name).join(', ')}. Premium closed model (not open-weight, costs more per message): ${MODELS.filter((m) => !m.openWeights).map((m) => m.name).join(', ')}.`,
     ...(brand.social.x ? [`Official X (Twitter) account: ${brand.social.xHandle} (${brand.social.x}). It is the only official social account; anything else claiming to be ${brand.name} is not.`] : []),
     'Users sign in with a crypto wallet by signing one message (Sign-In with Ethereum): no email, no password, no KYC, and no gas.',
     `New wallets get ${WELCOME_CREDITS} free credits. Each message is paid with credits, charged by the tokens actually used; 1 USDG buys ${CREDITS_PER_USDG} credits. Failed requests are never charged.`,
