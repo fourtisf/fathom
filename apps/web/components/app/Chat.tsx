@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { brand, FALLBACK_MODEL, MAX_CHAT_IMAGES, MODELS, PERSONAS, VISION_MODEL, getPersona, WELCOME_CREDITS, modelDisplayName } from '@fathom/config';
 import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
@@ -101,6 +102,51 @@ const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean 
       'How do I safely bridge ETH or stablecoins from Ethereum to a layer 2 like Robinhood Chain? List the steps, how to verify the official bridge, and the common mistakes that lose funds.',
   },
 ];
+
+const svg = (d: ReactNode) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {d}
+  </svg>
+);
+const FEAT_ICONS: Record<'vision' | 'research' | 'image' | 'audit' | 'voice' | 'memory', ReactNode> = {
+  vision: svg(
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="M21 16l-5-5-8 8" />
+    </>,
+  ),
+  research: svg(
+    <>
+      <circle cx="11" cy="11" r="6" />
+      <path d="M20 20l-4.2-4.2M8.5 11h5M11 8.5v5" />
+    </>,
+  ),
+  image: svg(
+    <>
+      <path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" />
+      <path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+    </>,
+  ),
+  audit: svg(
+    <>
+      <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
+      <path d="M9 12l2 2 4-4" />
+    </>,
+  ),
+  voice: svg(
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0014 0M12 18v3" />
+    </>,
+  ),
+  memory: svg(
+    <>
+      <rect x="5" y="10" width="14" height="10" rx="2.5" />
+      <path d="M8 10V7a4 4 0 018 0v3M12 14v2" />
+    </>,
+  ),
+};
 
 const modelName = modelDisplayName;
 const IMAGE_DEFAULT_QUESTION = 'What is in this image? Point out anything important.';
@@ -213,6 +259,7 @@ const DOC_DEFAULT_QUESTION = 'Summarize this document and point out anything ris
 
 export function Chat() {
   const { me, config, lastSignIn, clearLastSignIn, setCredits, refreshMe } = useSession();
+  const router = useRouter();
   const ui = useUi();
   const history = useHistory();
   const toast = useToast();
@@ -980,6 +1027,84 @@ export function Chat() {
               </div>
             );
           })}
+          {!turns.some((t) => t.kind === 'you') && !busy && (
+            <div className="feats" aria-label="AI tools">
+              <div className="feats-hd">
+                <span className="nb">New</span>AI tools · as private as your chats
+              </div>
+              <div className="feats-grid">
+                {(
+                  [
+                    {
+                      key: 'vision',
+                      title: 'Read a screenshot',
+                      sub: 'Charts, tweets, docs',
+                      on: Boolean(config?.vision),
+                      go: () => fileInp.current?.click(),
+                    },
+                    {
+                      key: 'research',
+                      title: 'Deep Research',
+                      sub: 'Report with sources',
+                      on: Boolean(config?.research),
+                      go: () => {
+                        setResearch(true);
+                        setImageMode(false);
+                        toast('Deep Research on: ask your question');
+                        inp.current?.focus();
+                      },
+                    },
+                    {
+                      key: 'image',
+                      title: 'Create an image',
+                      sub: config?.imageGen ? `Memes, logos · ${config.imageGen.credits} cr` : 'Memes, banners, logos',
+                      on: Boolean(config?.imageGen),
+                      go: () => {
+                        setImageMode(true);
+                        setResearch(false);
+                        toast('Image mode: describe the image you want');
+                        inp.current?.focus();
+                      },
+                    },
+                    {
+                      key: 'audit',
+                      title: 'Audit a contract',
+                      sub: 'Verified source code',
+                      on: Boolean(config?.audit),
+                      go: () => {
+                        setImageMode(false);
+                        fillComposer(AUDIT_PREFIX);
+                        toast('Paste a contract address (0x…). Add “on Base” to pick the chain.');
+                      },
+                    },
+                    {
+                      key: 'voice',
+                      title: 'Talk to it',
+                      sub: 'Speak, don’t type',
+                      on: voice.available,
+                      go: () => void voice.start(),
+                    },
+                    {
+                      key: 'memory',
+                      title: 'Private memory',
+                      sub: 'Encrypted, only you',
+                      on: Boolean(me),
+                      go: () => router.push('/app/settings#memory'),
+                    },
+                  ] as const
+                ).map((f) => (
+                  <button key={f.key} className={`feat f-${f.key}`} disabled={!f.on} onClick={f.go} title={f.on ? undefined : 'Coming soon'}>
+                    <i aria-hidden="true">{FEAT_ICONS[f.key]}</i>
+                    <b>
+                      {f.title}
+                      {!f.on && <em>soon</em>}
+                    </b>
+                    <span>{f.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {!turns.some((t) => t.kind === 'you') && !busy && (
             <div className="suggest" aria-label="Suggested questions">
               {SUGGESTIONS.filter((x) => !x.fill || config?.tokenCheck).map((x) => (

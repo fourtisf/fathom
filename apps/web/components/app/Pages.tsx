@@ -527,8 +527,12 @@ function MemoryPanel() {
   const toast = useToast();
   const [draft, setDraft] = useState('');
   const fail = () => toast("Couldn't update your memory. Try again.", true);
+  // Opened from the chat's "Private memory" card: bring this panel into view.
+  useEffect(() => {
+    if (window.location.hash === '#memory') document.getElementById('memory')?.scrollIntoView({ block: 'start' });
+  }, []);
   return (
-    <div className="glass panel">
+    <div className="glass panel" id="memory">
       <h3>Memory</h3>
       <div className="setrow">
         <div>
