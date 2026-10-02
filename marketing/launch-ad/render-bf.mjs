@@ -30,7 +30,17 @@ const target = await browser.waitForTarget((t) => t._targetId === targetId);
 const page = await target.page();
 await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
 const cdp = await page.createCDPSession();
-const frame = (fmt) => cdp.send('HeadlessExperimental.beginFrame', fmt ? { screenshot: { format: fmt } } : {});
+const frame = async (fmt) => {
+  // A frame can still be in flight right after loading; wait for it instead of failing.
+  for (let i = 0; ; i++) {
+    try {
+      return await cdp.send('HeadlessExperimental.beginFrame', fmt ? { screenshot: { format: fmt } } : {});
+    } catch (err) {
+      if (i > 50 || !String(err?.message).includes('Another frame is pending')) throw err;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
+};
 // Drive frames while the page loads (nothing paints without them).
 let pumping = true;
 const pump = (async () => { while (pumping) { await frame().catch(() => null); await new Promise((r) => setTimeout(r, 20)); } })();
