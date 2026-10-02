@@ -378,7 +378,9 @@
       html = you(QD) + `<div class="m ai">${IC}<div class="b">${pre1}${r.html}${r.done ? meta('DeepSeek V4 Pro', '0.92') : ''}</div></div>`;
       if (r.done) bal = 16.55;
     } else if (t >= T.MOD0) {
+      // The model menu is the subject; an empty thread keeps the caption clear of the suggestion cards.
       bal = 16.55;
+      html = '';
     }
     setThread(html);
     setPre(preH);
