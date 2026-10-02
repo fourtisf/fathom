@@ -22,3 +22,20 @@ To re-render:
 2. `node capture.mjs .` captures `landing.html`, `scan.html`, `gate.html` and `app.html` (signs in with a
    throwaway test wallet; needs playwright + viem). Copy `sprite.html` and `frame.css` from `../features-ad`.
 3. `python3 music.py && ./render-all.sh` (Playwright/Chromium, ffmpeg, numpy). Output: `noxsea-launch-ad-hd.mp4`.
+
+## v2: premium cut (`noxsea-launch-ad-premium.mp4`)
+
+`timeline2.js` + `overlay2.css` + `music2.py` + `render-all2.sh`:
+
+- Cinematic intro: the sealed-drop logo draws itself, blooms, sends out ripple rings; the wordmark resolves
+  letter by letter, then "Now live" and the tagline. Rising bubbles behind everything.
+- Film finish: vignette, deterministic film grain, soft light leaks, light sweeps on every transition.
+- Pages float as glossy windows with a moving sheen; scene changes dissolve through a dip instead of whips.
+- Editorial captions (chapter number, word-by-word title, subtitle) on a soft left gradient.
+- Soundtrack: logo-synced chimes, a sub drop into the site, kick-ducked pads, a bigger ending.
+
+Rendering: `render-bf.mjs` drives Chrome's headless shell frame by frame with
+`HeadlessExperimental.beginFrame` (needs `puppeteer-core`; uses Playwright's `chromium_headless_shell`), so every
+frame is captured fully composited. Keep camera transforms 2D: a `perspective()`/`rotateX/Y` tilt makes Chrome
+depth-sort the page plane against the overlay, and parts of the page then draw over captions on some frames
+(this is what flickered in v1 during the landing zoom).

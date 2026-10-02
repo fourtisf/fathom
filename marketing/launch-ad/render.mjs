@@ -10,11 +10,11 @@ const inner = (f) => read(f).replace('<head>', `<head><base href="${ORIGIN}"><st
 const PAGES = { fL: inner('landing.html'), fG: inner('gate.html'), fS: inner('scan.html'), fA: inner('app.html') };
 const head = read('app.html').match(/<link rel="stylesheet"[^>]*>/g).join('');
 const htmlClass = read('app.html').match(/<html[^>]*class="([^"]*)"/)[1];
-const stage = `<!DOCTYPE html><html lang="en" class="${htmlClass}"><head><meta charset="utf-8"><base href="${ORIGIN}">${head}<style>${read('overlay.css')}</style></head>
+const stage = `<!DOCTYPE html><html lang="en" class="${htmlClass}"><head><meta charset="utf-8"><base href="${ORIGIN}">${head}<style>${read(process.env.OV ?? 'overlay.css')}</style></head>
 <body>${read('sprite.html')}<div id="adbg"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
 ${Object.keys(PAGES).map((k) => `<div class="cam" id="cam${k[1]}"><iframe id="${k}" scrolling="no"></iframe></div>`).join('')}</body></html>`;
 
-const b = await chromium.launch({ args: ['--force-color-profile=srgb'] });
+const b = await chromium.launch({ args: ['--force-color-profile=srgb', '--run-all-compositor-stages-before-draw', '--disable-checker-imaging', '--disable-threaded-animation', '--disable-threaded-scrolling', '--disable-partial-raster', '--disable-zero-copy'] });
 const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
 await p.goto(ORIGIN + 'robots.txt'); // same origin as the app, so next/font files load
 await p.setContent(stage, { waitUntil: 'networkidle' });
@@ -28,18 +28,20 @@ await p.evaluate(async (pages) => {
   }));
 }, PAGES);
 await p.waitForTimeout(500);
-await p.addScriptTag({ content: read('timeline.js') });
+await p.addScriptTag({ content: read(process.env.TL ?? 'timeline.js') });
+if (process.env.RAF_WAIT) await p.evaluate((n) => { window.RAF_WAIT = n; }, +process.env.RAF_WAIT);
 const cdp = await p.context().newCDPSession(p);
 const shot = async (t, fmt = 'png') => {
   await p.evaluate((t) => window.render(t), t);
   // Let the compositor raster newly exposed areas (big scroll jumps) before the capture.
-  await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-  return Buffer.from((await cdp.send('Page.captureScreenshot', { format: fmt, ...(fmt === 'jpeg' ? { quality: 82 } : {}), optimizeForSpeed: true })).data, 'base64');
+  await p.evaluate(() => new Promise((r) => { let n = 0; const f = () => (++n >= Number(window.RAF_WAIT || 2) ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }));
+  return Buffer.from((await cdp.send('Page.captureScreenshot', { format: fmt, ...(fmt === 'jpeg' ? { quality: 82 } : {}), optimizeForSpeed: !process.env.SLOWCAP })).data, 'base64');
 };
 if (mode === 'still') {
   const ts = a2.split(',').map(Number);
   const imgs = [];
-  for (const t of ts) imgs.push(await shot(t, 'jpeg'));
+  // Warm up on nearby frames, as a video render would, so big jumps in time are fully painted.
+  for (const t of ts) { for (const d of [0.3, 0.2, 0.1]) await shot(Math.max(0, t - d), 'jpeg'); imgs.push(await shot(t, 'jpeg')); }
   const s = await b.newPage({ viewport: { width: 1920, height: Math.ceil(ts.length / 2) * 556 } });
   await s.setContent(`<body style="margin:0;background:#222;display:grid;grid-template-columns:1fr 1fr;gap:6px;font:20px sans-serif;color:#fff">${imgs.map((im, i) => `<div style="position:relative"><img style="width:957px;display:block" src="data:image/jpeg;base64,${im.toString('base64')}"><b style="position:absolute;left:8px;top:6px;background:#000a;padding:2px 8px">${ts[i]}s</b></div>`).join('')}</body>`);
   await s.screenshot({ path: a1, fullPage: true });
