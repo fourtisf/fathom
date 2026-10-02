@@ -1,0 +1,9 @@
+*.mp4
+*.wav
+*.png
+*.jpg
+*.log
+parts.txt
+node_modules
+app.html
+sprite.html
