@@ -13,4 +13,7 @@ printf "file 'q1.mp4'\nfile 'q2.mp4'\nfile 'q3.mp4'\nfile 'q4.mp4'\n" > parts2.t
 ffmpeg -hide_banner -loglevel error -y -f concat -safe 0 -i parts2.txt -c copy master2.mp4
 # X-ready HD: H.264 Main, 1080p30, AAC, faststart (a little more bitrate for the film grain)
 ffmpeg -hide_banner -loglevel error -y -i master2.mp4 -i music2.wav -map 0:v -map 1:a -vf fps=30 -c:v libx264 -profile:v main -level 4.0 -preset slow -crf 18 -maxrate 4.5M -bufsize 9M -pix_fmt yuv420p -c:a aac -b:a 192k -ar 48000 -shortest -movflags +faststart noxsea-launch-ad-premium.mp4
+# Smaller two-pass copy (~21 MB) for chat uploads and X's quicker processing.
+ffmpeg -hide_banner -loglevel error -y -i master2.mp4 -vf fps=30 -c:v libx264 -profile:v main -level 4.0 -preset slow -b:v 2650k -maxrate 4M -bufsize 8M -pix_fmt yuv420p -pass 1 -passlogfile p2 -an -f mp4 /dev/null
+ffmpeg -hide_banner -loglevel error -y -i master2.mp4 -i music2.wav -map 0:v -map 1:a -vf fps=30 -c:v libx264 -profile:v main -level 4.0 -preset slow -b:v 2650k -maxrate 4M -bufsize 8M -pix_fmt yuv420p -pass 2 -passlogfile p2 -c:a aac -b:a 160k -ar 48000 -shortest -movflags +faststart noxsea-launch-ad-premium-x.mp4
 echo ALLDONE
