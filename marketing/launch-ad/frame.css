@@ -1,0 +1,3 @@
+*,*::before,*::after{transition:none!important;caret-color:transparent}
+html,body{overflow:hidden!important}
+html{scroll-behavior:auto!important}
