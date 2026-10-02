@@ -264,7 +264,7 @@ describe.skipIf(!up)('chat with crypto tools', () => {
   const chat = async (content: string) => {
     const r = await signIn(app, nextIp());
     addresses.push(r.account.address.toLowerCase());
-    const res = await app.inject({ method: 'POST', url: '/chat', cookies: { nx_session: r.session! }, payload: { model: 'deepseek-v3.1', messages: [{ role: 'user', content }] } });
+    const res = await app.inject({ method: 'POST', url: '/chat', cookies: { nx_session: r.session! }, payload: { model: 'deepseek-v4-pro', messages: [{ role: 'user', content }] } });
     expect(res.statusCode).toBe(200);
     return sseEvents(res.body) as Ev[];
   };

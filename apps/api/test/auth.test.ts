@@ -182,8 +182,8 @@ describe.skipIf(!up)('SIWE auth (Postgres + Redis)', () => {
     const today = new Date(new Date().toISOString().slice(0, 10));
     await prisma.usageDaily.createMany({
       data: [
-        { userId: user.id, day: today, model: 'qwen3-235b', messages: 2, creditsMicro: 1_500_000n },
-        { userId: user.id, day: today, model: 'llama-3.3-70b', messages: 1, creditsMicro: 250_000n },
+        { userId: user.id, day: today, model: 'qwen3.5-397b', messages: 2, creditsMicro: 1_500_000n },
+        { userId: user.id, day: today, model: 'deepseek-v4-flash', messages: 1, creditsMicro: 250_000n },
       ],
     });
     const s = (await app.inject({ method: 'GET', url: '/credits/summary', cookies })).json();
@@ -192,8 +192,8 @@ describe.skipIf(!up)('SIWE auth (Postgres + Redis)', () => {
     expect(s.usage14[13]).toEqual({ day: today.toISOString().slice(0, 10), credits: 1.75 });
     expect(s.usage14[0].credits).toBe(0);
     expect(s.byModel).toEqual([
-      { model: 'qwen3-235b', credits: 1.5 },
-      { model: 'llama-3.3-70b', credits: 0.25 },
+      { model: 'qwen3.5-397b', credits: 1.5 },
+      { model: 'deepseek-v4-flash', credits: 0.25 },
     ]);
     expect(s.messagesMonth).toBe(3);
     expect(s.spentMonth).toBe(1.75);

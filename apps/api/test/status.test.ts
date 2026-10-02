@@ -70,7 +70,7 @@ describe.skipIf(!up)('status probes and GET /status', () => {
     const ok = await make({}, { provider: createMockProvider({ delayMs: 1 }) });
     expect(await probeServices(ok.ctx)).toEqual({ API: 'ok', Database: 'ok', 'AI models': 'ok' });
 
-    const partial = await make({}, { provider: createMockProvider({ unavailableModels: ['qwen3-235b'] }) });
+    const partial = await make({}, { provider: createMockProvider({ unavailableModels: ['qwen3.5-397b'] }) });
     expect((await probeServices(partial.ctx))['AI models']).toBe('warn');
 
     const none = await make({ INFERENCE_PROVIDER: '' });

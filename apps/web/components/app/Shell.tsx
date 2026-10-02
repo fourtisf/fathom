@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { brand, estimateMessageCredits, LOW_BALANCE_CREDITS, MODELS } from '@fathom/config';
+import { brand, contextLabel, estimateMessageCredits, LOW_BALANCE_CREDITS, MODELS } from '@fathom/config';
 import { Icon, type IconName } from '../Icon';
 import { LogoMark } from '../LogoMark';
 import { useCopy, useToast } from '../Toast';
@@ -59,7 +59,8 @@ function ModelMenu() {
         </span>
         <Icon name="down" />
       </button>
-      <div className={`menu${open ? ' open' : ''}`} role="menu" style={{ top: 44, left: 0 }}>
+      <div className={`menu modelmenu${open ? ' open' : ''}`} role="menu" style={{ top: 44, left: 0 }}>
+        <div className="mm-hd">Latest open models · zero logs</div>
         {MODELS.map((m) => (
           <button
             key={m.id}
@@ -70,11 +71,20 @@ function ModelMenu() {
               setOpen(false);
             }}
           >
-            <b>
-              {m.name}
-              {status(m.id) !== 'ok' && <em className="tag-deg">{status(m.id) === 'degraded' ? 'Degraded' : 'Unavailable'}</em>}
-            </b>
-            <small>{m.menuBlurb}</small>
+            <span className="mlogo sm" style={{ background: m.logo.color }} aria-hidden="true">
+              {m.logo.letter}
+            </span>
+            <span className="mm-t">
+              <b>
+                {m.name}
+                {m.badge && <i className={`mm-badge b-${m.badge.toLowerCase()}`}>{m.badge}</i>}
+                {status(m.id) !== 'ok' && <em className="tag-deg">{status(m.id) === 'degraded' ? 'Degraded' : 'Unavailable'}</em>}
+              </b>
+              <small>{m.menuBlurb}</small>
+              <small className="mm-meta">
+                {contextLabel(m.contextK)} context · open weights
+              </small>
+            </span>
             <em>{estimateMessageCredits(m).toFixed(2)} cr</em>
           </button>
         ))}

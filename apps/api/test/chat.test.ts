@@ -38,7 +38,7 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
 
   beforeAll(async () => {
     ({ app } = await buildCapturingApp('info', TEST_ENV, {
-      provider: createMockProvider({ delayMs: 1, failModels: ['llama-3.3-70b'] }),
+      provider: createMockProvider({ delayMs: 1, failModels: ['deepseek-v4-flash'] }),
       search,
     }));
   });
@@ -51,17 +51,17 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
   it('streams SSE and charges exactly the reported token usage', async () => {
     const { cookies, userId } = await newUser();
     const before = await balance(userId);
-    const res = await chat(cookies, { model: 'deepseek-v3.1', messages: msgs });
+    const res = await chat(cookies, { model: 'deepseek-v4-pro', messages: msgs });
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toMatch(/^text\/event-stream/);
     expect(res.headers['cache-control']).toBe('no-cache, no-transform');
     expect(res.headers['x-accel-buffering']).toBe('no');
     const events = sseEvents(res.body) as Ev[];
     const text = events.filter((e) => e.type === 'delta').map((e) => e.text).join('');
-    expect(text).toMatch(/^Mock reply from DeepSeek V3\.1: I received \d+ characters\.$/);
+    expect(text).toMatch(/^Mock reply from DeepSeek V4 Pro: I received \d+ characters\.$/);
     const done = events.find((e) => e.type === 'done')!;
-    expect(done).toMatchObject({ slot: 0, model: 'deepseek-v3.1' });
-    const cost = tokenCostMicro(getModel('deepseek-v3.1')!, done.tokens.input, done.tokens.output);
+    expect(done).toMatchObject({ slot: 0, model: 'deepseek-v4-pro' });
+    const cost = tokenCostMicro(getModel('deepseek-v4-pro')!, done.tokens.input, done.tokens.output);
     expect(cost).toBeGreaterThan(0n);
     expect(done.credits).toBe(Number(cost) / 1e6);
     const after = await balance(userId);
@@ -70,13 +70,13 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
 
     const usage = await prisma.usageDaily.findMany({ where: { userId } });
     expect(usage).toHaveLength(1);
-    expect(usage[0]).toMatchObject({ model: 'deepseek-v3.1', messages: 1, creditsMicro: cost });
+    expect(usage[0]).toMatchObject({ model: 'deepseek-v4-pro', messages: 1, creditsMicro: cost });
   });
 
   it('compare mode streams two slots and charges both', async () => {
     const { cookies, userId } = await newUser();
     const before = await balance(userId);
-    const res = await chat(cookies, { model: 'deepseek-v3.1', compareWith: 'qwen3-235b', messages: msgs });
+    const res = await chat(cookies, { model: 'deepseek-v4-pro', compareWith: 'qwen3.5-397b', messages: msgs });
     const events = sseEvents(res.body) as Ev[];
     const dones = events.filter((e) => e.type === 'done');
     expect(dones.map((d) => d.slot).sort()).toEqual([0, 1]);
@@ -92,7 +92,7 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
   it('provider failure yields an error event and no charge', async () => {
     const { cookies, userId } = await newUser();
     const before = await balance(userId);
-    const res = await chat(cookies, { model: 'llama-3.3-70b', messages: msgs });
+    const res = await chat(cookies, { model: 'deepseek-v4-flash', messages: msgs });
     expect(res.statusCode).toBe(200);
     const events = sseEvents(res.body) as Ev[];
     expect(events.find((e) => e.type === 'error')).toMatchObject({ slot: 0, code: 'provider_error' });
@@ -101,17 +101,17 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
     expect(await prisma.usageDaily.count({ where: { userId } })).toBe(0);
 
     // Compare with a failing second model: slot 0 is charged, slot 1 is not.
-    const cmp = sseEvents((await chat(cookies, { model: 'gpt-oss-120b', compareWith: 'llama-3.3-70b', messages: msgs })).body) as Ev[];
+    const cmp = sseEvents((await chat(cookies, { model: 'kimi-k3', compareWith: 'deepseek-v4-flash', messages: msgs })).body) as Ev[];
     expect(cmp.find((e) => e.type === 'error')).toMatchObject({ slot: 1 });
     const done = cmp.find((e) => e.type === 'done')!;
     expect(done.slot).toBe(0);
-    expect(before - (await balance(userId))).toBe(tokenCostMicro(getModel('gpt-oss-120b')!, done.tokens.input, done.tokens.output));
+    expect(before - (await balance(userId))).toBe(tokenCostMicro(getModel('kimi-k3')!, done.tokens.input, done.tokens.output));
   });
 
   it('402 before streaming when the balance is too low, without charging', async () => {
     const { cookies, userId } = await newUser();
     await prisma.user.update({ where: { id: userId }, data: { creditsMicro: 1000n } });
-    const res = await chat(cookies, { model: 'deepseek-v3.1', messages: msgs });
+    const res = await chat(cookies, { model: 'deepseek-v4-pro', messages: msgs });
     expect(res.statusCode).toBe(402);
     const err = res.json().error;
     expect(err.code).toBe('insufficient_credits');
@@ -125,12 +125,12 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
     const { cookies, userId } = await newUser();
     const before = await balance(userId);
     const n = searches;
-    const events = sseEvents((await chat(cookies, { model: 'qwen3-235b', webSearch: true, messages: msgs })).body) as Ev[];
+    const events = sseEvents((await chat(cookies, { model: 'qwen3.5-397b', webSearch: true, messages: msgs })).body) as Ev[];
     expect(searches).toBe(n + 1);
     expect(events[0]).toEqual({ type: 'search', status: 'running' });
     expect(events[1]).toEqual({ type: 'search', status: 'done', sources: 1 });
     const done = events.find((e) => e.type === 'done')!;
-    const cost = tokenCostMicro(getModel('qwen3-235b')!, done.tokens.input, done.tokens.output, { webSearch: true });
+    const cost = tokenCostMicro(getModel('qwen3.5-397b')!, done.tokens.input, done.tokens.output, { webSearch: true });
     expect(before - (await balance(userId))).toBe(cost);
   });
 
@@ -138,20 +138,20 @@ describe.skipIf(!up)('POST /chat (mock provider, Postgres + Redis)', () => {
     const { cookies } = await newUser();
     const bad = [
       {},
-      { model: 'deepseek-v3.1', messages: [] },
-      { model: 'deepseek-v3.1', messages: [{ role: 'assistant', content: 'hi' }] },
-      { model: 'deepseek-v3.1', messages: [{ role: 'system', content: 'hi' }] },
-      { model: 'deepseek-v3.1', compareWith: 'deepseek-v3.1', messages: msgs },
-      { model: 'deepseek-v3.1', persona: 'hacker', messages: msgs },
-      { model: 'deepseek-v3.1', persona: 7, messages: msgs },
-      { model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'x'.repeat(100_001) }] },
-      { model: 'deepseek-v3.1', messages: Array.from({ length: 51 }, () => ({ role: 'user', content: 'x' })) },
+      { model: 'deepseek-v4-pro', messages: [] },
+      { model: 'deepseek-v4-pro', messages: [{ role: 'assistant', content: 'hi' }] },
+      { model: 'deepseek-v4-pro', messages: [{ role: 'system', content: 'hi' }] },
+      { model: 'deepseek-v4-pro', compareWith: 'deepseek-v4-pro', messages: msgs },
+      { model: 'deepseek-v4-pro', persona: 'hacker', messages: msgs },
+      { model: 'deepseek-v4-pro', persona: 7, messages: msgs },
+      { model: 'deepseek-v4-pro', messages: [{ role: 'user', content: 'x'.repeat(100_001) }] },
+      { model: 'deepseek-v4-pro', messages: Array.from({ length: 51 }, () => ({ role: 'user', content: 'x' })) },
     ];
     for (const b of bad) expect((await chat(cookies, b)).statusCode).toBe(400);
     const res = await chat(cookies, { model: 'gpt-5', messages: msgs });
     expect(res.statusCode).toBe(503);
     expect(res.json().error).toMatchObject({ code: 'model_unavailable', model: 'gpt-5' });
-    expect((await app.inject({ method: 'POST', url: '/chat', payload: { model: 'deepseek-v3.1', messages: msgs } })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/chat', payload: { model: 'deepseek-v4-pro', messages: msgs } })).statusCode).toBe(401);
   });
 
   it('rate limits chat per user', async () => {
@@ -179,7 +179,7 @@ describe.skipIf(!up)('POST /chat edge cases', () => {
       addresses.push(r.account.address.toLowerCase());
       const cookies = { nx_session: r.session! };
       const events = sseEvents(
-        (await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'llama-3.3-70b', messages: [{ role: 'user', content: 'hi' }] } })).body,
+        (await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-flash', messages: [{ role: 'user', content: 'hi' }] } })).body,
       ) as Ev[];
       const done = events.find((e) => e.type === 'done')!;
       expect(done.tokens.input).toBeGreaterThan(0);
@@ -187,11 +187,11 @@ describe.skipIf(!up)('POST /chat edge cases', () => {
 
       // Web search requested but not configured: 'unavailable', no multiplier.
       const ws = sseEvents(
-        (await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'llama-3.3-70b', webSearch: true, messages: [{ role: 'user', content: 'hi' }] } })).body,
+        (await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-flash', webSearch: true, messages: [{ role: 'user', content: 'hi' }] } })).body,
       ) as Ev[];
       expect(ws[0]).toEqual({ type: 'search', status: 'unavailable' });
       const d2 = ws.find((e) => e.type === 'done')!;
-      expect(d2.credits * 1e6).toBe(Number(tokenCostMicro(getModel('llama-3.3-70b')!, d2.tokens.input, d2.tokens.output)));
+      expect(d2.credits * 1e6).toBe(Number(tokenCostMicro(getModel('deepseek-v4-flash')!, d2.tokens.input, d2.tokens.output)));
 
       const r2 = await signIn(noProvider, ip);
       addresses.push(r2.account.address.toLowerCase());
@@ -199,7 +199,7 @@ describe.skipIf(!up)('POST /chat edge cases', () => {
         method: 'POST',
         url: '/chat',
         cookies: { nx_session: r2.session! },
-        payload: { model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'hi' }] },
+        payload: { model: 'deepseek-v4-pro', messages: [{ role: 'user', content: 'hi' }] },
       });
       expect(res.statusCode).toBe(503);
       expect(res.json().error.code).toBe('model_unavailable');
@@ -237,7 +237,7 @@ describe.skipIf(!up)('POST /chat client abort', () => {
       const res = await fetch(`${url}/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', cookie: `nx_session=${r.session}` },
-        body: JSON.stringify({ model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'hi' }] }),
+        body: JSON.stringify({ model: 'deepseek-v4-pro', messages: [{ role: 'user', content: 'hi' }] }),
         signal: ac.signal,
       });
       const reader = res.body!.getReader();

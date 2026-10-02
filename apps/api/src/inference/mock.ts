@@ -1,4 +1,4 @@
-import { getModel } from '@fathom/config';
+import { getModel, MODELS, VISION_MODEL } from '@fathom/config';
 import { ProviderError, type ChatChunk, type ChatStreamRequest, type InferenceProvider } from './types';
 
 export interface MockProviderOptions {
@@ -40,7 +40,7 @@ export function createMockProvider(opts: MockProviderOptions = {}): InferencePro
     name: 'mock',
     providerModelId: (m) => m,
     async models() {
-      return ['deepseek-v3.1', 'qwen3-235b', 'gpt-oss-120b', 'llama-3.3-70b'].filter(
+      return [...MODELS.map((m) => m.id as string), VISION_MODEL.id].filter(
         (m) => !opts.unavailableModels?.includes(m),
       );
     },

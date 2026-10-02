@@ -23,11 +23,11 @@ describe('routes', () => {
     expect(body.object).toBe('list');
     expect(body.data.map((m: { id: string }) => m.id)).toEqual(MODELS.map((m) => m.id));
     expect(body.data[0]).toEqual({
-      id: 'deepseek-v3.1',
+      id: 'deepseek-v4-pro',
       object: 'model',
       owned_by: brand.name.toLowerCase(),
-      context_length: 128 * 1024,
-      pricing: { input_per_m: 40, output_per_m: 120 },
+      context_length: 1024 * 1024,
+      pricing: { input_per_m: 50, output_per_m: 700 },
       status: 'unavailable', // no inference provider configured
     });
   });
@@ -40,7 +40,7 @@ describe('routes', () => {
     expect(body.inference).toBe(false);
     expect(body.webSearch).toBe(false);
     expect(body.models).toHaveLength(MODELS.length);
-    expect(body.models[0]).toEqual({ id: 'deepseek-v3.1', name: 'DeepSeek V3.1', status: 'unavailable' });
+    expect(body.models[0]).toEqual({ id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', status: 'unavailable' });
   });
 
   it('protected routes need a session', async () => {

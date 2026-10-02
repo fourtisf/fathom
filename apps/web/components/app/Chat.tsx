@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { brand, FALLBACK_MODEL, MAX_CHAT_IMAGES, MODELS, PERSONAS, VISION_MODEL, getPersona, WELCOME_CREDITS } from '@fathom/config';
+import { brand, FALLBACK_MODEL, MAX_CHAT_IMAGES, MODELS, PERSONAS, VISION_MODEL, getPersona, WELCOME_CREDITS, modelDisplayName } from '@fathom/config';
 import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
 import type { ToolState } from '@/lib/crypto-types';
@@ -101,7 +101,7 @@ const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean 
   },
 ];
 
-const modelName = (id: string) => (id === VISION_MODEL.id ? VISION_MODEL.name : MODELS.find((m) => m.id === id)?.name ?? id);
+const modelName = modelDisplayName;
 const IMAGE_DEFAULT_QUESTION = 'What is in this image? Point out anything important.';
 const imagesIn = (t: { images?: string[]; imageCount?: number }) => t.images?.length ?? t.imageCount ?? 0;
 const RM = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -42,7 +42,7 @@ describe('openai-compatible provider', () => {
       name: 'test',
       baseUrl: 'https://p.example/v1/',
       apiKey: 'k',
-      modelMap: { 'llama-3.3-70b': 'llama3-3-70b' },
+      modelMap: { 'deepseek-v4-flash': 'llama3-3-70b' },
       fetch: (async (url: string, init: RequestInit) => {
         sent = { url, headers: init.headers, body: JSON.parse(init.body as string) };
         return sseResponse([
@@ -54,7 +54,7 @@ describe('openai-compatible provider', () => {
         ]);
       }) as typeof fetch,
     });
-    const out = await collect(provider.chatStream({ model: 'llama-3.3-70b', messages: msgs, signal }));
+    const out = await collect(provider.chatStream({ model: 'deepseek-v4-flash', messages: msgs, signal }));
     expect(out).toEqual([
       { type: 'delta', text: 'Hel' },
       { type: 'delta', text: 'lo' },
@@ -71,10 +71,10 @@ describe('openai-compatible provider', () => {
         name: 't',
         baseUrl: 'https://p.example/v1',
         apiKey: null,
-        modelMap: { 'gpt-oss-120b': 'gpt-oss-120b' },
+        modelMap: { 'kimi-k3': 'kimi-k3' },
         fetch: (async () => new Response(text, { status })) as unknown as typeof fetch,
       });
-    const code = async (status: number, text?: string, model = 'gpt-oss-120b') => {
+    const code = async (status: number, text?: string, model = 'kimi-k3') => {
       try {
         await collect(make(status, text).chatStream({ model, messages: msgs, signal }));
         return 'none';
@@ -87,7 +87,7 @@ describe('openai-compatible provider', () => {
     expect(await code(400, '{"error":{"message":"context too long"}}')).toBe('provider_error');
     expect(await code(429)).toBe('provider_error');
     expect(await code(502)).toBe('provider_error');
-    expect(await code(200, '', 'deepseek-v3.1')).toBe('model_unavailable'); // unmapped
+    expect(await code(200, '', 'deepseek-v4-pro')).toBe('model_unavailable'); // unmapped
   });
 
   it('times out waiting for the first byte', async () => {
@@ -95,12 +95,12 @@ describe('openai-compatible provider', () => {
       name: 't',
       baseUrl: 'https://p.example/v1',
       apiKey: null,
-      modelMap: { 'gpt-oss-120b': 'x' },
+      modelMap: { 'kimi-k3': 'x' },
       firstByteTimeoutMs: 30,
       fetch: ((_: string, init: RequestInit) =>
         new Promise((_r, reject) => init.signal!.addEventListener('abort', () => reject(new Error('aborted'))))) as typeof fetch,
     });
-    await expect(collect(provider.chatStream({ model: 'gpt-oss-120b', messages: msgs, signal }))).rejects.toMatchObject({
+    await expect(collect(provider.chatStream({ model: 'kimi-k3', messages: msgs, signal }))).rejects.toMatchObject({
       code: 'timeout',
     });
   });
@@ -108,27 +108,33 @@ describe('openai-compatible provider', () => {
 
 describe('presets and model health', () => {
   it('tinfoil maps only the models it serves; unmapped ones are unavailable', async () => {
-    const env = loadEnv({ INFERENCE_PROVIDER: 'tinfoil', INFERENCE_API_KEY: 'k' });
+    // Tinfoil serves none of the current models by default; INFERENCE_MODEL_MAP maps the ones it does.
+    expect(loadEnv({ INFERENCE_PROVIDER: 'tinfoil', INFERENCE_API_KEY: 'k' }).inference!.modelMap).toEqual({});
+    const env = loadEnv({
+      INFERENCE_PROVIDER: 'tinfoil',
+      INFERENCE_API_KEY: 'k',
+      INFERENCE_MODEL_MAP: '{"kimi-k3":"kimi-k3","deepseek-v4-flash":"llama3-3-70b"}',
+    });
     expect(env.inference).toMatchObject({ kind: 'openai-compatible', baseUrl: 'https://inference.tinfoil.sh/v1' });
-    expect(env.inference!.modelMap).toEqual({ 'gpt-oss-120b': 'gpt-oss-120b', 'llama-3.3-70b': 'llama3-3-70b' });
+    expect(env.inference!.modelMap).toEqual({ 'kimi-k3': 'kimi-k3', 'deepseek-v4-flash': 'llama3-3-70b' });
     const provider = createOpenAiCompatibleProvider({
       name: 'tinfoil',
       baseUrl: env.inference!.baseUrl!,
       apiKey: 'k',
       modelMap: env.inference!.modelMap,
-      fetch: (async () => Response.json({ data: [{ id: 'gpt-oss-120b' }, { id: 'deepseek-v3.1' }] })) as unknown as typeof fetch,
+      fetch: (async () => Response.json({ data: [{ id: 'kimi-k3' }, { id: 'deepseek-v4-pro' }] })) as unknown as typeof fetch,
     });
     const health = new ModelHealth(provider, null, silentLog);
     await health.refresh();
     expect(Object.fromEntries(health.all().map((m) => [m.id, m.status]))).toEqual({
-      'deepseek-v3.1': 'unavailable', // listed by the provider but not mapped: never silently served
-      'qwen3-235b': 'unavailable',
-      'gpt-oss-120b': 'ok',
-      'llama-3.3-70b': 'unavailable', // mapped but not listed
+      'deepseek-v4-pro': 'unavailable', // listed by the provider but not mapped: never silently served
+      'qwen3.5-397b': 'unavailable',
+      'kimi-k3': 'ok',
+      'deepseek-v4-flash': 'unavailable', // mapped but not listed
     });
 
-    const extended = loadEnv({ INFERENCE_PROVIDER: 'tinfoil', INFERENCE_MODEL_MAP: '{"qwen3-235b":"qwen3-x","bogus":"y"}' });
-    expect(extended.inference!.modelMap['qwen3-235b']).toBe('qwen3-x');
+    const extended = loadEnv({ INFERENCE_PROVIDER: 'tinfoil', INFERENCE_MODEL_MAP: '{"qwen3.5-397b":"qwen3-x","bogus":"y"}' });
+    expect(extended.inference!.modelMap['qwen3.5-397b']).toBe('qwen3-x');
     expect(extended.warnings.some((w) => w.includes('bogus'))).toBe(true);
   });
 
@@ -136,10 +142,11 @@ describe('presets and model health', () => {
     const env = loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_API_KEY: 'k' });
     const inf = env.inference!;
     expect(inf.baseUrl).toBe('https://openrouter.ai/api/v1');
-    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v3.1', 'gpt-oss-120b', 'llama-3.3-70b', 'qwen2.5-vl-72b', 'qwen3-235b']);
+    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v4-flash', 'deepseek-v4-pro', 'kimi-k3', 'qwen3.5-397b', 'qwen3.5-vision']);
+    expect(inf.modelMap['qwen3.5-vision']).toBe('qwen/qwen3.5-397b-a17b');
     // VISION_MODEL swaps the provider's vision model; empty turns vision off.
-    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: 'meta-llama/llama-3.2-90b-vision-instruct' }).inference!.modelMap['qwen2.5-vl-72b']).toBe('meta-llama/llama-3.2-90b-vision-instruct');
-    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: '' }).inference!.modelMap['qwen2.5-vl-72b']).toBeUndefined();
+    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: 'google/gemma-4-31b-it' }).inference!.modelMap['qwen3.5-vision']).toBe('google/gemma-4-31b-it');
+    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: '' }).inference!.modelMap['qwen3.5-vision']).toBeUndefined();
     let sent: any;
     const provider = createOpenAiCompatibleProvider({
       name: 'openrouter',
@@ -153,9 +160,9 @@ describe('presets and model health', () => {
         return sseResponse(['data: {"choices":[{"delta":{"content":"ok"}}]}\n\n', 'data: [DONE]\n\n']);
       }) as typeof fetch,
     });
-    await collect(provider.chatStream({ model: 'deepseek-v3.1', messages: msgs, signal }));
+    await collect(provider.chatStream({ model: 'deepseek-v4-pro', messages: msgs, signal }));
     expect(sent.body).toMatchObject({
-      model: 'deepseek/deepseek-chat-v3.1',
+      model: 'deepseek/deepseek-v4-pro',
       stream: true,
       provider: { data_collection: 'deny', zdr: true },
     });
@@ -170,7 +177,7 @@ describe('presets and model health', () => {
   it('generic preset maps identity; listing unsupported means all ok; failures degrade', async () => {
     expect(loadEnv({ INFERENCE_PROVIDER: 'openai-compatible' }).inference).toBeNull(); // needs a base URL
     const env = loadEnv({ INFERENCE_PROVIDER: 'openai-compatible', INFERENCE_BASE_URL: 'https://p.example/v1' });
-    expect(env.inference!.modelMap['deepseek-v3.1']).toBe('deepseek-v3.1');
+    expect(env.inference!.modelMap['deepseek-v4-pro']).toBe('deepseek-v4-pro');
     const provider = createOpenAiCompatibleProvider({
       name: 'g',
       baseUrl: 'https://p.example/v1',
@@ -181,12 +188,12 @@ describe('presets and model health', () => {
     const health = new ModelHealth(provider, null, silentLog);
     await health.refresh();
     expect(health.all().every((m) => m.status === 'ok')).toBe(true);
-    for (let i = 0; i < 3; i++) health.reportFailure('qwen3-235b', 'provider_error');
-    expect(health.status('qwen3-235b')).toBe('degraded');
-    health.reportFailure('gpt-oss-120b', 'model_unavailable');
-    expect(health.status('gpt-oss-120b')).toBe('unavailable');
+    for (let i = 0; i < 3; i++) health.reportFailure('qwen3.5-397b', 'provider_error');
+    expect(health.status('qwen3.5-397b')).toBe('degraded');
+    health.reportFailure('kimi-k3', 'model_unavailable');
+    expect(health.status('kimi-k3')).toBe('unavailable');
     expect(loadEnv({ INFERENCE_PROVIDER: 'nope' }).inference).toBeNull();
-    expect(new ModelHealth(null, null, silentLog).status('deepseek-v3.1')).toBe('unavailable');
+    expect(new ModelHealth(null, null, silentLog).status('deepseek-v4-pro')).toBe('unavailable');
   });
 });
 
@@ -197,7 +204,7 @@ describe('openai-compatible provider: generation params', () => {
       name: 'test',
       baseUrl: 'https://p.example/v1',
       apiKey: null,
-      modelMap: { 'gpt-oss-120b': 'openai/gpt-oss-120b' },
+      modelMap: { 'kimi-k3': 'openai/gpt-oss-120b' },
       extraBody: { provider: { zdr: true } },
       fetch: (async (_url: string, init: RequestInit) => {
         body = JSON.parse(init.body as string);
@@ -207,7 +214,7 @@ describe('openai-compatible provider: generation params', () => {
     const tools = [{ type: 'function', function: { name: 'f', parameters: {} } }];
     await collect(
       provider.chatStream({
-        model: 'gpt-oss-120b',
+        model: 'kimi-k3',
         messages: msgs,
         signal,
         params: { temperature: 0.2, max_tokens: 50, top_p: 0.9, stop: ['x'], tools, tool_choice: 'auto' },

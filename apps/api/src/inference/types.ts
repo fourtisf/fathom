@@ -23,7 +23,7 @@ export interface GenerationParams {
 }
 
 export interface ChatStreamRequest {
-  /** Our model id (e.g. "deepseek-v3.1"); the provider maps it to its own id. */
+  /** Our model id (e.g. "deepseek-v4-pro"); the provider maps it to its own id. */
   model: string;
   messages: ChatMessage[];
   signal: AbortSignal;

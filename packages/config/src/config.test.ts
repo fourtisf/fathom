@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   MODELS,
+  LEGACY_MODELS,
+  VISION_MODEL,
+  contextLabel,
   getModel,
+  modelDisplayName,
   loadChainConfig,
   loadContractAddresses,
   tokenAddress,
@@ -10,7 +14,28 @@ import {
   tokenCostMicro,
 } from './index';
 
-const deepseek = getModel('deepseek-v3.1')!;
+// Fixed prices so the math is tested independently of the model catalog.
+const deepseek = { inputPerM: 40, outputPerM: 120 };
+
+describe('model catalog', () => {
+  it('resolves legacy ids to their replacements and keeps their names for old usage', () => {
+    for (const [old, { to }] of Object.entries(LEGACY_MODELS)) expect(getModel(old)?.id).toBe(to);
+    expect(getModel('nope')).toBeUndefined();
+    expect(modelDisplayName('deepseek-v3.1')).toBe('DeepSeek V3.1');
+    expect(modelDisplayName('kimi-k3')).toBe('Kimi K3');
+    expect(modelDisplayName(VISION_MODEL.id)).toBe(VISION_MODEL.name);
+    expect(modelDisplayName('image-generation')).toBe('Image generation');
+  });
+  it('labels context windows and keeps integer prices', () => {
+    expect(contextLabel(1024)).toBe('1M');
+    expect(contextLabel(262)).toBe('262K');
+    for (const m of MODELS) {
+      expect(Number.isInteger(m.inputPerM) && Number.isInteger(m.outputPerM)).toBe(true);
+      // The UI estimate matches the stated average message (3k tokens in, 700 out).
+      expect(Math.abs(m.avgMessageCredits - (3000 * m.inputPerM + 700 * m.outputPerM) / 1e6)).toBeLessThan(0.03);
+    }
+  });
+});
 
 describe('tokenCostMicro', () => {
   it('charges per-million prices exactly', () => {

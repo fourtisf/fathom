@@ -34,28 +34,29 @@ export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
   mock: { kind: 'mock', identityMap: true },
   'openai-compatible': { kind: 'openai-compatible', identityMap: true },
   // Tinfoil: OpenAI-compatible, Bearer INFERENCE_API_KEY, the router always includes usage in streams.
-  // Model ids from the models.dev catalog: verify at deploy against GET /v1/models.
-  // DeepSeek V3.1 and Qwen3 235B are not served there, so they stay unmapped (unavailable).
+  // It doesn't serve the current model line-up yet, so nothing is mapped (every model reads
+  // 'unavailable'); map ids with INFERENCE_MODEL_MAP once Tinfoil serves them.
   tinfoil: {
     kind: 'openai-compatible',
     baseUrl: 'https://inference.tinfoil.sh/v1',
     privacy: 'tee',
-    modelMap: { 'gpt-oss-120b': 'gpt-oss-120b', 'llama-3.3-70b': 'llama3-3-70b' },
+    modelMap: {},
   },
   // OpenRouter: a router, NOT confidential computing. Requests are restricted to upstream providers
   // that don't collect prompts (data_collection: deny) and to zero-data-retention endpoints (zdr).
-  // Model ids from the models.dev catalog: verify at deploy against GET /v1/models.
   openrouter: {
     kind: 'openai-compatible',
     baseUrl: 'https://openrouter.ai/api/v1',
     privacy: 'no-retention',
+    // Ids from openrouter.ai model pages (Oct 2026). Verify at deploy against GET /v1/models: a model
+    // with no zero-retention endpoint answers 404 and shows as unavailable.
     modelMap: {
-      'deepseek-v3.1': 'deepseek/deepseek-chat-v3.1',
-      'qwen3-235b': 'qwen/qwen3-235b-a22b-2507',
-      'gpt-oss-120b': 'openai/gpt-oss-120b',
-      'llama-3.3-70b': 'meta-llama/llama-3.3-70b-instruct',
-      // Vision (images in chat). Override with VISION_MODEL if the zero-retention routing can't serve it.
-      'qwen2.5-vl-72b': 'qwen/qwen2.5-vl-72b-instruct',
+      'deepseek-v4-pro': 'deepseek/deepseek-v4-pro',
+      'kimi-k3': 'moonshotai/kimi-k3',
+      'qwen3.5-397b': 'qwen/qwen3.5-397b-a17b',
+      'deepseek-v4-flash': 'deepseek/deepseek-v4-flash',
+      // Vision (images in chat): Qwen3.5 reads images natively. Override with VISION_MODEL.
+      'qwen3.5-vision': 'qwen/qwen3.5-397b-a17b',
     },
     extraBody: { provider: { data_collection: 'deny', zdr: true }, usage: { include: true } },
     headers: { 'X-Title': brand.name, 'HTTP-Referer': brand.siteUrl },

@@ -236,3 +236,18 @@
 .toolsmenu{width:300px}
 .toolsmenu button.on b::after{content:"On";margin-left:8px;padding:1px 7px;border-radius:999px;font:600 10.5px var(--mono);letter-spacing:.06em;color:#BFF5DC;background:rgba(61,220,151,.12);border:1px solid rgba(61,220,151,.35);vertical-align:1px}
 @media (max-width:600px){.toolsmenu{left:-120px;width:270px}}
+
+/* Model menu */
+.modelmenu{width:350px}
+.modelmenu .mm-hd{padding:8px 12px 6px;font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.modelmenu button{grid-template-columns:auto 1fr auto;align-items:center;gap:0 12px}
+.modelmenu .mlogo.sm{width:32px;height:32px;border-radius:10px;font-size:13px}
+.modelmenu .mm-t{display:grid;gap:1px;min-width:0}
+.modelmenu .mm-t b{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.modelmenu .mm-meta{font-size:11.5px;color:var(--faint,#6F76A6)}
+.modelmenu em{grid-row:auto;grid-column:3}
+.mm-badge{font-style:normal;font:600 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:999px;color:#D6D0FF;background:rgba(139,124,255,.16);border:1px solid rgba(179,168,255,.35)}
+.mm-badge.b-new{color:#BFF5DC;background:rgba(61,220,151,.12);border-color:rgba(61,220,151,.35)}
+.mm-badge.b-fast{color:#B9F1FA;background:rgba(56,200,232,.12);border-color:rgba(56,200,232,.35)}
+.models .mn b{display:flex;align-items:center;gap:8px}
+@media (max-width:600px){.modelmenu{width:min(330px,calc(100vw - 32px))}}

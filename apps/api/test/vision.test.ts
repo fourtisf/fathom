@@ -78,7 +78,7 @@ describe.skipIf(!up)('POST /chat with images (mock provider)', () => {
       method: 'POST',
       url: '/chat',
       cookies,
-      payload: { model: 'deepseek-v3.1', compareWith: 'qwen3-235b', messages: [{ role: 'user', content: 'Read this chart', images: [PNG, PNG] }] },
+      payload: { model: 'deepseek-v4-pro', compareWith: 'qwen3.5-397b', messages: [{ role: 'user', content: 'Read this chart', images: [PNG, PNG] }] },
     });
     expect(res.statusCode).toBe(200);
     const events = sseEvents(res.body) as Ev[];
@@ -93,9 +93,18 @@ describe.skipIf(!up)('POST /chat with images (mock provider)', () => {
     expect(lines.join('\n')).not.toContain('Read this chart');
   });
 
+  it('accepts legacy model ids and runs (and bills) their replacement', async () => {
+    const { cookies } = await newUser(app);
+    seen = [];
+    const res = await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'hi' }] } });
+    expect(res.statusCode).toBe(200);
+    expect(seen).toEqual(['deepseek-v4-pro']);
+    expect((sseEvents(res.body) as Ev[]).find((e) => e.type === 'done')!.model).toBe('deepseek-v4-pro');
+  });
+
   it('rejects bad images and too many images', async () => {
     const { cookies } = await newUser(app);
-    const post = (messages: unknown) => app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v3.1', messages } });
+    const post = (messages: unknown) => app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-pro', messages } });
     for (const bad of [
       [{ role: 'user', content: 'x', images: ['https://evil.test/a.png'] }],
       [{ role: 'user', content: 'x', images: ['data:image/svg+xml;base64,PHN2Zz4='] }],
@@ -112,7 +121,7 @@ describe.skipIf(!up)('POST /chat with images (mock provider)', () => {
     const { app: app2 } = await buildCapturingApp('info', TEST_ENV, { provider: noVision });
     try {
       const { cookies } = await newUser(app2);
-      const res = await app2.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v3.1', messages: [{ role: 'user', content: 'x', images: [PNG] }] } });
+      const res = await app2.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-pro', messages: [{ role: 'user', content: 'x', images: [PNG] }] } });
       expect(res.statusCode).toBe(503);
       expect(res.json().error.code).toBe('model_unavailable');
     } finally {

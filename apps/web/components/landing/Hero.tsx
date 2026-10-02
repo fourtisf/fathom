@@ -3,8 +3,8 @@ import { getModel, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { Icon } from '../Icon';
 import { ContractAddress } from '../site/ContractAddress';
 
-const ds = getModel('deepseek-v3.1')!;
-const qw = getModel('qwen3-235b')!;
+const ds = getModel('deepseek-v4-pro')!;
+const qw = getModel('kimi-k3')!;
 
 /** Hero plus the static app preview. The preview is an illustration, not live data. */
 export function Hero() {

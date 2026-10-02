@@ -10,7 +10,7 @@ const MARKER = 'SECRET-PROMPT-7f3a9c';
 const IP = '203.0.113.7';
 const KEY = 'nox_live_secret';
 const headers = { 'x-forwarded-for': IP, authorization: `Bearer ${KEY}`, cookie: `session=${KEY}` };
-const chatBody = { model: 'deepseek-v3.1', messages: [{ role: 'user', content: MARKER }], prompt: MARKER };
+const chatBody = { model: 'deepseek-v4-pro', messages: [{ role: 'user', content: MARKER }], prompt: MARKER };
 
 let app: FastifyInstance;
 let lines: string[];
@@ -77,7 +77,7 @@ describe.skipIf(!up)('no content in logs, DB or Redis for /auth/verify and /chat
     ({ app: chatApp, lines: chatLines } = await buildCapturingApp('trace', TEST_ENV, {
       provider: createMockProvider({
         delayMs: 1,
-        failModels: ['llama-3.3-70b'],
+        failModels: ['deepseek-v4-flash'],
         reply: (model) => `${COMPLETION} from ${model}`,
       }),
       // A search backend whose error message quotes the query.
@@ -123,7 +123,7 @@ describe.skipIf(!up)('no content in logs, DB or Redis for /auth/verify and /chat
         payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
       });
     const messages = [{ role: 'user', content: MARKER }];
-    const ok = await post({ model: 'deepseek-v3.1', compareWith: 'llama-3.3-70b', webSearch: true, messages });
+    const ok = await post({ model: 'deepseek-v4-pro', compareWith: 'deepseek-v4-flash', webSearch: true, messages });
     const events = sseEvents(ok.body);
     expect(events.some((e) => e.type === 'done')).toBe(true);
     expect(events.some((e) => e.type === 'error')).toBe(true); // llama failed: error path logged
@@ -131,9 +131,9 @@ describe.skipIf(!up)('no content in logs, DB or Redis for /auth/verify and /chat
     expect(streamed).toContain(COMPLETION); // the completion did stream to the client
     expect(events).toContainEqual({ type: 'search', status: 'unavailable' }); // search failed: error path logged
     for (const bad of [
-      { model: 'deepseek-v3.1', messages: [{ role: 'assistant', content: MARKER }] },
+      { model: 'deepseek-v4-pro', messages: [{ role: 'assistant', content: MARKER }] },
       { model: MARKER, messages },
-      `{"model":"deepseek-v3.1","messages":"${MARKER}`,
+      `{"model":"deepseek-v4-pro","messages":"${MARKER}`,
     ]) {
       const res = await post(bad);
       expect(res.statusCode).toBeGreaterThanOrEqual(400);
@@ -175,7 +175,7 @@ describe.skipIf(!up)('no content in logs, DB or Redis for /v1/chat/completions, 
 
   beforeAll(async () => {
     ({ app: apiApp, lines: apiLines } = await buildCapturingApp('trace', TEST_ENV, {
-      provider: createMockProvider({ delayMs: 1, failModels: ['llama-3.3-70b'], reply: (m) => `${COMPLETION} from ${m}` }),
+      provider: createMockProvider({ delayMs: 1, failModels: ['deepseek-v4-flash'], reply: (m) => `${COMPLETION} from ${m}` }),
       search: {
         async search(query) {
           throw new Error(`search failed for ${query}`);
@@ -206,22 +206,22 @@ describe.skipIf(!up)('no content in logs, DB or Redis for /v1/chat/completions, 
         payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
       });
     const messages = [{ role: 'system', content: MARKER }, { role: 'user', content: MARKER }];
-    const ok = await post({ model: 'deepseek-v3.1', compare_with: 'llama-3.3-70b', web_search: true, messages });
+    const ok = await post({ model: 'deepseek-v4-pro', compare_with: 'deepseek-v4-flash', web_search: true, messages });
     expect(ok.statusCode).toBe(200);
     expect(JSON.stringify(ok.json())).toContain(COMPLETION);
-    const streamed = await post({ model: 'deepseek-v3.1', messages, stream: true, stream_options: { include_usage: true } });
+    const streamed = await post({ model: 'deepseek-v4-pro', messages, stream: true, stream_options: { include_usage: true } });
     const streamedText = streamed.body
       .split('\n\n')
       .filter((b) => b.startsWith('data: {'))
       .map((b) => (JSON.parse(b.slice(6)) as { choices: { delta?: { content?: string } }[] }).choices[0]?.delta?.content ?? '')
       .join('');
     expect(streamedText).toContain(COMPLETION);
-    expect((await post({ model: 'llama-3.3-70b', messages, stream: true })).body).toContain('provider_error');
-    expect((await post({ model: 'llama-3.3-70b', messages })).statusCode).toBe(502);
+    expect((await post({ model: 'deepseek-v4-flash', messages, stream: true })).body).toContain('provider_error');
+    expect((await post({ model: 'deepseek-v4-flash', messages })).statusCode).toBe(502);
     for (const bad of [
-      { model: 'deepseek-v3.1', messages: [{ role: 'tool', content: MARKER }] },
+      { model: 'deepseek-v4-pro', messages: [{ role: 'tool', content: MARKER }] },
       { model: MARKER, messages },
-      `{"model":"deepseek-v3.1","messages":"${MARKER}`,
+      `{"model":"deepseek-v4-pro","messages":"${MARKER}`,
     ]) {
       expect((await post(bad)).statusCode).toBeGreaterThanOrEqual(400);
     }

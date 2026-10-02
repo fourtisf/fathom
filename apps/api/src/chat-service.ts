@@ -86,8 +86,9 @@ export async function prepareChat(ctx: AppContext, job: ChatJob, log: FastifyBas
   const slots: ChatSlot[] = images
     ? [{ slot: 0, id: VISION_MODEL.id, info: VISION_MODEL, up: !!provider?.providerModelId(VISION_MODEL.id) }]
     : job.models.map((id, slot) => {
+        // Legacy ids resolve to their replacement model.
         const info = getModel(id);
-        return { slot, id, info, up: !!provider && !!info && health.status(id) === 'ok' };
+        return { slot, id: info?.id ?? id, info, up: !!provider && !!info && health.status(info.id) === 'ok' };
       });
   const running = slots.filter((s) => s.up);
   if (running.length === 0) {

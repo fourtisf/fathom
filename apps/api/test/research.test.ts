@@ -83,7 +83,7 @@ describe.skipIf(!up)('POST /chat research mode', () => {
       method: 'POST',
       url: '/chat',
       cookies,
-      payload: { model: 'deepseek-v3.1', compareWith: 'qwen3-235b', research: true, messages: [{ role: 'user', content: 'Research secret topic' }] },
+      payload: { model: 'deepseek-v4-pro', compareWith: 'qwen3.5-397b', research: true, messages: [{ role: 'user', content: 'Research secret topic' }] },
     });
     expect(res.statusCode).toBe(200);
     const ev = sseEvents(res.body) as Ev[];
@@ -97,7 +97,7 @@ describe.skipIf(!up)('POST /chat research mode', () => {
     expect(done).toHaveLength(1);
     expect(done[0]!.tokens).toEqual({ input: 1000, output: 320 });
     const after = (await prisma.user.findUniqueOrThrow({ where: { id: userId } })).creditsMicro;
-    expect(before - after).toBe(tokenCostMicro(getModel('deepseek-v3.1')!, 1000, 320, { webSearch: true }));
+    expect(before - after).toBe(tokenCostMicro(getModel('deepseek-v4-pro')!, 1000, 320, { webSearch: true }));
     const log = lines.join('\n');
     expect(log).not.toContain('secret topic');
   });
@@ -107,7 +107,7 @@ describe.skipIf(!up)('POST /chat research mode', () => {
     const before = (await prisma.user.findUniqueOrThrow({ where: { id: userId } })).creditsMicro;
     failReport = true;
     try {
-      const res = await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v3.1', research: true, messages: [{ role: 'user', content: 'x topic' }] } });
+      const res = await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-pro', research: true, messages: [{ role: 'user', content: 'x topic' }] } });
       const ev = sseEvents(res.body) as Ev[];
       expect(ev.some((e) => e.type === 'error')).toBe(true);
       expect(ev.some((e) => e.type === 'done')).toBe(false);
@@ -122,7 +122,7 @@ describe.skipIf(!up)('POST /chat research mode', () => {
     try {
       const r = await signIn(app2, ip);
       addresses.push(r.account.address.toLowerCase());
-      const res = await app2.inject({ method: 'POST', url: '/chat', cookies: { nx_session: r.session! }, payload: { model: 'deepseek-v3.1', research: true, messages: [{ role: 'user', content: 'x' }] } });
+      const res = await app2.inject({ method: 'POST', url: '/chat', cookies: { nx_session: r.session! }, payload: { model: 'deepseek-v4-pro', research: true, messages: [{ role: 'user', content: 'x' }] } });
       expect(res.statusCode).toBe(503);
       expect(res.json().error.code).toBe('research_unavailable');
     } finally {

@@ -8,6 +8,7 @@ import {
   UNSTAKE_COOLDOWN_DAYS,
   WELCOME_CREDITS,
   getModel,
+  contextLabel,
 } from '@fathom/config';
 import { Icon } from '../Icon';
 import { Cipher } from './Cipher';
@@ -346,7 +347,7 @@ export function Models() {
         <SectionHead
           tag="Models"
           title="The best open models, in one place"
-          sub="All open-weight models, not one company's black box. Prices in credits per million tokens."
+          sub="The newest open-weight models of 2026, not one company's black box. Prices in credits per million tokens."
         />
         <div className="models rv">
           <div className="mh"><span>Model</span><span>Best for</span><span>Context</span><span>Input</span><span>Output</span></div>
@@ -354,10 +355,16 @@ export function Models() {
             <div className="mr" key={m.id}>
               <div className="mn">
                 <span className="mlogo" style={{ background: m.logo.color }}>{m.logo.letter}</span>
-                <div><b>{m.name}</b><small>{m.tableBlurb}</small></div>
+                <div>
+                  <b>
+                    {m.name}
+                    {m.badge && m.badge !== 'Default' && <i className={`mm-badge b-${m.badge.toLowerCase()}`}>{m.badge}</i>}
+                  </b>
+                  <small>{m.tableBlurb}</small>
+                </div>
               </div>
               <div className="chips">{m.bestFor.map((b) => <span key={b}>{b}</span>)}</div>
-              <div className="num"><span className="lbl">Context</span>{m.contextK}K</div>
+              <div className="num"><span className="lbl">Context</span>{contextLabel(m.contextK)}</div>
               <div className="num"><span className="lbl">Input</span>{m.inputPerM}</div>
               <div className="num"><span className="lbl">Output</span>{m.outputPerM}</div>
             </div>
@@ -394,7 +401,7 @@ export function Pricing() {
   );
 }
 
-const model = getModel('deepseek-v3.1')!.id;
+const model = getModel('deepseek-v4-pro')!.id;
 const k = (s: string) => `<span class="k">${s}</span>`;
 const f = (s: string) => `<span class="f">${s}</span>`;
 const str = (s: string) => `<span class="s">${s}</span>`;

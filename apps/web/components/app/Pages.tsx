@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { brand, CREDITS_PER_USDG, MAX_API_KEYS, MODELS, TIERS, UNSTAKE_COOLDOWN_DAYS, WELCOME_CREDITS } from '@fathom/config';
+import { brand, CREDITS_PER_USDG, MAX_API_KEYS, MODELS, TIERS, UNSTAKE_COOLDOWN_DAYS, WELCOME_CREDITS, modelDisplayName } from '@fathom/config';
 import { api, ApiError, post, type ApiKeyRow, type CreditsSummary, type Settings, type TxRow } from '@/lib/api';
 import { useToast } from '../Toast';
 import { fmt2, fmtCost } from './Shell';
@@ -13,7 +13,7 @@ import { MAX_FACTS, MAX_FACT_CHARS, useMemory } from './Memory';
 import { useUi, type Burn } from './Ui';
 import { VOICE_LANGS, resolveVoiceLang } from '@/lib/voice/languages';
 
-const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
+const modelName = modelDisplayName;
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 
 function NeedWallet({ title, sub }: { title: string; sub: string }) {

@@ -74,12 +74,12 @@ describe.skipIf(!up)('/memory (encrypted blob) and chat memory', () => {
       method: 'POST',
       url: '/chat',
       cookies,
-      payload: { model: 'deepseek-v3.1', memory: 'My name is Zephyrine\nI hold mostly SOL', messages: [{ role: 'user', content: 'hi' }] },
+      payload: { model: 'deepseek-v4-pro', memory: 'My name is Zephyrine\nI hold mostly SOL', messages: [{ role: 'user', content: 'hi' }] },
     });
     expect(res.statusCode).toBe(200);
     expect(lastSystem).toContain('- My name is Zephyrine');
     expect(lines.join('\n')).not.toContain('Zephyrine');
-    const tooLong = await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v3.1', memory: 'x'.repeat(4001), messages: [{ role: 'user', content: 'hi' }] } });
+    const tooLong = await app.inject({ method: 'POST', url: '/chat', cookies, payload: { model: 'deepseek-v4-pro', memory: 'x'.repeat(4001), messages: [{ role: 'user', content: 'hi' }] } });
     expect(tooLong.statusCode).toBe(400);
   });
 });
