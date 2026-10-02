@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getModel, MODELS, WELCOME_CREDITS } from '@fathom/config';
 import { Icon } from '../Icon';
 import { ContractAddress } from '../site/ContractAddress';
+import { ModelLogo } from '../ModelLogo';
 
 const ds = getModel('deepseek-v4-pro')!;
 const qw = getModel('kimi-k3')!;
@@ -75,14 +76,14 @@ export function Hero() {
                   <div className="m you">Is my salary offer of 18k fair for a senior designer in Jakarta?</div>
                   <div className="cmp">
                     <div>
-                      <h5>{ds.name}<small>{ds.avgMessageCredits.toFixed(2)} cr</small></h5>
+                      <h5><span className="mname"><ModelLogo model={ds.id} size={18} />{ds.name}</span><small>{ds.avgMessageCredits.toFixed(2)} cr</small></h5>
                       <p style={{ fontSize: 14, color: 'var(--ink2)' }}>
                         For senior product designers in Jakarta, offers usually land in a wider band depending on company
                         stage. Ask for the full package: equity, bonus and remote days…
                       </p>
                     </div>
                     <div>
-                      <h5>{qw.name}<small>{qw.avgMessageCredits.toFixed(2)} cr</small></h5>
+                      <h5><span className="mname"><ModelLogo model={qw.id} size={18} />{qw.name}</span><small>{qw.avgMessageCredits.toFixed(2)} cr</small></h5>
                       <p style={{ fontSize: 14, color: 'var(--ink2)' }}>
                         It&apos;s reasonable but not top of market. Before you counter, find out whether the number is gross
                         or net, and what the review cycle looks like…

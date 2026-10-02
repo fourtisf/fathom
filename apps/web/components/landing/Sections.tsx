@@ -15,6 +15,7 @@ import { Cipher } from './Cipher';
 import { CodeTabs } from './CodeTabs';
 import { Faq } from './Faq';
 import { PricingCalc } from './PricingCalc';
+import { ModelLogo } from '../ModelLogo';
 
 const maxDiscount = Math.max(...TIERS.map((t) => t.discountBps)) / 100;
 const delay = (s: number) => ({ transitionDelay: `${s}s` });
@@ -354,7 +355,7 @@ export function Models() {
           {MODELS.map((m) => (
             <div className="mr" key={m.id}>
               <div className="mn">
-                <span className="mlogo" style={{ background: m.logo.color }}>{m.logo.letter}</span>
+                <ModelLogo model={m.id} size={40} />
                 <div>
                   <b>
                     {m.name}

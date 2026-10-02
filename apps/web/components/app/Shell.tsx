@@ -11,6 +11,7 @@ import { useHistory } from './History';
 import { AppModals } from './Modals';
 import { short, useSession } from './Session';
 import { useUi, type Burn } from './Ui';
+import { ModelLogo } from '../ModelLogo';
 
 const NAV: { href: string; label: string; tab: string; icon: IconName }[] = [
   { href: '/app', label: 'Chat', tab: 'Chat', icon: 'chat' },
@@ -48,6 +49,7 @@ function ModelMenu() {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button className="model-btn" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <ModelLogo model={model} size={22} className="mb-logo" />
         <span>
           {name(model)}
           {compare && (
@@ -71,9 +73,7 @@ function ModelMenu() {
               setOpen(false);
             }}
           >
-            <span className="mlogo sm" style={{ background: m.logo.color }} aria-hidden="true">
-              {m.logo.letter}
-            </span>
+            <ModelLogo model={m.id} size={34} />
             <span className="mm-t">
               <b>
                 {m.name}

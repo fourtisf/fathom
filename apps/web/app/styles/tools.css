@@ -251,3 +251,12 @@
 .mm-badge.b-fast{color:#B9F1FA;background:rgba(56,200,232,.12);border-color:rgba(56,200,232,.35)}
 .models .mn b{display:flex;align-items:center;gap:8px}
 @media (max-width:600px){.modelmenu{width:min(330px,calc(100vw - 32px))}}
+
+/* Model brand logos */
+.mlogo.brand{display:inline-grid;place-items:center;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 6px 16px -6px rgba(0,0,0,.6)}
+.mlogo.brand svg{display:block}
+.mname{display:inline-flex;align-items:center;gap:7px}
+.model-btn{display:inline-flex;align-items:center;gap:9px}
+.model-btn .mb-logo{border-radius:7px!important}
+.meta .mname{gap:6px}
+.meta .mname .mlogo{border-radius:5px!important}

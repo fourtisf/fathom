@@ -22,7 +22,8 @@ export interface ModelInfo {
   badge?: string;
   /** Month the open weights were released (for "latest model" copy). */
   released: string;
-  logo: { letter: string; color: string };
+  /** Fallback letter tile, and the lab whose logo the web app shows. */
+  logo: { letter: string; color: string; brand?: 'deepseek' | 'kimi' | 'qwen' };
 }
 
 /**
@@ -44,7 +45,7 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 0.64,
     badge: 'Default',
     released: '2026-04',
-    logo: { letter: 'D', color: '#4D6BFE' },
+    logo: { letter: 'D', color: '#4D6BFE', brand: 'deepseek' },
   },
   {
     id: 'kimi-k3',
@@ -59,7 +60,7 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 1.6,
     badge: 'New',
     released: '2026-07',
-    logo: { letter: 'K', color: '#16181F' },
+    logo: { letter: 'K', color: '#16181F', brand: 'kimi' },
   },
   {
     id: 'qwen3.5-397b',
@@ -73,7 +74,7 @@ export const MODELS: readonly ModelInfo[] = [
     outputPerM: 470,
     avgMessageCredits: 0.57,
     released: '2026-02',
-    logo: { letter: 'Q', color: '#7C3AED' },
+    logo: { letter: 'Q', color: '#7C3AED', brand: 'qwen' },
   },
   {
     id: 'deepseek-v4-flash',
@@ -88,7 +89,7 @@ export const MODELS: readonly ModelInfo[] = [
     avgMessageCredits: 0.12,
     badge: 'Fast',
     released: '2026-04',
-    logo: { letter: 'F', color: '#0EA5E9' },
+    logo: { letter: 'F', color: '#0EA5E9', brand: 'deepseek' },
   },
 ] as const;
 

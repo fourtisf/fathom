@@ -21,6 +21,7 @@ import { short, useSession } from './Session';
 import { useUi } from './Ui';
 import { ListenButton, MicButton, VoiceBar, readAloud, stopReading, useVoiceInput } from './Voice';
 import { resolveVoiceLang } from '@/lib/voice/languages';
+import { ModelLogo } from '../ModelLogo';
 
 type SlotState = {
   model: string;
@@ -121,7 +122,10 @@ function Actions({ slot, onRegenerate, listenKey }: { slot: SlotState; onRegener
   const toast = useToast();
   return (
     <div className="meta">
-      <span>{modelName(slot.model)}</span>
+      <span className="mname">
+        <ModelLogo model={slot.model} size={16} />
+        {modelName(slot.model)}
+      </span>
       <span>{slot.status === 'stopped' ? 'Stopped · not charged' : `${fmtCost(slot.credits ?? 0)} credits`}</span>
       <span className="ok">
         <Icon name="shield" />
@@ -939,7 +943,10 @@ export function Chat() {
                       {t.slots.map((s, i) => (
                         <div key={i}>
                           <h5>
-                            {modelName(s.model)}
+                            <span className="mname">
+                              <ModelLogo model={s.model} size={18} />
+                              {modelName(s.model)}
+                            </span>
                             <small>
                               {s.status === 'done' ? `${fmtCost(s.credits ?? 0)} cr` : s.status === 'error' ? 'unavailable' : s.status === 'stopped' ? 'stopped' : ''}
                             </small>
