@@ -1,4 +1,4 @@
-import { tokenAddress, type Address } from '@fathom/config';
+import { brand, tokenAddress, type Address } from '@fathom/config';
 
 /** Server-only helpers for /trust. Everything is read from the environment at request time. */
 
@@ -130,7 +130,7 @@ export function getAddresses(): AddressRow[] {
   return [
     { name: 'USDG', purpose: 'Stablecoin for top-ups (coming soon)', address: envAddress('USDG_ADDRESS') },
     { name: 'Treasury', purpose: 'Will receive USDG top-ups (coming soon)', address: envAddress('TREASURY_ADDRESS') },
-    { name: 'Token (CA)', purpose: 'Planned utility token contract', address: tokenAddress(), pending: 'Coming soon' },
+    { name: brand.token.announced ? `${brand.token.display} (CA)` : 'Token (CA)', purpose: brand.token.announced ? 'Utility token contract' : 'Planned utility token contract', address: tokenAddress(), pending: 'Coming soon' },
   ];
 }
 

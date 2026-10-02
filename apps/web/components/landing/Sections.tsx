@@ -486,22 +486,29 @@ export function Token() {
       <div className="wrap">
         <div className="token glass rv">
           <div>
-            <span className="tag">Token · planned</span>
+            <span className="tag">{brand.token.announced ? 'Token · live' : 'Token · planned'}</span>
             <h2 style={{ marginTop: 16 }}>A utility token for paying less</h2>
-            <p>
-              The {brand.token.display} is a planned utility token. It has not launched and there is no date. The plan: stake it to
-              unlock up to {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue,
-              no yield. Details may change before launch.
-            </p>
+            {brand.token.announced ? (
+              <p>
+                {brand.token.display} is live: the utility token of {brand.name}. Staking opens soon: stake it to unlock up to{' '}
+                {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue, no yield.
+              </p>
+            ) : (
+              <p>
+                The {brand.token.display} is a planned utility token. It has not launched and there is no date. The plan: stake it to
+                unlock up to {maxDiscount}% off every message, early access to new models and free monthly credits. No revenue,
+                no yield. Details may change before launch.
+              </p>
+            )}
             <ContractAddress full className="ca-token" />
             <div className="ctas">
-              <Link className="btn btn-dark" href="/docs#token">Read the plan</Link>
-              <Link className="btn btn-light" href="/app/stake">Planned tiers</Link>
+              <Link className="btn btn-dark" href="/docs#token">{brand.token.announced ? 'How it works' : 'Read the plan'}</Link>
+              <Link className="btn btn-light" href="/app/stake">{brand.token.announced ? 'Staking tiers' : 'Planned tiers'}</Link>
             </div>
           </div>
           <div className="stats">
             {TIERS.map((t) => (
-              <div key={t.id}><span>{t.name} tier (planned)</span><b>{t.discountBps / 100}% off</b></div>
+              <div key={t.id}><span>{t.name} tier{brand.token.announced ? '' : ' (planned)'}</span><b>{t.discountBps / 100}% off</b></div>
             ))}
             <div><span>Unstake cooldown (planned)</span><b>{UNSTAKE_COOLDOWN_DAYS} days</b></div>
           </div>
@@ -545,7 +552,9 @@ export function FaqAndCta() {
             },
             {
               q: `Is the ${brand.token.display} an investment?`,
-              a: `No. The ${brand.token.display} is a planned utility token and hasn't launched. If it launches, it is meant for discounts and early access inside ${brand.name}. It won't entitle holders to revenue, dividends or profits.`,
+              a: brand.token.announced
+                ? `No. ${brand.token.display} is a utility token: it is meant for discounts and early access inside ${brand.name}. It doesn't entitle holders to revenue, dividends or profits.`
+                : `No. The ${brand.token.display} is a planned utility token and hasn't launched. If it launches, it is meant for discounts and early access inside ${brand.name}. It won't entitle holders to revenue, dividends or profits.`,
             },
             {
               q: 'What if I lose my wallet?',

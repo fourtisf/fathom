@@ -271,13 +271,18 @@ export function StakePage() {
       <div className="page-h">
         <div>
           <h2>Staking</h2>
-          <p>Planned: stake the {brand.token.display} for discounts on every message. It is a utility token and staking pays no yield.</p>
+          <p>
+            {brand.token.announced ? `Stake ${brand.token.display}` : `Planned: stake the ${brand.token.display}`} for discounts on every
+            message. It is a utility token and staking pays no yield.
+          </p>
         </div>
       </div>
       <div className="glass panel" style={{ marginTop: 0 }}>
         <div className="empty-state">
-          <b>Staking isn&apos;t open yet</b>
-          The {brand.token.display} hasn&apos;t launched. Unstaking will have a {UNSTAKE_COOLDOWN_DAYS}-day cooldown. These are the planned tiers:
+          <b>{brand.token.announced ? 'Staking opens soon' : 'Staking isn\u2019t open yet'}</b>
+          {brand.token.announced
+            ? `${brand.token.display} is live; staking isn't open yet. Unstaking will have a ${UNSTAKE_COOLDOWN_DAYS}-day cooldown. These are the tiers:`
+            : `The ${brand.token.display} hasn't launched. Unstaking will have a ${UNSTAKE_COOLDOWN_DAYS}-day cooldown. These are the planned tiers:`}
         </div>
       </div>
       <div className="tiers">

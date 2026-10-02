@@ -305,10 +305,11 @@ export default function DocsPage() {
           setting.
         </p>
 
-        <h2 id="token">Token (planned)</h2>
+        <h2 id="token">{brand.token.announced ? 'Token' : 'Token (planned)'}</h2>
         <p>
-          The {brand.token.display} is a planned utility token. It has not launched and has no launch date. The current plan is
-          that staking it unlocks discounts of up to {maxDiscount}% on messages and early access to new models, with a{' '}
+          {brand.token.announced
+            ? `${brand.token.display} is live as a utility token. Staking is not open yet. When it opens, staking it unlocks discounts`
+            : 'The ' + brand.token.display + ' is a planned utility token. It has not launched and has no launch date. The current plan is that staking it unlocks discounts'} of up to {maxDiscount}% on messages and early access to new models, with a{' '}
           {UNSTAKE_COOLDOWN_DAYS}-day unstake cooldown. It will not pay revenue, dividends or yield. Details may change
           before launch, and nothing about it affects the API today.
         </p>

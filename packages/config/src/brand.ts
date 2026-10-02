@@ -8,7 +8,7 @@ const name = 'Noxsea';
  * The token ticker stays out of the codebase until launch so it can't leak through the JS bundle.
  * At launch set TOKEN_TICKER (e.g. '$XYZ'); public copy then switches from the generic label to it.
  */
-const TOKEN_TICKER = '' as string;
+const TOKEN_TICKER = '$NXSA' as string;
 
 export const brand = {
   name,

@@ -60,9 +60,10 @@ export default function TermsPage() {
 
         <h2>6. The {brand.token.display}</h2>
         <p>
-          The {brand.token.display} is a planned utility token and has not launched. If it launches, it is intended for discounts
-          and early access inside {brand.name}. It is not an investment and does not entitle holders to revenue, dividends or
-          profit.
+          {brand.token.announced
+            ? `${brand.token.display} is a utility token. It is intended for discounts and early access inside ${brand.name}; staking is not open yet. `
+            : `The ${brand.token.display} is a planned utility token and has not launched. If it launches, it is intended for discounts and early access inside ${brand.name}. `}
+          It is not an investment and does not entitle holders to revenue, dividends or profit.
         </p>
 
         <h2>7. Availability</h2>
