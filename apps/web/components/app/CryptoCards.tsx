@@ -1,6 +1,6 @@
 'use client';
 
-import type { CoinPrice, FlagLevel, TokenReport, ToolState } from '@/lib/crypto-types';
+import type { AuditInfo, CoinPrice, FlagLevel, TokenReport, ToolState } from '@/lib/crypto-types';
 import { useCopy } from '../Toast';
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -36,9 +36,15 @@ function Spark() {
   );
 }
 
-export function ToolLine({ tool, state, chain }: { tool: 'token' | 'price'; state: ToolState; chain?: string }) {
+export function ToolLine({ tool, state, chain }: { tool: 'token' | 'price' | 'audit'; state: ToolState; chain?: string }) {
   const label =
-    tool === 'token'
+    tool === 'audit'
+      ? state.status === 'running'
+        ? 'Fetching the verified source code…'
+        : state.status === 'missing'
+          ? 'No verified source code found on any supported chain'
+          : "Couldn't reach the verification services, answering without the code"
+      : tool === 'token'
       ? state.status === 'running'
         ? `Checking on-chain data${chain ? ` on ${chain}` : ''}…`
         : state.status === 'done'
@@ -129,6 +135,30 @@ export function TokenCard({ report: r }: { report: TokenReport }) {
         {r.market !== undefined ? ', with market data from DexScreener' : ''}. They can miss honeypots, liquidity pulls and other tricks.
         Not financial advice.
       </div>
+    </div>
+  );
+}
+
+export function AuditCard({ a }: { a: AuditInfo }) {
+  return (
+    <div className="auditcard">
+      <div className="ah">
+        <span className="ak">Contract audit · {a.chain}</span>
+        {a.explorerUrl && (
+          <a className="mact" href={a.explorerUrl} target="_blank" rel="noopener noreferrer nofollow">
+            Explorer ↗
+          </a>
+        )}
+      </div>
+      <b>{a.name ?? short(a.address)}</b>
+      <div className="am">
+        <span>Verified on {a.verifiedBy}</span>
+        <span>
+          {a.lines.toLocaleString('en-US')} lines · {a.files} file{a.files === 1 ? '' : 's'}
+        </span>
+        {a.omitted > 0 && <span>{a.omitted} library files skipped for length</span>}
+      </div>
+      <p>Automated review of the public source code. Not a professional audit, not financial advice.</p>
     </div>
   );
 }

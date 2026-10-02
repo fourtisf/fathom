@@ -1,4 +1,4 @@
-import { brand, type ModelId } from '@fathom/config';
+import { brand, type ModelId, type VisionModelId } from '@fathom/config';
 
 export type ProviderKind = 'mock' | 'openai-compatible';
 
@@ -11,7 +11,7 @@ export interface ProviderPreset {
    * unmapped and reported 'unavailable' (never silently served by a different model).
    * INFERENCE_MODEL_MAP overrides and extends it.
    */
-  modelMap?: Partial<Record<ModelId, string>>;
+  modelMap?: Partial<Record<ModelId | VisionModelId, string>>;
   /** Generic presets map every model to the same id unless INFERENCE_MODEL_MAP says otherwise. */
   identityMap?: boolean;
   /** Extra JSON fields merged into every chat request (INFERENCE_EXTRA_BODY replaces it). */
@@ -54,6 +54,8 @@ export const INFERENCE_PRESETS: Record<string, ProviderPreset> = {
       'qwen3-235b': 'qwen/qwen3-235b-a22b-2507',
       'gpt-oss-120b': 'openai/gpt-oss-120b',
       'llama-3.3-70b': 'meta-llama/llama-3.3-70b-instruct',
+      // Vision (images in chat). Override with VISION_MODEL if the zero-retention routing can't serve it.
+      'qwen2.5-vl-72b': 'qwen/qwen2.5-vl-72b-instruct',
     },
     extraBody: { provider: { data_collection: 'deny', zdr: true }, usage: { include: true } },
     headers: { 'X-Title': brand.name, 'HTTP-Referer': brand.siteUrl },

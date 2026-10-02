@@ -1,6 +1,8 @@
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  /** User images as data URLs (vision). Sent to the provider with the text, never stored or logged. */
+  images?: string[];
 }
 
 export type ChatChunk = { type: 'delta'; text: string } | { type: 'usage'; input: number; output: number };

@@ -28,6 +28,16 @@ export function buildSystemPrompt(opts: {
   livePrices?: boolean;
   /** The token's published contract address, or null while it is "coming soon". */
   tokenAddress?: string | null;
+  /** Deep Research is available (needs web search). */
+  research?: boolean;
+  /** Images in chat are read by the vision model. */
+  vision?: boolean;
+  /** Contract audits from verified source code are available. */
+  audit?: boolean;
+  /** Image generation is available. */
+  imageGen?: boolean;
+  /** Private memory facts the user chose to share with this chat (decrypted in their browser). */
+  memory?: string | null;
 }): string {
   const privacy = (opts.preset && INFERENCE_PRESETS[opts.preset]?.privacy) || 'none';
   const mode = getPersona(opts.persona);
@@ -45,6 +55,19 @@ export function buildSystemPrompt(opts: {
       ? [`Token Safety Check: when the user pastes a token address into the chat (Robinhood Chain, Solana, Ethereum, Base, BNB Chain, Arbitrum, Polygon, Optimism or Avalanche), ${brand.name} reads public on-chain data (owner, mint/blacklist/fee functions, Solana mint and freeze authority, top holders, DEX liquidity, and GoPlus honeypot and tax checks on EVM chains other than Robinhood Chain) and shows automatic red flags. The same check is free without a wallet at ${brand.siteUrl}/scan. The checks can miss honeypots and liquidity pulls and are not financial advice.`]
       : []),
     ...(opts.livePrices ? ['Price questions get live prices from CoinGecko, fetched by the server.'] : []),
+    ...(opts.vision
+      ? ['Users can attach images or paste screenshots (charts, tweets, documents): an open-weight vision model reads them. Images are sent with that message only and never stored.']
+      : []),
+    ...(opts.research
+      ? [`Deep Research (the Research button): ${brand.name} plans several web searches, runs them from its servers and writes a report with cited sources. It costs more than a normal answer and is charged only when the report finishes.`]
+      : []),
+    ...(opts.audit
+      ? ['Contract audits (the Audit button, or "audit" plus a 0x address): the verified source code is fetched from Sourcify, Etherscan or the block explorer and reviewed function by function. It is an automated review, not a professional audit.']
+      : []),
+    ...(opts.imageGen
+      ? ['Image generation (the Image button): users describe an image and an open-weight image model creates it, for a fixed number of credits per image, charged only when the image arrives. Prompts and images are not stored.']
+      : []),
+    'Private memory (Settings → Memory): users can save facts for the assistant to remember. They are encrypted in the browser with the wallet key, so the server only stores ciphertext; the decrypted facts are sent with each message while memory is on.',
     'Users can talk instead of typing: the microphone button turns speech into text with Whisper running inside their browser, so audio never leaves their device, and answers can be read aloud by the device\'s own voice. Users can attach a PDF or text file: it is read inside their browser and only the extracted text is sent with the message. They can pick a chat mode (Contract auditor, Memecoin researcher, Explain simply, Web3 developer, Crypto writer) and share a chat with an encrypted link whose key lives only in the link; links expire after 1, 7 or 30 days and can be deleted in Settings.',
     `Privacy: ${brand.name} never logs or stores prompts or answers in readable form. Chat history is optional (Settings): when on, chats are encrypted in the browser with a key from the user's wallet signature and the server keeps only ciphertext it cannot read; when off, closing or forgetting a chat erases it. Chats can be set to self-destruct after 1 hour or 24 hours. ${PRIVACY_LINE[privacy]}`,
     `The ${brand.token.display} is a planned utility token for message discounts and early access through staking. It has not launched, it is not an investment, and it pays no yield, dividends or revenue.${brand.token.announced ? '' : ' Its ticker has not been announced: never state or guess one.'}`,
@@ -60,5 +83,17 @@ export function buildSystemPrompt(opts: {
     `Facts about ${brand.name}, for when the user asks about it. Do not claim anything about ${brand.name} beyond these; if asked something not covered, say you don't know and point to ${brand.domain}.`,
     ...facts.map((f) => `- ${f}`),
     ...(mode?.prompt ? ['', `Chat mode chosen by the user: ${mode.name}. ${mode.prompt}`] : []),
+    ...(opts.memory
+      ? [
+          '',
+          'The user saved these facts in their private memory so you know them. Use them when relevant; do not list them back unless asked:',
+          ...opts.memory
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .slice(0, 50)
+            .map((l) => `- ${l.replace(/^[-•]\s*/, '')}`),
+        ]
+      : []),
   ].join('\n');
 }

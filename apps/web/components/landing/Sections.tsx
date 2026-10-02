@@ -108,6 +108,36 @@ const TOOLS: { title: string; text: string; icon: string; tag?: string; link?: [
     tag: 'New',
   },
   {
+    title: 'Reads your screenshots',
+    text: 'Paste a chart, a tweet or a document photo and ask about it. An open-weight vision model reads it; the image is sent with that message only and never stored.',
+    icon: 'M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z M8.5 11a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z M21 16l-5-5-9 9',
+    tag: 'New',
+  },
+  {
+    title: 'Deep Research',
+    text: 'Ask a big question and get a report: several web searches run from our servers, and every claim is cited to its source.',
+    icon: 'M11 17.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z M20 20l-4.2-4.2 M8.5 11h5 M11 8.5v5',
+    tag: 'New',
+  },
+  {
+    title: 'Contract audits',
+    text: 'Paste a contract address and the verified source code is fetched and reviewed function by function: owner powers, hidden fees, upgrade risks.',
+    icon: 'M8 6l-6 6 6 6 M16 6l6 6-6 6',
+    tag: 'New',
+  },
+  {
+    title: 'Create images',
+    text: 'Describe a meme, banner or logo and an open-weight image model draws it. A fixed price per image, charged only when it arrives.',
+    icon: 'M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z',
+    tag: 'New',
+  },
+  {
+    title: 'Private memory',
+    text: 'Tell it what to remember about you. Memory is encrypted in your browser with your wallet key, so we only ever hold ciphertext.',
+    icon: 'M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z M9 22h6',
+    tag: 'New',
+  },
+  {
     title: 'Live prices',
     text: 'Ask about BTC, ETH, SOL or any $TICKER and the answer uses live CoinGecko data instead of old training data.',
     icon: 'M3 17l6-6 4 4 8-8 M15 7h6v6',

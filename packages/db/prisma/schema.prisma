@@ -24,16 +24,17 @@ enum TxStatus {
 }
 
 model User {
-  id           String          @id @default(cuid())
-  address      String          @unique // lowercase
-  creditsMicro BigInt          @default(0)
-  settings     Json            @default("{\"saveHistory\":true,\"defaultBurn\":\"off\",\"webSearch\":false}")
-  createdAt    DateTime        @default(now())
+  id           String           @id @default(cuid())
+  address      String           @unique // lowercase
+  creditsMicro BigInt           @default(0)
+  settings     Json             @default("{\"saveHistory\":true,\"defaultBurn\":\"off\",\"webSearch\":false}")
+  createdAt    DateTime         @default(now())
   apiKeys      ApiKey[]
   txs          Transaction[]
   usage        UsageDaily[]
   chats        EncryptedChat[]
   shares       SharedChat[]
+  memory       EncryptedMemory?
 }
 
 model ApiKey {
@@ -108,4 +109,14 @@ model SharedChat {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+/// Private memory: facts the user wants the AI to know, encrypted in their browser with the
+/// wallet-derived history key. The server stores only ciphertext it cannot read.
+model EncryptedMemory {
+  userId     String   @id
+  ciphertext Bytes
+  iv         Bytes
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

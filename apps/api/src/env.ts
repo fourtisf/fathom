@@ -1,5 +1,5 @@
 import { getAddress, isAddress, type Address } from 'viem';
-import { MODELS, SCAN_CHAINS, type ModelId } from '@fathom/config';
+import { MODELS, SCAN_CHAINS, VISION_MODEL, type ModelId, type VisionModelId } from '@fathom/config';
 import { INFERENCE_PRESETS, type ProviderKind } from './inference/presets';
 
 export interface ChainEnv {
@@ -16,7 +16,7 @@ export interface InferenceEnv {
   baseUrl: string | null;
   apiKey: string | null;
   /** Our model id → provider model id. Unmapped models are unavailable. */
-  modelMap: Partial<Record<ModelId, string>>;
+  modelMap: Partial<Record<ModelId | VisionModelId, string>>;
   extraBody: Record<string, unknown>;
   headers: Record<string, string>;
 }
@@ -66,6 +66,20 @@ export interface CryptoEnv {
   /** Overrides for the DexScreener and GoPlus API bases (proxy or test server). */
   dexscreenerUrl: string | null;
   goplusUrl: string | null;
+  /** Contract audits: Sourcify base (no key) and an optional Etherscan multichain API key. */
+  sourcifyUrl: string | null;
+  etherscanKey: string | null;
+}
+
+export interface ImagesEnv {
+  kind: 'mock' | 'openai-compatible';
+  baseUrl: string | null;
+  apiKey: string | null;
+  model: string;
+  /** Credits per image, in micro-credits. */
+  costMicro: bigint;
+  sizeStyle: 'size' | 'wh';
+  extraBody: Record<string, unknown>;
 }
 
 export interface ApiEnv {
@@ -84,9 +98,12 @@ export interface ApiEnv {
   /** Null when no inference provider is configured: chat reports every model unavailable. */
   inference: InferenceEnv | null;
   braveSearchApiKey: string | null;
+  /** Override for the Brave Search API base (proxy or test server). */
+  braveSearchUrl: string | null;
   crypto: CryptoEnv;
   welcome: WelcomeEnv;
   turnstile: TurnstileEnv;
+  images: ImagesEnv | null;
   topup: TopupEnv | null;
   /** Non-fatal config problems, logged once at startup. Never contains secret values. */
   warnings: string[];
@@ -148,6 +165,51 @@ function loadCrypto(env: Env, chain: ChainEnv | null, warnings: string[]): Crypt
     ),
     dexscreenerUrl: optUrl(env, 'DEXSCREENER_API_URL', warnings),
     goplusUrl: optUrl(env, 'GOPLUS_API_URL', warnings),
+    sourcifyUrl: optUrl(env, 'SOURCIFY_API_URL', warnings),
+    etherscanKey: opt(env, 'ETHERSCAN_API_KEY'),
+  };
+}
+
+/**
+ * Image generation: IMAGE_PROVIDER=mock for local dev, or IMAGE_API_URL + IMAGE_MODEL (+ IMAGE_API_KEY)
+ * for any OpenAI-compatible /images/generations endpoint. IMAGE_CREDITS sets the price per image.
+ */
+function loadImages(env: Env, warnings: string[]): ImagesEnv | null {
+  const credits = Number(opt(env, 'IMAGE_CREDITS') ?? '3');
+  if (!Number.isFinite(credits) || credits <= 0 || credits > 1000) {
+    warnings.push('IMAGE_CREDITS must be a number between 0 and 1000; image generation disabled');
+    return null;
+  }
+  const costMicro = BigInt(Math.round(credits * 1_000_000));
+  if (opt(env, 'IMAGE_PROVIDER') === 'mock') {
+    return { kind: 'mock', baseUrl: null, apiKey: null, model: 'mock-image', costMicro, sizeStyle: 'size', extraBody: {} };
+  }
+  const baseUrl = optUrl(env, 'IMAGE_API_URL', warnings);
+  const model = opt(env, 'IMAGE_MODEL');
+  if (!baseUrl && !model) return null;
+  if (!baseUrl || !model) {
+    warnings.push('Image generation needs both IMAGE_API_URL and IMAGE_MODEL; disabled');
+    return null;
+  }
+  let extraBody: Record<string, unknown> = {};
+  const raw = opt(env, 'IMAGE_EXTRA_BODY');
+  if (raw) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+      extraBody = parsed as Record<string, unknown>;
+    } catch {
+      warnings.push('IMAGE_EXTRA_BODY is not a JSON object; ignored');
+    }
+  }
+  return {
+    kind: 'openai-compatible',
+    baseUrl,
+    apiKey: opt(env, 'IMAGE_API_KEY'),
+    model,
+    costMicro,
+    sizeStyle: opt(env, 'IMAGE_SIZE_STYLE') === 'wh' ? 'wh' : 'size',
+    extraBody,
   };
 }
 
@@ -164,10 +226,16 @@ function loadInference(env: Env, warnings: string[]): InferenceEnv | null {
     warnings.push('INFERENCE_BASE_URL is required for this provider; inference disabled');
     return null;
   }
-  const modelMap: Partial<Record<ModelId, string>> = p.identityMap
-    ? Object.fromEntries(MODELS.map((m) => [m.id, m.id]))
+  const modelMap: Partial<Record<ModelId | VisionModelId, string>> = p.identityMap
+    ? Object.fromEntries([...MODELS.map((m) => m.id), VISION_MODEL.id].map((id) => [id, id]))
     : {};
   Object.assign(modelMap, p.modelMap ?? {});
+  // The provider's id for the vision model (images in chat); empty turns vision off.
+  const vision = env.VISION_MODEL;
+  if (vision !== undefined) {
+    if (vision.trim()) modelMap[VISION_MODEL.id] = vision.trim();
+    else delete modelMap[VISION_MODEL.id];
+  }
   const ids = new Set<string>(MODELS.map((m) => m.id));
   const rawMap = opt(env, 'INFERENCE_MODEL_MAP');
   if (rawMap) {
@@ -302,9 +370,11 @@ export function loadEnv(env: Env = process.env): ApiEnv {
     chain,
     inference: loadInference(env, warnings),
     braveSearchApiKey: opt(env, 'BRAVE_SEARCH_API_KEY'),
+    braveSearchUrl: optUrl(env, 'BRAVE_SEARCH_API_URL', warnings),
     crypto: loadCrypto(env, chain, warnings),
     welcome: loadWelcome(env, warnings),
     turnstile: { siteKey: opt(env, 'TURNSTILE_SITE_KEY'), secretKey: opt(env, 'TURNSTILE_SECRET_KEY') },
+    images: loadImages(env, warnings),
     topup: loadTopup(env, chain, warnings),
     warnings,
   };

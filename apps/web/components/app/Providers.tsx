@@ -10,6 +10,7 @@ import { defineChain, type Chain } from 'viem';
 import { brand } from '@fathom/config';
 import { api, type AppConfig } from '@/lib/api';
 import { SessionProvider } from './Session';
+import { MemoryProvider } from './Memory';
 import { HistoryProvider } from './History';
 import { UiProvider } from './Ui';
 
@@ -72,7 +73,9 @@ function WithConfig({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmi} key={chain?.id ?? 0}>
       <SessionProvider config={q.data ?? null} configError={q.isError}>
         <UiProvider>
-          <HistoryProvider>{children}</HistoryProvider>
+          <HistoryProvider>
+            <MemoryProvider>{children}</MemoryProvider>
+          </HistoryProvider>
         </UiProvider>
       </SessionProvider>
     </WagmiProvider>

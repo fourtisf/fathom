@@ -108,7 +108,14 @@ export function createOpenAiCompatibleProvider(opts: OpenAiCompatibleOptions): I
               ...opts.extraBody,
               ...req.params,
               model: providerModel,
-              messages: req.messages,
+              messages: req.messages.map((m) =>
+                m.images?.length
+                  ? {
+                      role: m.role,
+                      content: [{ type: 'text', text: m.content }, ...m.images.map((url) => ({ type: 'image_url', image_url: { url } }))],
+                    }
+                  : { role: m.role, content: m.content },
+              ),
               stream: true,
               stream_options: { include_usage: true },
             }),

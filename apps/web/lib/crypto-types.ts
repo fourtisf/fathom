@@ -55,6 +55,18 @@ export interface CoinPrice {
   volume24hUsd: number | null;
 }
 
+/** A contract whose verified source was sent to the model for an audit. */
+export interface AuditInfo {
+  address: string;
+  chain: string;
+  name: string | null;
+  verifiedBy: string;
+  files: number;
+  lines: number;
+  omitted: number;
+  explorerUrl: string | null;
+}
+
 export type ToolState =
-  | { status: 'running' | 'unavailable' }
-  | { status: 'done'; report?: TokenReport; prices?: CoinPrice[] };
+  | { status: 'running' | 'unavailable' | 'missing' }
+  | { status: 'done'; report?: TokenReport; prices?: CoinPrice[]; audit?: AuditInfo };

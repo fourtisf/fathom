@@ -27,7 +27,13 @@ export interface ChatRecord {
   createdAt: string;
   burn: Burn;
   turns: (
-    | { kind: 'you'; text: string; doc?: { name: string; pages: number | null; text: string; truncated: boolean } }
+    | {
+        kind: 'you';
+        text: string;
+        doc?: { name: string; pages: number | null; text: string; truncated: boolean };
+        /** Images are never saved, only how many there were. */
+        imageCount?: number;
+      }
     | {
         kind: 'ai';
         slots: { model: string; text: string; credits?: number }[];
@@ -58,6 +64,9 @@ interface History {
   remove(id: string): Promise<void>;
   /** Forget the local key (sign-out or history turned off). */
   lock(): Promise<void>;
+  /** Encrypt / decrypt any JSON with the wallet-derived key (null while locked). Used by private memory. */
+  seal(value: unknown): Promise<{ ciphertext: string; iv: string } | null>;
+  open<T>(ciphertext: string, iv: string): Promise<T | null>;
 }
 
 const Ctx = createContext<History | null>(null);
@@ -188,8 +197,22 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(t);
   }, [items]);
 
+  const seal = useCallback(async (value: unknown) => {
+    const k = keyRef.current;
+    return k ? encryptJson(k, value) : null;
+  }, []);
+  const open = useCallback(async <T,>(ciphertext: string, iv: string): Promise<T | null> => {
+    const k = keyRef.current;
+    if (!k) return null;
+    try {
+      return await decryptJson<T>(k, ciphertext, iv);
+    } catch {
+      return null;
+    }
+  }, []);
+
   return (
-    <Ctx.Provider value={{ enabled, unlocked: !!key, items, unlock, refresh, save, load, remove, lock }}>
+    <Ctx.Provider value={{ enabled, unlocked: !!key, items, unlock, refresh, save, load, remove, lock, seal, open }}>
       {children}
     </Ctx.Provider>
   );

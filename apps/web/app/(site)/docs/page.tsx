@@ -158,6 +158,31 @@ export default function DocsPage() {
             by your device&apos;s own voice; turn that off under Settings → Voice, or press Listen on any answer.
           </li>
           <li>
+            <b>Images.</b> Attach a screenshot, chart or photo (or paste it into the message box) and ask about it. An
+            open-weight vision model reads it. The image is resized in your browser and sent with that message only; it
+            is never stored, and saved chats keep only a note that an image was there.
+          </li>
+          <li>
+            <b>Research.</b> Turn on Research and ask a big question. {brand.name} plans several web searches, runs them
+            from its own servers (your IP stays hidden) and writes a report with every claim cited. It costs more than a
+            normal answer and is charged only when the report finishes.
+          </li>
+          <li>
+            <b>Audit.</b> Press Audit (or write &ldquo;audit&rdquo; and a 0x address). The contract&apos;s verified source
+            code is fetched from Sourcify, Etherscan or the block explorer, upgradeable proxies are followed to their logic
+            contract, and the AI reviews it function by function. This is an automated review, not a professional audit.
+          </li>
+          <li>
+            <b>Image.</b> Switch to Image, pick a shape and describe what you want. An open-weight image model draws it for
+            a fixed number of credits, charged only when the image arrives. Prompts and images are not stored; download
+            the image to keep it.
+          </li>
+          <li>
+            <b>Memory.</b> Under Settings → Memory, save facts the assistant should know about you. They are encrypted in
+            your browser with your wallet key and we keep only ciphertext. While memory is on, the facts are sent with your
+            messages (never logged); turn it off or forget any fact at any time.
+          </li>
+          <li>
             <b>Live prices.</b> Ask a price question (&ldquo;ETH price today?&rdquo;, &ldquo;$PEPE price?&rdquo;) and the answer
             uses live CoinGecko data, shown above the reply. No button needed.
           </li>

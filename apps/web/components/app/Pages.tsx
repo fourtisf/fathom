@@ -9,6 +9,7 @@ import { useToast } from '../Toast';
 import { fmt2, fmtCost } from './Shell';
 import { useSession } from './Session';
 import { useHistory } from './History';
+import { MAX_FACTS, MAX_FACT_CHARS, useMemory } from './Memory';
 import { useUi, type Burn } from './Ui';
 import { VOICE_LANGS, resolveVoiceLang } from '@/lib/voice/languages';
 
@@ -454,6 +455,7 @@ export function SettingsPage() {
           </div>
         )}
       </div>
+      <MemoryPanel />
       <div className="glass panel">
         <h3>Voice</h3>
         <div className="setrow">
@@ -515,6 +517,107 @@ export function SettingsPage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MemoryPanel() {
+  const memory = useMemory();
+  const history = useHistory();
+  const toast = useToast();
+  const [draft, setDraft] = useState('');
+  const fail = () => toast("Couldn't update your memory. Try again.", true);
+  return (
+    <div className="glass panel">
+      <h3>Memory</h3>
+      <div className="setrow">
+        <div>
+          <h4>Private memory</h4>
+          <p>
+            Facts you want the assistant to know about you, such as your name, what you trade or how you like answers. They are
+            encrypted in this browser with your wallet key; we store only ciphertext. While memory is on, they are sent with
+            your messages and never logged.
+          </p>
+        </div>
+        {memory.ready && (
+          <button
+            className="tog"
+            role="switch"
+            aria-checked={memory.enabled}
+            aria-label="Use memory in chats"
+            onClick={() =>
+              memory
+                .setEnabled(!memory.enabled)
+                .then(() => toast(memory.enabled ? 'Memory off: chats start without it' : 'Memory on'))
+                .catch(fail)
+            }
+          />
+        )}
+      </div>
+      {!memory.ready ? (
+        <div className="setrow">
+          <div>
+            <h4>Locked</h4>
+            <p>Sign one message with your wallet to unlock memory on this device. It costs no gas.</p>
+          </div>
+          <button
+            className="btn btn-light"
+            onClick={() =>
+              history
+                .unlock()
+                .then(() => toast('Memory unlocked'))
+                .catch((e: unknown) =>
+                  toast(e instanceof Error && e.message === 'wallet_not_connected' ? 'Reconnect your wallet to unlock memory.' : 'Memory stays locked.', true),
+                )
+            }
+          >
+            Unlock
+          </button>
+        </div>
+      ) : (
+        <>
+          {memory.unreadable && <p className="memnote">Your saved memory was encrypted with a different key and can&apos;t be read here. Adding a fact replaces it.</p>}
+          <ul className="memlist" aria-label="Saved memory">
+            {memory.facts.map((f, i) => (
+              <li key={i}>
+                <span>{f}</span>
+                <button className="mact" aria-label={`Forget: ${f}`} onClick={() => memory.remove(i).catch(fail)}>
+                  Forget
+                </button>
+              </li>
+            ))}
+            {!memory.facts.length && <li className="memempty">Nothing saved yet. Try “I trade on Solana and prefer short answers.”</li>}
+          </ul>
+          <form
+            className="memadd"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!draft.trim()) return;
+              if (memory.facts.length >= MAX_FACTS) return toast(`Up to ${MAX_FACTS} facts. Forget one first.`, true);
+              memory
+                .add(draft)
+                .then(() => setDraft(''))
+                .catch(fail);
+            }}
+          >
+            <input
+              value={draft}
+              maxLength={MAX_FACT_CHARS}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Add something to remember…"
+              aria-label="New memory"
+            />
+            <button className="btn btn-dark" type="submit" disabled={!draft.trim()}>
+              Remember
+            </button>
+          </form>
+          {memory.facts.length > 0 && (
+            <button className="mact memclear" onClick={() => memory.clear().then(() => toast('Memory deleted')).catch(fail)}>
+              Delete all memory
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }

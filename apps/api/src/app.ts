@@ -24,6 +24,9 @@ import { chatHistoryRoutes } from './routes/chats';
 import { purgeExpiredShares, shareRoutes } from './routes/shares';
 import { statusRoutes } from './routes/status';
 import { scanRoutes } from './routes/scan';
+import { imageRoutes } from './routes/images';
+import { memoryRoutes } from './routes/memory';
+import { createImageGenerator, createMockImageGenerator, type ImageGenerator } from './images';
 import { v1ChatRoutes } from './routes/v1-chat';
 import { v1AuthRoutes } from './routes/v1-auth';
 import { createChainClient, type ChainClient } from './chain';
@@ -36,6 +39,7 @@ import {
   createGoPlus,
   createMultiScanner,
   createSolanaScanner,
+  createSourceFetcher,
   createTokenScanner,
   type CryptoTools,
 } from './crypto';
@@ -53,6 +57,8 @@ export interface BuildAppOptions {
   verifyCaptcha?: CaptchaVerifier | null;
   /** Crypto tools override for tests. Null disables them. */
   crypto?: CryptoTools | null;
+  /** Image generator override for tests. Null disables it. */
+  images?: ImageGenerator | null;
   /**
    * Timers: burn cron (60s), status probe (60s), top-up indexer (15s).
    * Default: on, except under NODE_ENV=test (tests run the jobs explicitly).
@@ -101,12 +107,12 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     opts.prisma ?? (env.databaseUrl ? new PrismaClient({ datasourceUrl: env.databaseUrl }) : new PrismaClient());
   const provider = opts.provider !== undefined ? opts.provider : createProvider(env.inference);
   const rawSearch =
-    opts.search !== undefined ? opts.search : env.braveSearchApiKey ? createBraveSearch(env.braveSearchApiKey) : null;
+    opts.search !== undefined ? opts.search : env.braveSearchApiKey ? createBraveSearch(env.braveSearchApiKey, fetch, env.braveSearchUrl ?? undefined) : null;
   const searchHealth = new SearchHealth();
   const search: WebSearch | null = rawSearch && {
-    async search(query, signal) {
+    async search(query, signal, count) {
       try {
-        const r = await rawSearch.search(query, signal);
+        const r = await rawSearch.search(query, signal, count);
         searchHealth.ok();
         return r;
       } catch (err) {
@@ -139,8 +145,31 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
               plan: env.crypto.coingeckoPlan,
               baseUrl: env.crypto.coingeckoUrl,
             }),
+            sources: createSourceFetcher({
+              home: env.chain
+                ? { chainId: env.chain.id, name: env.chain.name, explorerUrl: env.chain.explorerUrl, blockscoutApi: env.crypto.explorerApi }
+                : null,
+              sourcifyUrl: env.crypto.sourcifyUrl ?? undefined,
+              etherscanKey: env.crypto.etherscanKey,
+            }),
           }
         : null;
+
+  const images: ImageGenerator | null =
+    opts.images !== undefined
+      ? opts.images
+      : !env.images
+        ? null
+        : env.images.kind === 'mock'
+          ? createMockImageGenerator(env.images.costMicro)
+          : createImageGenerator({
+              baseUrl: env.images.baseUrl!,
+              apiKey: env.images.apiKey,
+              model: env.images.model,
+              costMicro: env.images.costMicro,
+              sizeStyle: env.images.sizeStyle,
+              extraBody: env.images.extraBody,
+            });
 
   const ctx: AppContext = {
     env,
@@ -152,6 +181,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     chain,
     topup,
     verifyCaptcha: env.turnstile.secretKey ? verifyCaptcha : null,
+    images,
     crypto,
     health: new ModelHealth(provider, redis, app.log),
     activeStreams: new Set(),
@@ -212,6 +242,8 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(shareRoutes);
   await app.register(statusRoutes);
   await app.register(scanRoutes);
+  await app.register(imageRoutes);
+  await app.register(memoryRoutes);
   await app.register(modelRoutes, { prefix: '/v1' });
   await app.register(v1ChatRoutes, { prefix: '/v1' });
   await app.register(v1AuthRoutes, { prefix: '/v1' });

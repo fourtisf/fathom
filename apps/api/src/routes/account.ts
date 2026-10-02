@@ -193,6 +193,7 @@ export const accountRoutes: FastifyPluginAsync = async (app) => {
       prisma.apiKey.deleteMany({ where: { userId } }),
       prisma.encryptedChat.deleteMany({ where: { userId } }),
       prisma.sharedChat.deleteMany({ where: { userId } }),
+      prisma.encryptedMemory.deleteMany({ where: { userId } }),
       prisma.user.update({
         where: { id: userId },
         data: { settings: DEFAULT_SETTINGS as unknown as Prisma.InputJsonObject },

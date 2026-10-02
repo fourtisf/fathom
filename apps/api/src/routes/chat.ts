@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { getPersona, tokenAddress } from '@fathom/config';
+import { getPersona, MAX_CHAT_IMAGES, tokenAddress, VISION_MODEL } from '@fathom/config';
 import { errorBody } from '../errors';
 import { requireAuth } from '../session';
 import { fixedWindow } from '../ratelimit';
@@ -17,14 +17,23 @@ export const CHAT_RATE_LIMIT = 20;
 const MAX_MESSAGES = 50;
 const MAX_TOTAL_CHARS = 100_000;
 const PING_MS = 15_000;
+/** Decrypted memory facts sent with a chat (the browser holds the key). */
+export const MAX_MEMORY_CHARS = 4000;
+/** One resized image (the browser sends JPEG/PNG/WebP at most IMAGE_MAX_SIDE px) as a base64 data URL. */
+const MAX_IMAGE_CHARS = 2_000_000;
+const IMAGE_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
+/** Room for MAX_CHAT_IMAGES images plus the text limit; stays under Nginx's 10 MB client_max_body_size. */
+export const CHAT_BODY_LIMIT = MAX_CHAT_IMAGES * MAX_IMAGE_CHARS + 1_000_000;
 
 type Role = 'user' | 'assistant';
 interface ChatBody {
   model: string;
   compareWith?: string;
   webSearch: boolean;
+  research: boolean;
   persona: string | null;
-  messages: { role: Role; content: string }[];
+  memory: string | null;
+  messages: { role: Role; content: string; images?: string[] }[];
 }
 
 function parseBody(raw: unknown): ChatBody | string {
@@ -36,6 +45,10 @@ function parseBody(raw: unknown): ChatBody | string {
   }
   if (b.compareWith === b.model) return 'compareWith must be a different model';
   if (b.webSearch !== undefined && typeof b.webSearch !== 'boolean') return 'webSearch must be a boolean';
+  if (b.research !== undefined && typeof b.research !== 'boolean') return 'research must be a boolean';
+  if (b.memory !== undefined && b.memory !== null && (typeof b.memory !== 'string' || b.memory.length > MAX_MEMORY_CHARS)) {
+    return `memory must be a string of at most ${MAX_MEMORY_CHARS} characters`;
+  }
   if (b.persona !== undefined && b.persona !== null && (typeof b.persona !== 'string' || !getPersona(b.persona))) {
     return 'persona must be a known chat mode';
   }
@@ -43,6 +56,7 @@ function parseBody(raw: unknown): ChatBody | string {
     return `messages must have 1 to ${MAX_MESSAGES} entries`;
   }
   let total = 0;
+  let imageTotal = 0;
   const messages: ChatBody['messages'] = [];
   for (const m of b.messages as unknown[]) {
     const mm = m as Record<string, unknown> | null;
@@ -50,8 +64,18 @@ function parseBody(raw: unknown): ChatBody | string {
       return 'each message needs role "user" or "assistant" and string content';
     }
     total += mm.content.length;
-    messages.push({ role: mm.role, content: mm.content });
+    let images: string[] | undefined;
+    if (mm.images !== undefined) {
+      if (mm.role !== 'user' || !Array.isArray(mm.images)) return 'images are allowed on user messages only, as an array';
+      if (!mm.images.every((u): u is string => typeof u === 'string' && u.length <= MAX_IMAGE_CHARS && IMAGE_RE.test(u))) {
+        return 'each image must be a PNG, JPEG or WebP data URL of at most 2 MB';
+      }
+      imageTotal += mm.images.length;
+      if (mm.images.length) images = mm.images;
+    }
+    messages.push({ role: mm.role, content: mm.content, ...(images ? { images } : {}) });
   }
+  if (imageTotal > MAX_CHAT_IMAGES) return `a conversation may include at most ${MAX_CHAT_IMAGES} images`;
   if (total > MAX_TOTAL_CHARS) return `messages may contain at most ${MAX_TOTAL_CHARS} characters in total`;
   const last = messages[messages.length - 1]!;
   if (last.role !== 'user' || !last.content.trim()) return 'the last message must be a non-empty user message';
@@ -59,6 +83,8 @@ function parseBody(raw: unknown): ChatBody | string {
     model: b.model,
     compareWith: typeof b.compareWith === 'string' ? b.compareWith : undefined,
     webSearch: b.webSearch === true,
+    research: b.research === true,
+    memory: typeof b.memory === 'string' && b.memory.trim() ? b.memory.trim() : null,
     persona: typeof b.persona === 'string' ? b.persona : null,
     messages,
   };
@@ -67,19 +93,24 @@ function parseBody(raw: unknown): ChatBody | string {
 export const chatRoutes: FastifyPluginAsync = async (app) => {
   const { redis, activeStreams } = app.ctx;
   // Built per request: top-ups become live once the USDG decimals have been read.
-  const systemPrompt = (persona: string | null) =>
+  const systemPrompt = (persona: string | null, memory: string | null) =>
     buildSystemPrompt({
       persona,
+      memory,
       preset: app.ctx.env.inference?.preset ?? null,
       webSearch: !!app.ctx.search,
+      research: !!app.ctx.search,
       topups: !!app.ctx.topup?.ready,
       developerApi: true,
       tokenAddress: tokenAddress(),
       tokenCheck: !!app.ctx.crypto?.scanner,
       livePrices: !!app.ctx.crypto?.prices,
+      audit: !!app.ctx.crypto?.sources,
+      imageGen: !!app.ctx.images,
+      vision: !!app.ctx.provider?.providerModelId(VISION_MODEL.id),
     });
 
-  app.post('/chat', { preHandler: requireAuth }, async (request, reply) => {
+  app.post('/chat', { preHandler: requireAuth, bodyLimit: CHAT_BODY_LIMIT }, async (request, reply) => {
     const userId = request.userId!;
     const rl = await fixedWindow(redis, `chat:${userId}`, CHAT_RATE_LIMIT, 60);
     if (!rl.ok) {
@@ -98,8 +129,9 @@ export const chatRoutes: FastifyPluginAsync = async (app) => {
         userId,
         models: [body.model, ...(body.compareWith ? [body.compareWith] : [])],
         messages: body.messages,
-        systemPrompt: systemPrompt(body.persona),
+        systemPrompt: systemPrompt(body.persona, body.memory),
         webSearch: body.webSearch,
+        research: body.research,
         cryptoTools: true,
       },
       request.log,

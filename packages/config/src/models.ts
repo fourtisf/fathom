@@ -79,6 +79,21 @@ export const DEFAULT_MODEL: ModelId = 'deepseek-v3.1';
 /** Model offered by the "Switch to … and retry" action when the default is degraded. */
 export const FALLBACK_MODEL: ModelId = 'qwen3-235b';
 
+/**
+ * The model that reads images (screenshots, charts, photos). Used automatically for messages with
+ * images; it isn't in the chat model menu. Billed by tokens like the others (images count as input).
+ */
+export const VISION_MODEL = {
+  id: 'qwen2.5-vl-72b',
+  name: 'Qwen2.5-VL 72B',
+  inputPerM: 40,
+  outputPerM: 120,
+} as const;
+export type VisionModelId = typeof VISION_MODEL.id;
+/** Images per request (counted across the conversation) and the longest side the browser resizes to. */
+export const MAX_CHAT_IMAGES = 4;
+export const IMAGE_MAX_SIDE = 1568;
+
 const byId = new Map<string, ModelInfo>(MODELS.map((m) => [m.id, m]));
 
 export function getModel(id: string): ModelInfo | undefined {

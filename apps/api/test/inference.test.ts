@@ -132,11 +132,14 @@ describe('presets and model health', () => {
     expect(extended.warnings.some((w) => w.includes('bogus'))).toBe(true);
   });
 
-  it('openrouter maps all four models and sends the no-retention provider policy', async () => {
+  it('openrouter maps all four chat models plus vision and sends the no-retention provider policy', async () => {
     const env = loadEnv({ INFERENCE_PROVIDER: 'openrouter', INFERENCE_API_KEY: 'k' });
     const inf = env.inference!;
     expect(inf.baseUrl).toBe('https://openrouter.ai/api/v1');
-    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v3.1', 'gpt-oss-120b', 'llama-3.3-70b', 'qwen3-235b']);
+    expect(Object.keys(inf.modelMap).sort()).toEqual(['deepseek-v3.1', 'gpt-oss-120b', 'llama-3.3-70b', 'qwen2.5-vl-72b', 'qwen3-235b']);
+    // VISION_MODEL swaps the provider's vision model; empty turns vision off.
+    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: 'meta-llama/llama-3.2-90b-vision-instruct' }).inference!.modelMap['qwen2.5-vl-72b']).toBe('meta-llama/llama-3.2-90b-vision-instruct');
+    expect(loadEnv({ INFERENCE_PROVIDER: 'openrouter', VISION_MODEL: '' }).inference!.modelMap['qwen2.5-vl-72b']).toBeUndefined();
     let sent: any;
     const provider = createOpenAiCompatibleProvider({
       name: 'openrouter',

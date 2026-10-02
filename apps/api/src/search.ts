@@ -5,7 +5,8 @@ export interface SearchResult {
 }
 
 export interface WebSearch {
-  search(query: string, signal: AbortSignal): Promise<SearchResult[]>;
+  /** `count`: results wanted (default 5, at most 10). */
+  search(query: string, signal: AbortSignal, count?: number): Promise<SearchResult[]>;
 }
 
 const stripTags = (s: string) =>
@@ -22,10 +23,13 @@ const stripTags = (s: string) =>
  * Brave Search from our server, so the user's IP never reaches the search engine.
  * Errors carry no query text or response body.
  */
-export function createBraveSearch(apiKey: string, doFetch: typeof fetch = fetch): WebSearch {
+export function createBraveSearch(apiKey: string, doFetch: typeof fetch = fetch, baseUrl = 'https://api.search.brave.com'): WebSearch {
+  const base = baseUrl.replace(/\/$/, '');
   return {
-    async search(query, signal) {
-      const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`;
+    async search(query, signal, count = 5) {
+      const n = Math.min(10, Math.max(1, count));
+      // extra_snippets gives longer excerpts on plans that include them; others ignore it.
+      const url = `${base}/res/v1/web/search?q=${encodeURIComponent(query)}&count=${n}&extra_snippets=true`;
       const res = await doFetch(url, {
         headers: { accept: 'application/json', 'x-subscription-token': apiKey },
         signal: AbortSignal.any([signal, AbortSignal.timeout(8_000)]),
@@ -34,11 +38,17 @@ export function createBraveSearch(apiKey: string, doFetch: typeof fetch = fetch)
         await res.body?.cancel().catch(() => undefined);
         throw new Error(`search failed with HTTP ${res.status}`);
       }
-      const json = (await res.json()) as { web?: { results?: { title?: string; url?: string; description?: string }[] } };
+      const json = (await res.json()) as {
+        web?: { results?: { title?: string; url?: string; description?: string; extra_snippets?: unknown }[] };
+      };
       return (json.web?.results ?? [])
         .filter((r) => typeof r.url === 'string' && typeof r.title === 'string')
-        .slice(0, 5)
-        .map((r) => ({ title: stripTags(r.title!), url: r.url!, description: stripTags(r.description ?? '').slice(0, 500) }));
+        .slice(0, n)
+        .map((r) => {
+          const extra = Array.isArray(r.extra_snippets) ? r.extra_snippets.filter((x): x is string => typeof x === 'string') : [];
+          const text = [r.description ?? '', ...extra].map(stripTags).filter(Boolean).join(' … ');
+          return { title: stripTags(r.title!), url: r.url!, description: text.slice(0, extra.length ? 1200 : 500) };
+        });
     },
   };
 }

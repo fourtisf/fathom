@@ -1,5 +1,5 @@
 import { ApiError } from './api';
-import type { CoinPrice, TokenReport } from './crypto-types';
+import type { AuditInfo, CoinPrice, TokenReport } from './crypto-types';
 
 export type ChatEvent =
   | { type: 'search'; status: 'running' | 'done' | 'unavailable'; sources?: number }
@@ -10,15 +10,25 @@ export type ChatEvent =
   | { type: 'tool'; tool: 'token'; status: 'done'; report: TokenReport }
   | { type: 'tool'; tool: 'price'; status: 'running' | 'unavailable' }
   | { type: 'tool'; tool: 'price'; status: 'done'; prices: CoinPrice[] }
+  | { type: 'tool'; tool: 'audit'; status: 'running' | 'unavailable' | 'missing' }
+  | { type: 'tool'; tool: 'audit'; status: 'done'; audit: AuditInfo }
+  | { type: 'research'; stage: 'planning' }
+  | { type: 'research'; stage: 'searching'; queries: string[] }
+  | { type: 'research'; stage: 'writing'; sources: number }
   | { type: 'end'; balance: number };
 
 export interface ChatRequest {
   model: string;
   compareWith?: string;
   webSearch?: boolean;
+  /** Deep Research: planned searches and a cited report. */
+  research?: boolean;
+  /** Private memory facts, decrypted in this browser (sent only while memory is on). */
+  memory?: string;
   /** Chat mode id from PERSONAS; omitted for the default mode. */
   persona?: string;
-  messages: { role: 'user' | 'assistant'; content: string }[];
+  /** `images`: data URLs on user messages (vision). */
+  messages: { role: 'user' | 'assistant'; content: string; images?: string[] }[];
 }
 
 /** POST /api/chat and feed each server-sent event to `onEvent`. Throws ApiError for non-stream errors (402, 503, 429…). */

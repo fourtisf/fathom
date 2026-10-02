@@ -17,6 +17,14 @@ export interface AppConfig {
   /** Token Safety Check: a pasted 0x address is checked on the explorer. */
   tokenCheck?: boolean;
   livePrices?: boolean;
+  /** Images in chat are read by the vision model. */
+  vision?: boolean;
+  /** Deep Research (needs web search on the server). */
+  research?: boolean;
+  /** Contract audits from verified source code. */
+  audit?: boolean;
+  /** Image generation is configured; credits per image. */
+  imageGen?: { credits: number } | null;
   inference: boolean;
   turnstileSiteKey?: string | null;
   topup?: TopupConfig | null;

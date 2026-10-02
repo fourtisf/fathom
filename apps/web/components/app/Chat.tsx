@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { brand, FALLBACK_MODEL, MODELS, PERSONAS, getPersona, WELCOME_CREDITS } from '@fathom/config';
+import { brand, FALLBACK_MODEL, MAX_CHAT_IMAGES, MODELS, PERSONAS, VISION_MODEL, getPersona, WELCOME_CREDITS } from '@fathom/config';
 import { ApiError, post, type WelcomeDenied } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/chat';
 import type { ToolState } from '@/lib/crypto-types';
 import { DocError, readDocument, withDocument, type DocText } from '@/lib/pdf-text';
+import { ImageError, isImageFile, readImage } from '@/lib/image-input';
 import type { ShareDoc } from '@/lib/share-doc';
-import { PriceStrip, TokenCard, ToolLine } from './CryptoCards';
+import { AuditCard, PriceStrip, TokenCard, ToolLine } from './CryptoCards';
 import { Icon } from '../Icon';
 import { LogoMark } from '../LogoMark';
 import { useCopy, useToast } from '../Toast';
 import { useHistory, type ChatRecord } from './History';
+import { useMemory } from './Memory';
 import { Markdown } from './Markdown';
 import { fmt2, fmtCost } from './Shell';
 import { short, useSession } from './Session';
@@ -28,16 +30,18 @@ type SlotState = {
   error?: string;
 };
 type Turn =
-  | { id: number; kind: 'you'; text: string; doc?: DocText }
+  | { id: number; kind: 'you'; text: string; doc?: DocText; images?: string[]; imageCount?: number }
   | {
       id: number;
       kind: 'ai';
       slots: SlotState[];
       search?: 'running' | 'done' | 'unavailable';
       sources?: number;
-      tools?: { token?: ToolState; price?: ToolState };
+      tools?: { token?: ToolState; price?: ToolState; audit?: ToolState };
+      research?: { stage: 'planning' | 'searching' | 'writing'; queries?: string[]; sources?: number };
     }
   | { id: number; kind: 'note'; text: string }
+  | { id: number; kind: 'img'; status: 'waiting' | 'done' | 'error'; size: ImgSize; src?: string; credits?: number; error?: string }
   | {
       id: number;
       kind: 'fail';
@@ -45,6 +49,7 @@ type Turn =
       body: string;
       action?: { label: string; retry?: { q: string; model: string }; topup?: boolean; claim?: boolean };
     };
+type ImgSize = 'square' | 'landscape' | 'portrait';
 type NewTurn = Turn extends infer T ? (T extends Turn ? Omit<T, 'id'> : never) : never;
 
 export const WELCOME_DENIED_TEXT: Record<WelcomeDenied | 'already_claimed', string> = {
@@ -57,6 +62,7 @@ export const WELCOME_DENIED_TEXT: Record<WelcomeDenied | 'already_claimed', stri
 };
 
 const TOKEN_CHECK_PREFIX = 'Check this token for red flags: ';
+const AUDIT_PREFIX = 'Audit this contract: ';
 
 const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean }[] = [
   {
@@ -95,7 +101,9 @@ const SUGGESTIONS: { title: string; sub: string; prompt: string; fill?: boolean 
   },
 ];
 
-const modelName = (id: string) => MODELS.find((m) => m.id === id)?.name ?? id;
+const modelName = (id: string) => (id === VISION_MODEL.id ? VISION_MODEL.name : MODELS.find((m) => m.id === id)?.name ?? id);
+const IMAGE_DEFAULT_QUESTION = 'What is in this image? Point out anything important.';
+const imagesIn = (t: { images?: string[]; imageCount?: number }) => t.images?.length ?? t.imageCount ?? 0;
 const RM = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const newChatId = () => crypto.randomUUID().replace(/-/g, '');
 let nextId = 1;
@@ -149,7 +157,7 @@ function SlotBody({ slot, big }: { slot: SlotState; big?: boolean }) {
 function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): ChatRecord | null {
   const kept: ChatRecord['turns'] = [];
   for (const t of turns) {
-    if (t.kind === 'you') kept.push({ kind: 'you', text: t.text, ...(t.doc ? { doc: t.doc } : {}) });
+    if (t.kind === 'you') kept.push({ kind: 'you', text: t.text, ...(t.doc ? { doc: t.doc } : {}), ...(imagesIn(t) ? { imageCount: imagesIn(t) } : {}) });
     if (t.kind === 'ai') {
       const slots = t.slots
         .filter((s) => (s.status === 'done' || s.status === 'stopped') && s.text)
@@ -168,7 +176,7 @@ function toRecord(turns: Turn[], createdAt: string, burn: ChatRecord['burn']): C
 function fromRecord(r: ChatRecord): Turn[] {
   return r.turns.map((t) =>
     t.kind === 'you'
-      ? { id: nextId++, kind: 'you' as const, text: t.text, ...(t.doc ? { doc: t.doc } : {}) }
+      ? { id: nextId++, kind: 'you' as const, text: t.text, ...(t.doc ? { doc: t.doc } : {}), ...(t.imageCount ? { imageCount: t.imageCount } : {}) }
       : {
           id: nextId++,
           kind: 'ai' as const,
@@ -207,8 +215,15 @@ export function Chat() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState('');
   const [attached, setAttached] = useState<DocText | null>(null);
+  const [pics, setPics] = useState<string[]>([]);
+  const [research, setResearch] = useState(false);
+  const memory = useMemory();
+  const [imageMode, setImageMode] = useState(false);
+  const [imgSize, setImgSize] = useState<ImgSize>('square');
+  const activeTool = imageMode ? 'Image' : research ? 'Research' : ui.webSearch && config?.webSearch ? 'Web search' : null;
   const [reading, setReading] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const fileInp = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -288,6 +303,7 @@ export function Chat() {
   const reset = useCallback(
     (note?: string) => {
       setTurns([]);
+      setPics([]);
       setLeaving(false);
       setChatId(newChatId());
       setCreatedAt(new Date().toISOString());
@@ -351,10 +367,15 @@ export function Chat() {
     void persist(turnsRef.current, ui.burn);
   }, [ui.burn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function historyFor(ts: Turn[]): { role: 'user' | 'assistant'; content: string }[] {
-    const out: { role: 'user' | 'assistant'; content: string }[] = [];
+  function historyFor(ts: Turn[]): { role: 'user' | 'assistant'; content: string; images?: string[] }[] {
+    const out: { role: 'user' | 'assistant'; content: string; images?: string[] }[] = [];
     for (const t of ts) {
-      if (t.kind === 'you') out.push({ role: 'user', content: t.doc ? withDocument(t.text, t.doc) : t.text });
+      if (t.kind === 'you')
+        out.push({
+          role: 'user',
+          content: t.doc ? withDocument(t.text, t.doc) : t.imageCount && !t.images ? `${t.text}\n\n(An image was attached here earlier; it was not saved.)` : t.text,
+          ...(t.images?.length ? { images: t.images } : {}),
+        });
       const s = t.kind === 'ai' ? t.slots.find((x) => (x.status === 'done' || x.status === 'stopped') && x.text) : undefined;
       if (s) out.push({ role: 'assistant', content: s.text });
     }
@@ -386,11 +407,13 @@ export function Chat() {
     let base = turnsRef.current;
     let q: string;
     let doc: DocText | undefined;
+    let images: string[] | undefined;
     if (regenerate) {
       const lastYou = [...base].reverse().find((t) => t.kind === 'you') as Extract<Turn, { kind: 'you' }> | undefined;
       if (!lastYou) return;
       q = lastYou.text;
       doc = lastYou.doc;
+      images = lastYou.images;
       base = base.slice(0, base.indexOf(lastYou) + 1);
       setTurns(base);
     } else {
@@ -399,19 +422,35 @@ export function Chat() {
         doc = attached;
         if (!q) q = DOC_DEFAULT_QUESTION;
       }
-      if (retry) doc = (turnsRef.current.filter((t) => t.kind === 'you').at(-1) as Extract<Turn, { kind: 'you' }> | undefined)?.doc;
+      if (!retry && opts.text === undefined && pics.length) {
+        images = pics;
+        if (!q) q = IMAGE_DEFAULT_QUESTION;
+      }
+      if (retry) {
+        const lastYou = turnsRef.current.filter((t) => t.kind === 'you').at(-1) as Extract<Turn, { kind: 'you' }> | undefined;
+        doc = lastYou?.doc;
+        images = lastYou?.images;
+      }
     }
     if (!q || busy || reading) return;
     if (!me) return ui.openModal('wallet');
+    if (imageMode && !retry && !regenerate && opts.text === undefined && !images?.length && !doc) return generateImage(q);
     const model = retry?.model ?? ui.model;
-    const compare = !retry && ui.compare;
-    const web = Boolean(ui.webSearch && config?.webSearch);
-    const models = compare ? [model, ui.cmpModel] : [model];
-    const msgs = [...historyFor(regenerate ? base.slice(0, -1) : base), { role: 'user' as const, content: doc ? withDocument(q, doc) : q }];
+    const deep = !retry && research && Boolean(config?.research);
+    const web = !deep && Boolean(ui.webSearch && config?.webSearch);
+    const msgs = [
+      ...historyFor(regenerate ? base.slice(0, -1) : base),
+      { role: 'user' as const, content: doc ? withDocument(q, doc) : q, ...(images?.length ? { images } : {}) },
+    ];
+    // Any image in the conversation means the vision model answers, alone.
+    const vision = msgs.some((m) => m.images?.length);
+    const compare = !retry && ui.compare && !vision && !deep;
+    const models = vision ? [VISION_MODEL.id] : compare ? [model, ui.cmpModel] : [model];
 
     if (!retry && !regenerate) {
-      add({ kind: 'you', text: q, ...(doc ? { doc } : {}) });
+      add({ kind: 'you', text: q, ...(doc ? { doc } : {}), ...(images?.length ? { images } : {}) });
       if (doc) setAttached(null);
+      if (images?.length) setPics([]);
       // A new question always brings the thread to the bottom, even after a tall card.
       setTimeout(() => {
         const el = thread.current;
@@ -431,6 +470,7 @@ export function Chat() {
       kind: 'ai',
       slots: models.map((m) => ({ model: m, text: '', status: 'waiting' as const })),
       search: web ? 'running' : undefined,
+      ...(deep ? { research: { stage: 'planning' as const } } : {}),
     });
     voiceTurn.current = voiceDraft.current && !retry && !regenerate && opts.text === undefined ? aiId : null;
     voiceDraft.current = false;
@@ -441,9 +481,25 @@ export function Chat() {
 
     const onEvent = (e: ChatEvent) => {
       if (e.type === 'search') return patchAi(aiId, (t) => ({ ...t, search: e.status, sources: e.sources }));
+      if (e.type === 'research')
+        return patchAi(aiId, (t) => ({
+          ...t,
+          research: {
+            ...t.research,
+            stage: e.stage,
+            ...(e.stage === 'searching' ? { queries: e.queries } : {}),
+            ...(e.stage === 'writing' ? { sources: e.sources } : {}),
+          },
+        }));
       if (e.type === 'tool') {
         const state: ToolState =
-          e.status === 'done' ? (e.tool === 'token' ? { status: 'done', report: e.report } : { status: 'done', prices: e.prices }) : { status: e.status };
+          e.status === 'done'
+            ? e.tool === 'token'
+              ? { status: 'done', report: e.report }
+              : e.tool === 'audit'
+                ? { status: 'done', audit: e.audit }
+                : { status: 'done', prices: e.prices }
+            : { status: e.status };
         return patchAi(aiId, (t) => ({ ...t, tools: { ...t.tools, [e.tool]: state } }));
       }
       if (e.type === 'end') return setCredits(e.balance);
@@ -464,6 +520,8 @@ export function Chat() {
           model,
           compareWith: compare ? ui.cmpModel : undefined,
           webSearch: web,
+          ...(deep ? { research: true } : {}),
+          ...(memory.forChat() ? { memory: memory.forChat() } : {}),
           persona: ui.persona !== 'default' ? ui.persona : undefined,
           messages: msgs,
         },
@@ -495,6 +553,8 @@ export function Chat() {
           body: `This message needs about ${(body?.needed ?? 0).toFixed(2)} credits and you have ${fmt2(body?.balance ?? me.credits)}. You weren't charged.`,
           action: { label: 'Top up', topup: true },
         });
+      } else if (e?.status === 503 && (e.code === 'research_unavailable' || body?.model === VISION_MODEL.id)) {
+        add({ kind: 'fail', title: e.message, body: "You weren't charged." });
       } else if (e?.status === 503) {
         const down = body?.model ?? model;
         const alt =
@@ -525,6 +585,7 @@ export function Chat() {
     setTurns((ts) => ts.slice(0, ts.indexOf(turn)));
     setInput(turn.text === DOC_DEFAULT_QUESTION && turn.doc ? '' : turn.text);
     setAttached(turn.doc ?? null);
+    setPics(turn.images ?? []);
     setTimeout(() => {
       const el = inp.current;
       if (!el) return;
@@ -534,8 +595,60 @@ export function Chat() {
     }, 0);
   }
 
+  /** Image mode: the message is a prompt for an image model. Charged a fixed price only when the image arrives. */
+  async function generateImage(prompt: string) {
+    add({ kind: 'you', text: prompt });
+    setInput('');
+    if (inp.current) inp.current.style.height = 'auto';
+    const id = add({ kind: 'img', status: 'waiting', size: imgSize });
+    const patch = (f: (t: Extract<Turn, { kind: 'img' }>) => Extract<Turn, { kind: 'img' }>) =>
+      setTurns((ts) => ts.map((t) => (t.id === id && t.kind === 'img' ? f(t) : t)));
+    setBusy(true);
+    try {
+      const r = await post<{ image: string; credits: number; balance: number }>('/images', { prompt, size: imgSize });
+      patch((t) => ({ ...t, status: 'done', src: r.image, credits: r.credits }));
+      setCredits(r.balance);
+    } catch (err) {
+      const e = err instanceof ApiError ? err : null;
+      if (e?.status === 402) {
+        setTurns((ts) => ts.filter((t) => t.id !== id));
+        const body = (e.body as { error?: { needed?: number; balance?: number } } | undefined)?.error;
+        add({
+          kind: 'fail',
+          title: 'Not enough credits.',
+          body: `An image costs ${(body?.needed ?? 0).toFixed(2)} credits and you have ${fmt2(body?.balance ?? me!.credits)}. You weren't charged.`,
+          action: { label: 'Top up', topup: true },
+        });
+      } else {
+        patch((t) => ({ ...t, status: 'error', error: e?.message ?? `Couldn't reach ${brand.name}. You weren't charged.` }));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function attachImage(file: File | Blob) {
+    const inConversation = turnsRef.current.reduce((n, t) => n + (t.kind === 'you' ? imagesIn(t) : 0), 0);
+    if (inConversation + pics.length >= MAX_CHAT_IMAGES) {
+      toast(`Up to ${MAX_CHAT_IMAGES} images per chat. Start a new chat for more.`, true);
+      return;
+    }
+    setReading(true);
+    try {
+      const url = await readImage(file);
+      setPics((p) => [...p, url].slice(0, MAX_CHAT_IMAGES));
+      inp.current?.focus();
+    } catch (e) {
+      toast(e instanceof ImageError ? e.message : "Couldn't read this image.", true);
+    } finally {
+      setReading(false);
+      if (fileInp.current) fileInp.current.value = '';
+    }
+  }
+
   async function attachFile(file: File | undefined) {
     if (!file) return;
+    if (isImageFile(file)) return attachImage(file);
     setReading(true);
     try {
       const d = await readDocument(file);
@@ -686,12 +799,57 @@ export function Chat() {
               return (
                 <div key={t.id} className={`m you${gone}`} style={{ whiteSpace: 'pre-wrap' }}>
                   {t.doc && <DocChip doc={t.doc} />}
+                  {t.images?.length ? (
+                    <span className="imgrow">
+                      {t.images.map((src, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={src} alt={`Attached image ${i + 1}`} />
+                      ))}
+                    </span>
+                  ) : t.imageCount ? (
+                    <span className="docchip">
+                      <ImgIcon />
+                      <b>{t.imageCount > 1 ? `${t.imageCount} images` : 'Image'}</b>
+                      <small>not saved</small>
+                    </span>
+                  ) : null}
                   {t.text}
                   {!busy && (
                     <button className="editbtn" onClick={() => edit(t)} aria-label="Edit message">
                       Edit
                     </button>
                   )}
+                </div>
+              );
+            if (t.kind === 'img')
+              return (
+                <div key={t.id} className={`m ai${gone}`}>
+                  <AiIcon />
+                  <div className="b">
+                    {t.status === 'waiting' ? (
+                      <div className={`genimg wait s-${t.size}`}>
+                        <span className="shim">Generating your image privately…</span>
+                      </div>
+                    ) : t.status === 'error' ? (
+                      <p style={{ fontSize: 13.5, color: '#FFC2C8' }}>{t.error}</p>
+                    ) : (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img className={`genimg s-${t.size}`} src={t.src} alt="Generated image" />
+                        <div className="meta">
+                          <span>Image</span>
+                          <span>{fmtCost(t.credits ?? 0)} credits</span>
+                          <span className="ok">
+                            <Icon name="shield" />
+                            Not logged
+                          </span>
+                          <a className="mact" href={t.src} download={`noxsea-image-${t.id}.${t.src?.startsWith('data:image/jpeg') ? 'jpg' : t.src?.startsWith('data:image/webp') ? 'webp' : 'png'}`}>
+                            Download
+                          </a>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             if (t.kind === 'note')
@@ -749,10 +907,14 @@ export function Chat() {
                 )}
               </div>
             );
+            const rs = t.research && <ResearchSteps r={t.research} finished={t.slots[0]?.status === 'done' || t.slots[0]?.status === 'stopped' || t.slots[0]?.status === 'error'} />;
             const tk = t.tools?.token;
             const pr = t.tools?.price;
-            const tools = (tk || pr) && (
+            const au = t.tools?.audit;
+            const tools = (tk || pr || au) && (
               <>
+                {au && au.status !== 'done' && <ToolLine tool="audit" state={au} />}
+                {au?.status === 'done' && au.audit && <AuditCard a={au.audit} />}
                 {tk && (tk.status !== 'done' || !tk.report) && <ToolLine tool="token" state={tk} />}
                 {tk?.status === 'done' && tk.report && <TokenCard report={tk.report} />}
                 {pr && (pr.status !== 'done' || !pr.prices?.length) && <ToolLine tool="price" state={pr} />}
@@ -802,6 +964,7 @@ export function Chat() {
               <div key={t.id} className={`m ai${gone}`}>
                 <AiIcon />
                 <div className="b">
+                  {rs}
                   {search}
                   {tools}
                   <SlotBody slot={s} big />
@@ -831,10 +994,31 @@ export function Chat() {
             onStop={() => void voice.stop()}
             onCancel={voice.cancel}
           />
-          {(attached || reading) && (
+          {imageMode && (
+            <div className="sizebar" role="radiogroup" aria-label="Image shape">
+              {(['square', 'landscape', 'portrait'] as const).map((z) => (
+                <button key={z} type="button" role="radio" aria-checked={imgSize === z} className={imgSize === z ? 'on' : undefined} onClick={() => setImgSize(z)}>
+                  <i className={`shape s-${z}`} aria-hidden="true" />
+                  {z[0]!.toUpperCase() + z.slice(1)}
+                </button>
+              ))}
+              <span className="sp" />
+              <span className="sizenote">{config?.imageGen?.credits ?? 0} credits per image · never stored</span>
+            </div>
+          )}
+          {(attached || reading || pics.length > 0) && (
             <div className="attach-row">
+              {pics.map((src, i) => (
+                <span key={i} className="imgchip">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`Image ${i + 1} to send`} />
+                  <button onClick={() => setPics((p) => p.filter((_, j) => j !== i))} aria-label={`Remove image ${i + 1}`}>
+                    ×
+                  </button>
+                </span>
+              ))}
               {reading ? (
-                <span className="docchip"><span className="shim">Reading document in your browser…</span></span>
+                <span className="docchip"><span className="shim">Reading in your browser…</span></span>
               ) : (
                 attached && (
                   <DocChip
@@ -852,13 +1036,20 @@ export function Chat() {
             ref={fileInp}
             type="file"
             hidden
-            accept=".pdf,application/pdf,.txt,.md,.csv,.json,.sol,text/plain,text/markdown,text/csv"
+            accept=".pdf,application/pdf,.txt,.md,.csv,.json,.sol,text/plain,text/markdown,text/csv,image/png,image/jpeg,image/webp,image/gif"
             onChange={(e) => void attachFile(e.target.files?.[0])}
           />
           <textarea
             ref={inp}
             rows={1}
-            placeholder={attached ? 'Ask about this document…' : 'Ask anything, privately…'}
+            placeholder={imageMode ? 'Describe the image you want…' : pics.length ? 'Ask about this image…' : attached ? 'Ask about this document…' : 'Ask anything, privately…'}
+            onPaste={(e) => {
+              const file = [...e.clipboardData.items].find((i) => i.kind === 'file' && i.type.startsWith('image/'))?.getAsFile();
+              if (file) {
+                e.preventDefault();
+                void attachImage(file);
+              }
+            }}
             aria-label="Message"
             value={input}
             onChange={(e) => {
@@ -887,7 +1078,7 @@ export function Chat() {
               <Icon name="columns" />
               <span className="cl">Compare</span>
             </button>
-            <button className="chip" onClick={() => fileInp.current?.click()} disabled={reading} aria-label="Attach a PDF or text file" title="Attach a PDF or text file. It's read in your browser, never uploaded.">
+            <button className="chip" onClick={() => fileInp.current?.click()} disabled={reading} aria-label="Attach an image, PDF or text file" title="Attach a screenshot, image, PDF or text file. Documents are read in your browser; images go only to the model with your message, never stored.">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9" />
               </svg>
@@ -930,27 +1121,105 @@ export function Chat() {
                 </div>
               )}
             </div>
-            {config?.tokenCheck && (
-              <button
-                className="chip"
-                aria-label="Check a token"
-                onClick={() => {
-                  fillComposer(input.startsWith(TOKEN_CHECK_PREFIX) ? input : TOKEN_CHECK_PREFIX + input);
-                  toast('Paste a token address (0x… or a Solana mint)');
-                }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" />
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
-                <span className="cl">Check token</span>
-              </button>
-            )}
-            {config?.webSearch && (
-              <button className="chip" aria-label="Web search" aria-pressed={ui.webSearch} onClick={() => ui.setWebSearch(!ui.webSearch)}>
-                <Icon name="globe" />
-                <span className="cl">Web search</span>
-              </button>
+            {(config?.imageGen || config?.research || config?.audit || config?.tokenCheck || config?.webSearch) && (
+              <div className="modewrap">
+                <button
+                  className="chip"
+                  aria-haspopup="menu"
+                  aria-expanded={toolsOpen}
+                  aria-pressed={activeTool !== null}
+                  aria-label={`Tools${activeTool ? `: ${activeTool} on` : ''}`}
+                  onClick={() => setToolsOpen((o) => !o)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" />
+                    <path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+                  </svg>
+                  <span className="cl">{activeTool ?? 'Tools'}</span>
+                </button>
+                {toolsOpen && (
+                  <div className="modemenu toolsmenu" role="menu" onMouseLeave={() => setToolsOpen(false)}>
+                    {config?.webSearch && (
+                      <button
+                        role="menuitemcheckbox"
+                        aria-checked={ui.webSearch && !research && !imageMode}
+                        className={ui.webSearch && !research && !imageMode ? 'on' : undefined}
+                        onClick={() => {
+                          ui.setWebSearch(!ui.webSearch);
+                          setResearch(false);
+                          setImageMode(false);
+                          setToolsOpen(false);
+                          toast(ui.webSearch ? 'Web search off' : 'Web search on · your IP stays hidden');
+                        }}
+                      >
+                        <b>Web search</b>
+                        <span>Answers with fresh results, searched from our servers</span>
+                      </button>
+                    )}
+                    {config?.research && (
+                      <button
+                        role="menuitemcheckbox"
+                        aria-checked={research}
+                        className={research ? 'on' : undefined}
+                        onClick={() => {
+                          setResearch(!research);
+                          setImageMode(false);
+                          setToolsOpen(false);
+                          toast(research ? 'Deep Research off' : 'Deep Research on: your next question gets a cited report');
+                        }}
+                      >
+                        <b>Deep Research</b>
+                        <span>Several searches and a report with sources</span>
+                      </button>
+                    )}
+                    {config?.imageGen && (
+                      <button
+                        role="menuitemcheckbox"
+                        aria-checked={imageMode}
+                        className={imageMode ? 'on' : undefined}
+                        onClick={() => {
+                          setImageMode(!imageMode);
+                          setResearch(false);
+                          setToolsOpen(false);
+                          toast(imageMode ? 'Back to chat' : `Image mode: describe the image you want (${config.imageGen!.credits} credits each)`);
+                          inp.current?.focus();
+                        }}
+                      >
+                        <b>Create image</b>
+                        <span>{config.imageGen.credits} credits per image, charged only when it arrives</span>
+                      </button>
+                    )}
+                    {config?.audit && (
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setToolsOpen(false);
+                          setImageMode(false);
+                          fillComposer(input.startsWith(AUDIT_PREFIX) ? input : AUDIT_PREFIX + input);
+                          toast('Paste a contract address (0x…). Add “on Base” to pick the chain.');
+                        }}
+                      >
+                        <b>Audit a contract</b>
+                        <span>Reviews the verified source code, function by function</span>
+                      </button>
+                    )}
+                    {config?.tokenCheck && (
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setToolsOpen(false);
+                          setImageMode(false);
+                          fillComposer(input.startsWith(TOKEN_CHECK_PREFIX) ? input : TOKEN_CHECK_PREFIX + input);
+                          toast('Paste a token address (0x… or a Solana mint)');
+                        }}
+                      >
+                        <b>Check a token</b>
+                        <span>Red flags, holders and liquidity on 9 chains</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
             <span className="sp" />
             {voice.available && !busy && voice.state.s !== 'recording' && (
@@ -963,7 +1232,7 @@ export function Chat() {
                 </svg>
               </button>
             ) : (
-              <button className="send" aria-label="Send" disabled={(!input.trim() && !attached) || reading} onClick={() => void send()}>
+              <button className="send" aria-label="Send" disabled={(!input.trim() && !attached && !pics.length) || reading} onClick={() => void send()}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" />
                 </svg>
@@ -1016,6 +1285,48 @@ function CopyLink({ text }: { text: string }) {
     <button className="mact" style={{ marginTop: 8 }} onClick={() => copy(text, 'Answer copied')}>
       Copy
     </button>
+  );
+}
+
+function ResearchSteps({ r, finished }: { r: NonNullable<Extract<Turn, { kind: 'ai' }>['research']>; finished: boolean }) {
+  const order = ['planning', 'searching', 'writing'] as const;
+  const at = order.indexOf(r.stage);
+  const steps = [
+    { label: 'Planning the research', detail: null },
+    { label: r.queries ? `Searching the web · ${r.queries.length} search${r.queries.length === 1 ? '' : 'es'}` : 'Searching the web', detail: r.queries },
+    { label: r.sources !== undefined ? `Reading ${r.sources} sources · your IP stayed hidden` : 'Reading sources', detail: null },
+    { label: 'Writing the report', detail: null },
+  ];
+  // Stage "writing" means sources are read and the report is being written.
+  const current = r.stage === 'writing' ? (finished ? 4 : 3) : at;
+  return (
+    <div className="rsteps" aria-label="Deep Research progress">
+      {steps.map((s, i) => (
+        <div key={i} className={`rstep${i < current ? ' ok' : i === current ? ' on' : ''}`}>
+          <i aria-hidden="true">{i < current ? '✓' : ''}</i>
+          <div>
+            <span className={i === current ? 'shim' : undefined}>{s.label}</span>
+            {s.detail && (
+              <ul>
+                {s.detail.map((q) => (
+                  <li key={q}>{q}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ImgIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="9" cy="10" r="1.8" />
+      <path d="M21 16l-5-5-8 9" />
+    </svg>
   );
 }
 

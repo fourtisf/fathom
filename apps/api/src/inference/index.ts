@@ -4,7 +4,7 @@ import { createOpenAiCompatibleProvider } from './openai-compatible';
 import type { InferenceProvider } from './types';
 
 export * from './types';
-export { createMockProvider, estimateTokens } from './mock';
+export { createMockProvider, estimateTokens, IMAGE_TOKENS } from './mock';
 export { createOpenAiCompatibleProvider } from './openai-compatible';
 
 export function createProvider(env: InferenceEnv | null): InferenceProvider | null {
