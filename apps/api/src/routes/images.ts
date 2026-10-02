@@ -4,6 +4,7 @@ import { requireAuth } from '../session';
 import { fixedWindow } from '../ratelimit';
 import { chargeUsage, toCredits } from '../billing';
 import { ImageGenError, IMAGE_SIZES, type ImageSize } from '../images';
+import { enhanceImagePrompt } from '../image-prompt';
 
 /**
  * POST /images: generate one image from a prompt. Charged a fixed number of credits, only after the
@@ -41,7 +42,15 @@ export const imageRoutes: FastifyPluginAsync = async (app) => {
     });
     let image;
     try {
-      image = await gen.generate(prompt, size, ac.signal);
+      // A cheap text model turns the request into a detailed prompt (and knows what "Noxsea" looks like).
+      const { prompt: drawn } = await enhanceImagePrompt(
+        app.ctx.provider,
+        app.ctx.health.status('deepseek-v4-flash') !== 'unavailable',
+        prompt,
+        size,
+        ac.signal,
+      );
+      image = await gen.generate(drawn, size, ac.signal);
     } catch (err) {
       if (ac.signal.aborted) return reply;
       const code = err instanceof ImageGenError ? err.code : 'provider_error';

@@ -129,7 +129,7 @@ const TOOLS: { title: string; text: string; icon: string; tag?: string; link?: [
   },
   {
     title: 'Create images',
-    text: 'Describe a meme, banner or logo and an open-weight image model draws it. A fixed price per image, charged only when it arrives.',
+    text: 'Describe a meme, banner or logo and an image model draws it. Ask for a Noxsea banner and it already knows our look. A fixed price per image, charged only when it arrives.',
     icon: 'M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z',
     tag: 'New',
   },

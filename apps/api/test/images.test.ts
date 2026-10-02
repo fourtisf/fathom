@@ -45,10 +45,12 @@ describe.skipIf(!up)('POST /images', () => {
   const addresses: string[] = [];
   const ip = nextIp();
   let fail: 'rejected' | 'provider_error' | null = null;
+  const drawn: string[] = [];
   const mock = createMockImageGenerator(3_000_000n);
   const gen: ImageGenerator = {
     ...mock,
     async generate(p, s, sig) {
+      drawn.push(p);
       if (fail) throw new ImageGenError(fail, 'x');
       return mock.generate(p, s, sig);
     },
@@ -84,6 +86,8 @@ describe.skipIf(!up)('POST /images', () => {
     const usage = await prisma.usageDaily.findMany({ where: { userId } });
     expect(usage.map((u) => u.model)).toContain('image-generation');
     expect(lines.join('\n')).not.toContain('secret violet whale');
+    // The image model got the rewritten prompt (the mock text model's reply), not the raw request.
+    expect(drawn.at(-1)).toMatch(/^Mock reply from DeepSeek V4 Flash/);
   });
 
   it('charges nothing on refusals and failures, validates input, and needs a configured provider', async () => {

@@ -173,7 +173,7 @@ export default function DocsPage() {
             contract, and the AI reviews it function by function. This is an automated review, not a professional audit.
           </li>
           <li>
-            <b>Image.</b> Switch to Image, pick a shape and describe what you want. An open-weight image model draws it for
+            <b>Image.</b> Switch to Image, pick a shape and describe what you want. An image model draws it for
             a fixed number of credits, charged only when the image arrives. Prompts and images are not stored; download
             the image to keep it.
           </li>
